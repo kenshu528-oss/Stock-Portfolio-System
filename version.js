@@ -12,10 +12,10 @@
 // 版本管理系統
 class VersionManager {
     constructor() {
-        this.currentVersion = '1.2.0';
+        this.currentVersion = '1.2.0.1';
         this.versionHistory = [
             {
-                version: '1.0.0',
+                version: '1.0.0.0',
                 date: '2025-12-24',
                 features: [
                     '基本股票管理功能',
@@ -25,7 +25,7 @@ class VersionManager {
                 ]
             },
             {
-                version: '1.1.0',
+                version: '1.1.0.0',
                 date: '2025-12-24',
                 features: [
                     '真實股價 API 整合',
@@ -36,7 +36,7 @@ class VersionManager {
                 ]
             },
             {
-                version: '1.2.0',
+                version: '1.2.0.0',
                 date: '2025-12-24',
                 features: [
                     '雲端同步功能',
@@ -44,6 +44,18 @@ class VersionManager {
                     '版本管理系統',
                     '帳戶管理功能 (刪除/更名)',
                     '部署指南'
+                ]
+            },
+            {
+                version: '1.2.0.1',
+                date: '2025-12-24',
+                features: [
+                    '修正新增股票對話框滾動問題',
+                    '防止自動更新干擾新增股票流程',
+                    '新增智能股票搜尋功能',
+                    '修正股票名稱自動查詢 (如 2303 → 聯電)',
+                    '改善錯誤處理和用戶提示',
+                    '調整版權資訊顯示位置'
                 ]
             }
         ];
@@ -118,17 +130,21 @@ class VersionManager {
         console.log(`執行資料遷移: ${fromVersion} → ${toVersion}`);
         
         // 根據版本執行不同的遷移邏輯
-        if (this.compareVersions(fromVersion, '1.1.0') < 0) {
+        if (this.compareVersions(fromVersion, '1.1.0.0') < 0) {
             this.migrateToV110();
         }
         
-        if (this.compareVersions(fromVersion, '1.2.0') < 0) {
+        if (this.compareVersions(fromVersion, '1.2.0.0') < 0) {
             this.migrateToV120();
+        }
+        
+        if (this.compareVersions(fromVersion, '1.2.0.1') < 0) {
+            this.migrateToV1201();
         }
     }
 
     migrateToV110() {
-        console.log('遷移到 v1.1.0...');
+        console.log('遷移到 v1.1.0.0...');
         // 新增 error 和 source 欄位到現有股票
         const data = JSON.parse(localStorage.getItem('stockPortfolio') || '{}');
         if (data.stocks) {
@@ -145,7 +161,7 @@ class VersionManager {
     }
 
     migrateToV120() {
-        console.log('遷移到 v1.2.0...');
+        console.log('遷移到 v1.2.0.0...');
         // 新增 lastSync 欄位
         const data = JSON.parse(localStorage.getItem('stockPortfolio') || '{}');
         if (!data.lastSync) {
@@ -154,11 +170,23 @@ class VersionManager {
         }
     }
 
+    migrateToV1201() {
+        console.log('遷移到 v1.2.0.1...');
+        // 清除可能的搜尋快取，確保新的搜尋邏輯正常運作
+        localStorage.removeItem('stock_search_cache');
+        console.log('已清除搜尋快取，新的智能搜尋功能已啟用');
+    }
+
     compareVersions(version1, version2) {
+        // 支援四位數版本號比較 (major.minor.patch.build)
         const v1parts = version1.split('.').map(Number);
         const v2parts = version2.split('.').map(Number);
         
-        for (let i = 0; i < Math.max(v1parts.length, v2parts.length); i++) {
+        // 確保都是四位數版本號
+        while (v1parts.length < 4) v1parts.push(0);
+        while (v2parts.length < 4) v2parts.push(0);
+        
+        for (let i = 0; i < 4; i++) {
             const v1part = v1parts[i] || 0;
             const v2part = v2parts[i] || 0;
             

@@ -35,9 +35,17 @@ header {
     margin-bottom: 20px;
 }
 
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
 header h1 {
     color: #2c3e50;
-    margin-bottom: 15px;
+    margin: 0;
+    flex: 1;
 }
 
 .summary-panel {
@@ -391,10 +399,11 @@ header h1 {
 
 /* 版權資訊樣式 */
 .copyright-info {
-    text-align: center;
-    margin: 10px 0;
+    text-align: right;
     color: #7f8c8d;
     font-size: 0.8em;
+    margin-left: 20px;
+    white-space: nowrap;
 }
 
 .copyright-info a {
@@ -493,6 +502,29 @@ header h1 {
     background-color: #e67e22;
 }
 
+/* 搜尋狀態樣式 */
+.search-status {
+    font-size: 0.8em;
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+.search-status.loading {
+    color: #f39c12;
+}
+
+.search-status.success {
+    color: #27ae60;
+}
+
+.search-status.error {
+    color: #e74c3c;
+}
+
+.search-status.info {
+    color: #3498db;
+}
+
 /* Modal 樣式 */
 .modal {
     display: none;
@@ -503,15 +535,18 @@ header h1 {
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.5);
+    overflow-y: auto; /* 允許整個 modal 滾動 */
 }
 
 .modal-content {
     background-color: white;
-    margin: 10% auto;
+    margin: 5% auto;
     padding: 20px;
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
+    max-height: 80vh; /* 限制最大高度 */
+    overflow-y: auto; /* 內容超出時顯示滾動條 */
     position: relative;
 }
 
@@ -559,6 +594,18 @@ header h1 {
 @media (max-width: 768px) {
     .container {
         padding: 10px;
+    }
+    
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .copyright-info {
+        text-align: left;
+        margin-left: 0;
+        font-size: 0.75em;
     }
     
     .summary-panel {

@@ -9,7 +9,7 @@
  * Licensed under MIT License
  * 
  * 作者：徐國洲
- * 版本：v1.2.0
+ * 版本：v1.2.0.1
  * 建立日期：2025-12-24
  * 
  * 功能：
@@ -170,9 +170,20 @@ class StockPortfolio {
         });
 
         // 定期更新股價 (每30秒)
-        setInterval(() => {
-            this.refreshStockPrices();
+        this.autoRefreshInterval = setInterval(() => {
+            // 只有在沒有開啟 modal 時才自動更新
+            if (!this.isModalOpen()) {
+                this.refreshStockPrices();
+            }
         }, 30000);
+    }
+
+    isModalOpen() {
+        const modals = ['addStockModal', 'addAccountModal', 'manageAccountModal'];
+        return modals.some(modalId => {
+            const modal = document.getElementById(modalId);
+            return modal && modal.style.display === 'block';
+        });
     }
 
     showAddStockModal() {
@@ -186,7 +197,211 @@ class StockPortfolio {
             accountSelect.appendChild(option);
         });
         
+        // 設定智能搜尋
+        this.setupStockSearch();
+        
         document.getElementById('addStockModal').style.display = 'block';
+    }
+
+    setupStockSearch() {
+        const codeInput = document.getElementById('stockCode');
+        const nameInput = document.getElementById('stockName');
+        const codeStatus = document.getElementById('codeSearchStatus');
+        const nameStatus = document.getElementById('nameSearchStatus');
+        
+        let codeSearchTimeout;
+        let nameSearchTimeout;
+        
+        // 股票代碼輸入時自動查詢名稱
+        codeInput.addEventListener('input', (e) => {
+            clearTimeout(codeSearchTimeout);
+            const code = e.target.value.trim().toUpperCase();
+            
+            if (code.length >= 4) {
+                codeStatus.textContent = '🔍 查詢中...';
+                codeStatus.className = 'search-status loading';
+                
+                codeSearchTimeout = setTimeout(async () => {
+                    try {
+                        console.log(`搜尋股票代碼: ${code}`);
+                        const stockInfo = await this.searchStockByCode(code);
+                        console.log(`搜尋結果:`, stockInfo);
+                        
+                        if (stockInfo && stockInfo.name && stockInfo.name !== code) {
+                            nameInput.value = stockInfo.name;
+                            codeStatus.textContent = `✅ 找到: ${stockInfo.name}`;
+                            codeStatus.className = 'search-status success';
+                            nameStatus.textContent = '';
+                        } else {
+                            codeStatus.textContent = '❌ 找不到此股票代碼';
+                            codeStatus.className = 'search-status error';
+                        }
+                    } catch (error) {
+                        console.error('搜尋錯誤:', error);
+                        codeStatus.textContent = '⚠️ 查詢失敗，請手動輸入';
+                        codeStatus.className = 'search-status error';
+                    }
+                }, 800);
+            } else {
+                codeStatus.textContent = '';
+                codeStatus.className = 'search-status';
+            }
+        });
+        
+        // 股票名稱輸入時自動查詢代碼
+        nameInput.addEventListener('input', (e) => {
+            clearTimeout(nameSearchTimeout);
+            const name = e.target.value.trim();
+            
+            if (name.length >= 2) {
+                nameStatus.textContent = '🔍 查詢中...';
+                nameStatus.className = 'search-status loading';
+                
+                nameSearchTimeout = setTimeout(async () => {
+                    try {
+                        const stockInfo = await this.searchStockByName(name);
+                        if (stockInfo.code) {
+                            codeInput.value = stockInfo.code;
+                            nameStatus.textContent = `✅ 找到: ${stockInfo.code}`;
+                            nameStatus.className = 'search-status success';
+                            codeStatus.textContent = '';
+                        } else {
+                            nameStatus.textContent = '❌ 找不到此股票名稱';
+                            nameStatus.className = 'search-status error';
+                        }
+                    } catch (error) {
+                        nameStatus.textContent = '⚠️ 查詢失敗，請手動輸入';
+                        nameStatus.className = 'search-status error';
+                    }
+                }, 800);
+            } else {
+                nameStatus.textContent = '';
+                nameStatus.className = 'search-status';
+            }
+        });
+    }
+
+    async searchStockByCode(code) {
+        console.log(`開始搜尋股票代碼: ${code}`);
+        
+        // 優先使用本地股票資料庫 (更快更準確)
+        const localResult = this.getStockFromLocalDB(code, 'code');
+        console.log(`本地搜尋結果:`, localResult);
+        
+        if (localResult && localResult.name) {
+            return localResult;
+        }
+        
+        // 如果本地找不到，再嘗試 API 查詢
+        try {
+            console.log(`嘗試 API 查詢: ${code}`);
+            const stockInfo = await this.stockAPI.getStockInfo(code);
+            console.log(`API 查詢結果:`, stockInfo);
+            
+            if (stockInfo && stockInfo.name && stockInfo.name !== code) {
+                return stockInfo;
+            }
+        } catch (error) {
+            console.warn(`API 查詢失敗:`, error);
+        }
+        
+        // 如果都找不到，回傳空結果
+        return { code: null, name: null };
+    }
+
+    async searchStockByName(name) {
+        try {
+            // 先從本地資料庫搜尋
+            const localResult = this.getStockFromLocalDB(name, 'name');
+            if (localResult.code) {
+                return localResult;
+            }
+            
+            // 如果本地找不到，可以擴展為 API 搜尋
+            throw new Error('找不到股票');
+        } catch (error) {
+            return { code: null, name: null };
+        }
+    }
+
+    getStockFromLocalDB(query, searchType) {
+        // 常見台股資料庫
+        const stockDB = [
+            { code: '2330', name: '台積電' },
+            { code: '2317', name: '鴻海' },
+            { code: '2454', name: '聯發科' },
+            { code: '2881', name: '富邦金' },
+            { code: '2882', name: '國泰金' },
+            { code: '2883', name: '開發金' },
+            { code: '2884', name: '玉山金' },
+            { code: '2885', name: '元大金' },
+            { code: '2886', name: '兆豐金' },
+            { code: '2887', name: '台新金' },
+            { code: '2890', name: '永豐金' },
+            { code: '2891', name: '中信金' },
+            { code: '2892', name: '第一金' },
+            { code: '2912', name: '統一超' },
+            { code: '3008', name: '大立光' },
+            { code: '3711', name: '日月光投控' },
+            { code: '5880', name: '合庫金' },
+            { code: '6505', name: '台塑化' },
+            { code: '0050', name: '元大台灣50' },
+            { code: '0056', name: '元大高股息' },
+            { code: '00631L', name: '元大台灣50正2' },
+            { code: '00632R', name: '元大台灣50反1' },
+            { code: '00679B', name: '元大美債20年' },
+            { code: '00692', name: '富邦公司治理' },
+            { code: '00701', name: '國泰股利精選30' },
+            { code: '00713', name: '元大台灣高息低波' },
+            { code: '00878', name: '國泰永續高股息' },
+            { code: '00881', name: '國泰台灣5G+' },
+            { code: '00900', name: '富邦特選高股息30' },
+            { code: '00919', name: '群益台灣精選高息' },
+            { code: '1101', name: '台泥' },
+            { code: '1102', name: '亞泥' },
+            { code: '1216', name: '統一' },
+            { code: '1301', name: '台塑' },
+            { code: '1303', name: '南亞' },
+            { code: '1326', name: '台化' },
+            { code: '2002', name: '中鋼' },
+            { code: '2207', name: '和泰車' },
+            { code: '2303', name: '聯電' },
+            { code: '2308', name: '台達電' },
+            { code: '2327', name: '國巨' },
+            { code: '2357', name: '華碩' },
+            { code: '2382', name: '廣達' },
+            { code: '2395', name: '研華' },
+            { code: '2408', name: '南亞科' },
+            { code: '2412', name: '中華電' },
+            { code: '2474', name: '可成' },
+            { code: '2603', name: '長榮' },
+            { code: '2609', name: '陽明' },
+            { code: '2615', name: '萬海' },
+            { code: '2801', name: '彰銀' },
+            { code: '2880', name: '華南金' },
+            { code: '3045', name: '台灣大' },
+            { code: '3481', name: '群創' },
+            { code: '4938', name: '和碩' },
+            { code: '5871', name: '中租-KY' },
+            { code: '6415', name: '矽力-KY' },
+            { code: '6669', name: '緯穎' }
+        ];
+        
+        console.log(`本地資料庫搜尋: ${searchType} = ${query}`);
+        
+        if (searchType === 'code') {
+            const result = stockDB.find(stock => stock.code === query);
+            console.log(`代碼搜尋結果:`, result);
+            return result || { code: null, name: null };
+        } else if (searchType === 'name') {
+            const result = stockDB.find(stock => 
+                stock.name.includes(query) || query.includes(stock.name)
+            );
+            console.log(`名稱搜尋結果:`, result);
+            return result || { code: null, name: null };
+        }
+        
+        return { code: null, name: null };
     }
 
     showAddAccountModal() {
@@ -447,6 +662,13 @@ Stock Portfolio System
         // 清空表單
         document.getElementById('addStockForm').reset();
         document.getElementById('addAccountForm').reset();
+        
+        // 清空搜尋狀態
+        const searchStatuses = document.querySelectorAll('.search-status');
+        searchStatuses.forEach(status => {
+            status.textContent = '';
+            status.className = 'search-status';
+        });
     }
 
     async addStock() {
@@ -464,14 +686,25 @@ Stock Portfolio System
             return;
         }
 
+        // 驗證股票代碼格式
+        if (!/^[0-9]{4}[A-Z]*$/.test(formData.code)) {
+            alert('股票代碼格式錯誤，請輸入正確的台股代碼 (例如: 2330, 0050)');
+            return;
+        }
+
         // 如果沒有填寫股票名稱，嘗試自動獲取
         if (!formData.name) {
             try {
-                const stockInfo = await this.stockAPI.getStockInfo(formData.code);
-                formData.name = stockInfo.name || formData.code;
+                const stockInfo = await this.searchStockByCode(formData.code);
+                if (stockInfo.name) {
+                    formData.name = stockInfo.name;
+                } else {
+                    alert('找不到此股票代碼，請手動輸入股票名稱');
+                    return;
+                }
             } catch (error) {
-                console.warn('無法獲取股票名稱:', error);
-                formData.name = formData.code; // 使用代碼作為名稱
+                alert('無法驗證股票代碼，請確認代碼正確並手動輸入股票名稱');
+                return;
             }
         }
 

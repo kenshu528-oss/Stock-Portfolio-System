@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 kenshu528-oss
+Copyright (c) 2025 徐國洲
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+存股紀錄系統 (Stock Portfolio System)
+版權所有 (c) 2025 徐國洲
+
+本軟體採用 MIT 授權條款，允許自由使用、修改和分發，
+但必須保留原始版權聲明和授權條款。
+
+特別聲明：
+1. 本系統僅供個人投資記錄使用，不構成投資建議
+2. 股價資料來源於第三方 API，準確性請自行驗證
+3. 使用者需自行承擔投資風險
+4. 作者不對因使用本軟體造成的任何損失負責
+
+聯絡方式：kenshu528@gmail.com
