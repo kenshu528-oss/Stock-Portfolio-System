@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<!--
+存股紀錄系統 (Stock Portfolio System)
+版權所有 (c) 2025 徐國洲
+
+本軟體採用 MIT 授權條款
+詳細授權條款請參閱 LICENSE 檔案
+
+作者：徐國洲
+版本：v1.2.0
+建立日期：2025-12-24
+-->
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>存股紀錄系統</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>存股紀錄系統 <small id="versionInfo" class="version-tag">v1.2.0</small></h1>
+            <div class="copyright-info">
+                <small>© 2025 徐國洲 | MIT License | <a href="#" onclick="portfolio.showCopyrightInfo()">版權資訊</a></small>
+            </div>
+            <div class="summary-panel">
+                <div class="total-value">
+                    <h2>總市值: <span id="totalValue">$0</span></h2>
+                    <div class="daily-change">
+                        今日變化: <span id="dailyChange">+$0 (0%)</span>
+                    </div>
+                </div>
+                <div class="last-update">
+                    最後更新: <span id="lastUpdate">--</span>
+                    <div class="sync-status">
+                        <button id="cloudSyncBtn" class="btn-sync" title="雲端同步">☁️</button>
+                        <span id="syncStatus" class="sync-indicator">未同步</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="controls">
+                <button id="addStockBtn" class="btn btn-primary">新增股票</button>
+                <button id="addAccountBtn" class="btn btn-secondary">新增帳戶</button>
+                <button id="manageAccountBtn" class="btn btn-secondary">管理帳戶</button>
+                <button id="refreshBtn" class="btn btn-refresh">更新股價</button>
+                <button id="testApiBtn" class="btn btn-secondary">測試 API 連線</button>
+                <button id="batchEditBtn" class="btn btn-secondary">批量編輯</button>
+                <button id="versionBtn" class="btn btn-info">版本資訊</button>
+                <button id="resetBtn" class="btn btn-warning" style="display:none;">重置資料</button>
+            </div>
+
+            <div class="accounts-tabs">
+                <div class="tab-buttons" id="accountTabs">
+                    <button class="tab-btn active" data-account="all">全部</button>
+                    <button class="tab-btn" data-account="國泰Ken">國泰Ken</button>
+                    <button class="tab-btn" data-account="國泰Mom">國泰Mom</button>
+                </div>
+            </div>
+
+            <div class="stock-table-container">
+                <table class="stock-table" id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>股票代碼</th>
+                            <th>股票名稱</th>
+                            <th>帳戶</th>
+                            <th>持股數 <small>(可編輯)</small></th>
+                            <th>成本價 <small>(可編輯)</small></th>
+                            <th>現價 / 更新時間</th>
+                            <th>市值</th>
+                            <th>損益</th>
+                            <th>損益率</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <!-- 股票資料將動態載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- 新增股票對話框 -->
+        <div id="addStockModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>新增股票</h3>
+                <form id="addStockForm">
+                    <div class="form-group">
+                        <label for="stockCode">股票代碼:</label>
+                        <input type="text" id="stockCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockName">股票名稱:</label>
+                        <input type="text" id="stockName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="account">帳戶:</label>
+                        <select id="account" required>
+                            <option value="國泰Ken">國泰Ken</option>
+                            <option value="國泰Mom">國泰Mom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="shares">持股數:</label>
+                        <input type="number" id="shares" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="costPrice">成本價:</label>
+                        <input type="number" step="0.01" id="costPrice" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">新增</button>
+                        <button type="button" class="btn btn-secondary" id="cancelAdd">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 新增帳戶對話框 -->
+        <div id="addAccountModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>新增帳戶</h3>
+                <form id="addAccountForm">
+                    <div class="form-group">
+                        <label for="accountName">帳戶名稱:</label>
+                        <input type="text" id="accountName" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">新增</button>
+                        <button type="button" class="btn btn-secondary" id="cancelAddAccount">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 管理帳戶對話框 -->
+        <div id="manageAccountModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>管理帳戶</h3>
+                <div class="account-list" id="accountList">
+                    <!-- 帳戶列表將動態載入 -->
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelManageAccount">關閉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="version.js"></script>
+    <script src="stock-api.js"></script>
+    <script src="cloud-sync.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
