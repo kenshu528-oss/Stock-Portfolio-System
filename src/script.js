@@ -1620,9 +1620,9 @@ https://creativecommons.org/licenses/by-nc/4.0/deed.zh_TW
             return;
         }
 
-        // 驗證股票代碼格式
-        if (!/^[0-9]{4}[A-Z]*$/.test(formData.code)) {
-            alert('股票代碼格式錯誤，請輸入正確的台股代碼 (例如: 2330, 0050)');
+        // 驗證股票代碼格式 (支援4-6位數字，可含英文字母)
+        if (!/^[0-9]{4,6}[A-Z]*$/.test(formData.code)) {
+            alert('股票代碼格式錯誤，請輸入正確的股票代碼 (例如: 2330, 0050, 00631L)');
             return;
         }
 
