@@ -789,7 +789,7 @@ header h1 {
     margin-top: 20px;
 }
 
-/* 響應式設計 */
+/* 響應式設計 - 手機版 */
 @media (max-width: 768px) {
     .container {
         padding: 10px;
@@ -817,12 +817,81 @@ header h1 {
         font-size: 1.5em;
     }
     
-    .controls {
+    /* 手機版按鈕排版優化 */
+    .controls-content {
+        display: flex !important;
         flex-direction: column;
+        gap: 15px;
+        width: 100%;
     }
     
-    .btn {
+    .controls-primary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
         width: 100%;
+    }
+    
+    .controls-secondary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .controls-settings {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 10px 0;
+    }
+    
+    /* 手機版按鈕樣式 */
+    .controls-primary .btn {
+        width: 100%;
+        padding: 14px 8px;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .controls-secondary .btn {
+        width: 100%;
+        padding: 12px 6px;
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .btn-icon {
+        padding: 12px;
+        font-size: 20px;
+        min-width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+    }
+    
+    /* 手機版隱藏不常用按鈕 */
+    #testApiBtn,
+    #resetBtn {
+        display: none !important;
+    }
+    
+    /* 手機版優化特定按鈕 */
+    #versionBtn {
+        font-size: 12px;
+        padding: 10px 4px;
+    }
+    
+    #batchEditBtn {
+        font-size: 12px;
+        padding: 10px 4px;
     }
     
     .tab-buttons {
@@ -832,6 +901,47 @@ header h1 {
     .tab-btn {
         border-radius: 5px;
         margin-bottom: 5px;
+        width: 100%;
+    }
+    
+    /* 隱藏手機版切換按鈕（因為我們直接顯示所有按鈕） */
+    .controls-toggle {
+        display: none !important;
+    }
+    
+    /* 手機版表格優化 */
+    .stock-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .stock-table {
+        min-width: 800px; /* 確保表格有最小寬度 */
+        font-size: 12px;
+    }
+    
+    .stock-table th,
+    .stock-table td {
+        padding: 8px 4px;
+        white-space: nowrap;
+    }
+    
+    /* 手機版帳戶標籤 */
+    .tab-buttons {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 5px;
+        margin-bottom: 15px;
+    }
+    
+    .tab-btn {
+        flex-shrink: 0;
+        min-width: 80px;
+        margin-bottom: 0;
+        padding: 10px 15px;
+        font-size: 14px;
     }
 }
 
