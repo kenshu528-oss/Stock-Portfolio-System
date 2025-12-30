@@ -146,6 +146,32 @@
 ### ⚖️ 免責聲明
 本軟體僅供個人投資記錄使用，不構成投資建議。股價資料來源於第三方 API，準確性請自行驗證。使用者需自行承擔投資風險。
 
+## 📤 分享給他人使用
+
+### 🌐 線上分享（推薦）
+**Netlify Drop - 最簡單的方法**：
+1. 前往 https://app.netlify.com/drop
+2. 將專案資料夾拖拉到頁面上
+3. 獲得免費網址，直接分享給朋友使用
+4. 詳細教學請參閱 `NETLIFY_DROP_TUTORIAL.md`
+
+### 📁 檔案分享
+**Google Drive / Dropbox**：
+1. 將專案打包成 ZIP 檔案
+2. 上傳到雲端儲存
+3. 分享下載連結
+4. 朋友下載後雙擊 `index.html` 即可使用
+
+### 💾 本地分享
+**USB 隨身碟**：
+1. 將專案複製到 USB
+2. 直接給朋友使用
+3. 適合面對面分享
+
+**更多分享方法請參閱**：
+- `SIMPLE_SHARING_GUIDE.md` - 3種最簡單的分享方法
+- `ALTERNATIVE_SHARING_METHODS.md` - 完整的分享方案指南
+
 ## 🤝 貢獻指南
 
 歡迎提交 Issue 和 Pull Request！
