@@ -5,14 +5,14 @@
  * 版權所有 (c) 2025 徐國洲
  * Copyright (c) 2025 Xu Guo Zhou
  * 
- * 採用 MIT 授權條款
- * Licensed under MIT License
+ * 採用 CC BY-NC 4.0 授權條款 (禁止商業使用)
+ * Licensed under CC BY-NC 4.0 License (Non-Commercial)
  */
 
 // 版本管理系統
 class VersionManager {
     constructor() {
-        this.currentVersion = '1.2.1.0';
+        this.currentVersion = '1.2.2.0';
         this.versionHistory = [
             {
                 version: '1.0.0.0',
@@ -65,7 +65,25 @@ class VersionManager {
                     '自動調整成本價功能',
                     '真實報酬率計算',
                     '股息殖利率分析',
-                    '個股股息設定管理'
+                    '個股股息設定管理',
+                    'UI 界面優化',
+                    '雙隱私保護系統',
+                    '購買追蹤與自動股息計算'
+                ]
+            },
+            {
+                version: '1.2.2.0',
+                date: '2025-12-30',
+                features: [
+                    '版權保護升級 (CC BY-NC 4.0)',
+                    '明確禁止商業使用',
+                    '新增商業使用聲明文件',
+                    '完整文檔套件',
+                    'GitHub 上傳標準作業程序',
+                    '快速參考卡',
+                    '疑難排解指南',
+                    '版權資訊更新',
+                    '保護機制強化'
                 ]
             }
         ];
@@ -155,6 +173,10 @@ class VersionManager {
         if (this.compareVersions(fromVersion, '1.2.1.0') < 0) {
             this.migrateToV1210();
         }
+        
+        if (this.compareVersions(fromVersion, '1.2.2.0') < 0) {
+            this.migrateToV1220();
+        }
     }
 
     migrateToV110() {
@@ -225,6 +247,36 @@ class VersionManager {
         }
         
         console.log('已初始化股息管理功能');
+    }
+
+    migrateToV1220() {
+        console.log('遷移到 v1.2.2.0...');
+        // 版權保護升級通知
+        const message = `
+🔒 重要更新：版權保護升級
+
+本系統已更新為 CC BY-NC 4.0 授權條款：
+✅ 允許個人使用、修改、分發
+❌ 禁止商業使用
+
+新增功能：
+• 完整的 GitHub 上傳文檔套件
+• 標準作業程序 (SOP)
+• 快速參考卡
+• 疑難排解指南
+
+如需商業使用，請聯絡：kenshu528@gmail.com
+        `;
+        
+        // 顯示版權更新通知（只顯示一次）
+        if (localStorage.getItem('copyrightNoticeShown') !== '1.2.2.0') {
+            setTimeout(() => {
+                alert(message);
+                localStorage.setItem('copyrightNoticeShown', '1.2.2.0');
+            }, 2000); // 延遲2秒顯示，避免與其他通知衝突
+        }
+        
+        console.log('已完成版權保護升級');
     }
 
     compareVersions(version1, version2) {
