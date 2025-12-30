@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隱私星號修復測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #28a745;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2.2em;
+        }
+        .fix-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+        .fix-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .demo-button {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+        .problem-solution {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .problem-card, .solution-card {
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid;
+        }
+        .problem-card {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        .solution-card {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+        }
+        .code-preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .test-list {
+            list-style: none;
+            padding: 0;
+        }
+        .test-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .test-list li:before {
+            content: "✅";
+            font-size: 16px;
+        }
+        @media (max-width: 768px) {
+            .problem-solution {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌟 日間模式星號修復</h1>
+            <p>解決亮色模式下隱私遮罩星號無法顯示的問題</p>
+        </div>
+
+        <div class="fix-section">
+            <h3>🔧 問題修復</h3>
+            
+            <div class="problem-solution">
+                <div class="problem-card">
+                    <h4>🔴 問題描述</h4>
+                    <ul>
+                        <li>日間模式下星號 (****) 無法顯示</li>
+                        <li>星號顏色與背景相同</li>
+                        <li>隱私保護效果不明顯</li>
+                    </ul>
+                </div>
+                <div class="solution-card">
+                    <h4>🟢 修復方案</h4>
+                    <ul>
+                        <li>星號改為深色 (#2c3e50)</li>
+                        <li>加入淺色陰影增強對比</li>
+                        <li>確保在淺色背景下清楚可見</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <h3>💻 技術修復細節</h3>
+            
+            <div class="code-preview">
+/* 日間模式 - 深色星號 + 淺色陰影 */
+.privacy-value.hidden::after {
+    content: "****";
+    color: #2c3e50;  /* 深灰色，確保可見 */
+    font-weight: bold;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+/* 深色模式 - 白色星號 + 深色陰影 */
+[data-theme="dark"] .privacy-value.hidden::after {
+    color: #ffffff;  /* 白色 */
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h4>🎯 修復效果</h4>
+            <p><strong>日間模式：</strong>深灰色星號 + 淺色陰影，在淺色背景上清楚可見</p>
+            <p><strong>深色模式：</strong>白色星號 + 深色陰影，在深色背景上對比鮮明</p>
+        </div>
+
+        <div class="fix-section">
+            <h3>🧪 測試檢查清單</h3>
+            
+            <ul class="test-list">
+                <li>日間模式下點擊總市值隱私按鈕，確認星號清楚可見</li>
+                <li>日間模式下點擊個股隱私按鈕，確認表格中的星號顯示</li>
+                <li>切換到深色模式，確認星號在深色背景下依然清楚</li>
+                <li>測試不同的隱私組合，確認所有星號都正常顯示</li>
+                <li>檢查手機版的顯示效果</li>
+                <li>確認星號位置居中，大小適中</li>
+            </ul>
+        </div>
+
+        <div class="fix-section">
+            <h3>🎨 視覺對比說明</h3>
+            <p><strong>修復前：</strong></p>
+            <ul>
+                <li>日間模式：白色星號在淺色背景上 → 看不見 ❌</li>
+                <li>深色模式：白色星號在深色背景上 → 清楚可見 ✅</li>
+            </ul>
+            
+            <p><strong>修復後：</strong></p>
+            <ul>
+                <li>日間模式：深灰色星號在淺色背景上 → 清楚可見 ✅</li>
+                <li>深色模式：白色星號在深色背景上 → 清楚可見 ✅</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="index.html" class="demo-button">🚀 開啟主系統測試</a>
+            <a href="privacy-fix-test.html" class="demo-button">📖 查看完整修復說明</a>
+        </div>
+
+        <div class="highlight-box" style="margin-top: 30px;">
+            <h4>✅ 修復完成</h4>
+            <p>日間模式和深色模式下的隱私星號現在都應該清楚可見</p>
+            <p>隱私保護功能已完全正常運作</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('隱私星號修復測試頁面載入完成');
+            
+            // 為按鈕添加點擊效果
+            const buttons = document.querySelectorAll('.demo-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.style.transform = 'translateY(-4px)';
+                    setTimeout(() => {
+                        this.style.transform = 'translateY(-2px)';
+                    }, 150);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

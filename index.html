@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<!--
+存股紀錄系統 (Stock Portfolio System)
+版權所有 (c) 2025 徐國洲
+
+本軟體採用 CC BY-NC 4.0 授權條款 (禁止商業使用)
+詳細授權條款請參閱 LICENSE 檔案
+
+作者：徐國洲
+版本：v1.2.0.2
+建立日期：2025-12-24
+-->
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>存股紀錄系統</title>
+    <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-top">
+                <h1>存股紀錄系統 <small id="versionInfo" class="version-tag">v1.2.0.3</small></h1>
+                <div class="copyright-info">
+                    <small>© 2025 徐國洲 | CC BY-NC 4.0 License | <a href="#" onclick="portfolio.showCopyrightInfo()">版權資訊</a></small>
+                </div>
+            </div>
+            <div class="summary-panel">
+                <div class="total-value">
+                    <h2>
+                        <button id="summaryPrivacyBtn" class="btn-privacy-inline" title="顯示/隱藏總市值">
+                            <span id="summaryPrivacyIcon">🙈</span>
+                        </button>
+                        總市值: <span id="totalValue" class="summary-privacy-value">$0</span>
+                    </h2>
+                    <div class="daily-change">
+                        今日變化: <span id="dailyChange" class="summary-privacy-value">+$0 (0%)</span>
+                    </div>
+                </div>
+                <div class="last-update">
+                    最後更新: <span id="lastUpdate">--</span>
+                    <div class="sync-status">
+                        <button id="cloudSyncBtn" class="btn-sync" title="雲端同步">☁️</button>
+                        <span id="syncStatus" class="sync-indicator">未同步</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="privacy-notice" id="privacyNotice">
+                🙈 隱私模式已啟用 - 金額資訊已隱藏。點擊左側按鈕可顯示金額。
+            </div>
+            
+            <div class="controls" id="controlsContainer">
+                <div class="controls-toggle" id="controlsToggle">
+                    <button class="btn btn-toggle" id="toggleBtn">
+                        <span class="toggle-icon">≡</span>
+                        <span class="toggle-text">功能選單</span>
+                    </button>
+                </div>
+                <div class="controls-content" id="controlsContent">
+                    <div class="controls-primary">
+                        <button id="refreshBtn" class="btn btn-refresh">更新股價</button>
+                        <button id="addStockBtn" class="btn btn-primary">新增股票</button>
+                    </div>
+                    <div class="controls-secondary">
+                        <button id="addAccountBtn" class="btn btn-secondary">新增帳戶</button>
+                        <button id="manageAccountBtn" class="btn btn-secondary">管理帳戶</button>
+                        <button id="dividendBtn" class="btn btn-success">股息管理</button>
+                        <button id="testApiBtn" class="btn btn-secondary">測試 API 連線</button>
+                        <button id="batchEditBtn" class="btn btn-secondary">批量編輯</button>
+                        <button id="versionBtn" class="btn btn-info">版本資訊</button>
+                        <button id="resetBtn" class="btn btn-warning" style="display:none;">重置資料</button>
+                    </div>
+                </div>
+                <div class="controls-settings">
+                    <button id="viewModeBtn" class="btn btn-icon" title="切換介面模式">
+                        <span id="viewModeIcon">📱</span>
+                    </button>
+                    <button id="darkModeBtn" class="btn btn-icon" title="切換深色模式">
+                        <span id="darkModeIcon">🌙</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="accounts-tabs">
+                <div class="tab-buttons" id="accountTabs">
+                    <button class="tab-btn active" data-account="all">全部</button>
+                    <button class="tab-btn" data-account="國泰Ken">國泰Ken</button>
+                    <button class="tab-btn" data-account="國泰Mom">國泰Mom</button>
+                </div>
+            </div>
+
+            <div class="stock-table-container">
+                <table class="stock-table" id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>股票代碼</th>
+                            <th>股票名稱</th>
+                            <th>帳戶</th>
+                            <th>購買日期</th>
+                            <th>持股數 <small>(可編輯)</small></th>
+                            <th>成本價 <small>(可編輯)</small></th>
+                            <th>現價 / 更新時間</th>
+                            <th>市值 
+                                <button id="stockPrivacyBtn" class="btn-privacy-table" title="顯示/隱藏個股金額">
+                                    <span id="stockPrivacyIcon">👁️</span>
+                                </button>
+                            </th>
+                            <th>損益 <span class="privacy-hint">💰</span></th>
+                            <th>損益率</th>
+                            <th>股息收入 <span class="privacy-hint">💰</span></th>
+                            <th>總報酬 <span class="privacy-hint">💰</span></th>
+                            <th>操作 <span class="dropdown-hint">▼</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTableBody">
+                        <!-- 股票資料將動態載入 -->
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- 新增股票對話框 -->
+        <div id="addStockModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>新增股票</h3>
+                <form id="addStockForm">
+                    <div class="form-group">
+                        <label for="stockCode">股票代碼:</label>
+                        <input type="text" id="stockCode" required placeholder="例如: 2330, 0050">
+                        <div class="search-status" id="codeSearchStatus"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="stockName">股票名稱:</label>
+                        <input type="text" id="stockName" placeholder="例如: 台積電 (可自動查詢)">
+                        <div class="search-status" id="nameSearchStatus"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="account">帳戶:</label>
+                        <select id="account" required>
+                            <option value="國泰Ken">國泰Ken</option>
+                            <option value="國泰Mom">國泰Mom</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="shares">持股數:</label>
+                        <input type="number" id="shares" required placeholder="例如: 1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="costPrice">成本價:</label>
+                        <input type="number" step="0.01" id="costPrice" required placeholder="例如: 580.50">
+                    </div>
+                    <div class="form-group">
+                        <label for="purchaseDate">購買日期:</label>
+                        <input type="date" id="purchaseDate" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">新增</button>
+                        <button type="button" class="btn btn-secondary" id="cancelAdd">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 新增帳戶對話框 -->
+        <div id="addAccountModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>新增帳戶</h3>
+                <form id="addAccountForm">
+                    <div class="form-group">
+                        <label for="accountName">帳戶名稱:</label>
+                        <input type="text" id="accountName" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">新增</button>
+                        <button type="button" class="btn btn-secondary" id="cancelAddAccount">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 管理帳戶對話框 -->
+        <div id="manageAccountModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>管理帳戶</h3>
+                <div class="account-list" id="accountList">
+                    <!-- 帳戶列表將動態載入 -->
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-warning" id="resetSystemBtn">重置系統</button>
+                    <button type="button" class="btn btn-secondary" id="cancelManageAccount">關閉</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 股息管理對話框 -->
+        <div id="dividendModal" class="modal">
+            <div class="modal-content modal-large">
+                <span class="close">&times;</span>
+                <h3>股息管理</h3>
+                
+                <div class="dividend-tabs">
+                    <button class="tab-btn active" data-tab="records">股息記錄</button>
+                    <button class="tab-btn" data-tab="add">新增股息</button>
+                    <button class="tab-btn" data-tab="settings">設定</button>
+                </div>
+
+                <!-- 股息記錄頁面 -->
+                <div id="dividendRecords" class="tab-content active">
+                    <div class="dividend-summary">
+                        <div class="summary-card">
+                            <h4>總股息收入</h4>
+                            <div class="amount" id="totalDividendAmount">$0</div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>本年度股息</h4>
+                            <div class="amount" id="yearlyDividendAmount">$0</div>
+                        </div>
+                        <div class="summary-card">
+                            <h4>平均殖利率</h4>
+                            <div class="amount" id="averageYield">0%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dividend-table-container">
+                        <table class="dividend-table">
+                            <thead>
+                                <tr>
+                                    <th>日期</th>
+                                    <th>股票</th>
+                                    <th>股息類型</th>
+                                    <th>每股股息</th>
+                                    <th>持股數</th>
+                                    <th>股息收入</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dividendTableBody">
+                                <!-- 股息記錄將動態載入 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 新增股息頁面 -->
+                <div id="addDividend" class="tab-content">
+                    <form id="addDividendForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dividendStock">選擇股票:</label>
+                                <select id="dividendStock" required>
+                                    <option value="">請選擇股票</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="dividendDate">除息日期:</label>
+                                <input type="date" id="dividendDate" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="dividendType">股息類型:</label>
+                                <select id="dividendType" required>
+                                    <option value="cash">現金股息</option>
+                                    <option value="stock">股票股息</option>
+                                    <option value="both">現金+股票</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="dividendPerShare">每股股息 (元):</label>
+                                <input type="number" step="0.01" id="dividendPerShare" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sharesAtDate">除息日持股數:</label>
+                                <input type="number" id="sharesAtDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="taxRate">扣稅率 (%):</label>
+                                <input type="number" step="0.01" id="taxRate" value="0" min="0" max="100">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dividendNote">備註:</label>
+                            <input type="text" id="dividendNote" placeholder="例如：2024年度股息">
+                        </div>
+                        
+                        <div class="dividend-preview">
+                            <h4>預覽計算</h4>
+                            <div class="preview-item">
+                                <span>股息收入:</span>
+                                <span id="previewIncome">$0</span>
+                            </div>
+                            <div class="preview-item">
+                                <span>扣稅金額:</span>
+                                <span id="previewTax">$0</span>
+                            </div>
+                            <div class="preview-item">
+                                <span>實收金額:</span>
+                                <span id="previewNet">$0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success">新增股息</button>
+                            <button type="button" class="btn btn-secondary" id="cancelDividend">取消</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- 設定頁面 -->
+                <div id="dividendSettings" class="tab-content">
+                    <div class="settings-section">
+                        <h4>成本價調整設定</h4>
+                        <div class="setting-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="globalDividendAdjustment" checked>
+                                <span class="checkmark"></span>
+                                全域啟用股息調整成本價
+                            </label>
+                            <p class="setting-description">
+                                啟用後，股息收入會自動從成本價中扣除，計算真實報酬率
+                            </p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="defaultTaxRate">預設扣稅率 (%):</label>
+                            <input type="number" id="defaultTaxRate" value="0" min="0" max="100" step="0.01">
+                            <p class="setting-description">
+                                新增股息時的預設扣稅率 (可個別調整)
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h4>個股設定</h4>
+                        <div class="stock-settings" id="stockDividendSettings">
+                            <!-- 個股設定將動態載入 -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary" id="saveDividendSettings">儲存設定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/version.js"></script>
+    <script src="src/stock-api.js"></script>
+    <script src="src/cloud-sync.js"></script>
+    <script src="src/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雙隱私開關測試 - 存股紀錄系統</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin: 10px 0 0 0;
+        }
+        .feature-section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+        }
+        .feature-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.4em;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 25px 0;
+        }
+        .before-card, .after-card {
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid;
+        }
+        .before-card {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        .after-card {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+        }
+        .before-card h4, .after-card h4 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .control-demo {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #dee2e6;
+        }
+        .control-demo h5 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .demo-button {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .demo-button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-list li:before {
+            content: "✅";
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .highlight-box h4 {
+            margin-top: 0;
+            font-size: 1.3em;
+        }
+        .code-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 1px solid #4a5568;
+        }
+        .usage-steps {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .usage-steps h4 {
+            color: #2d3748;
+            margin-top: 0;
+        }
+        .usage-steps ol {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+        .usage-steps li {
+            margin: 8px 0;
+        }
+        @media (max-width: 768px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 2em;
+            }
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 雙隱私開關系統</h1>
+            <p>分離式隱私保護 - 總市值與個股金額獨立控制</p>
+        </div>
+
+        <div class="feature-section">
+            <h3>🎯 功能概述</h3>
+            <p>新的隱私保護系統將原本的單一開關分為兩個獨立控制：</p>
+            
+            <div class="comparison-grid">
+                <div class="before-card">
+                    <h4>🔴 改進前</h4>
+                    <ul>
+                        <li>單一隱私開關</li>
+                        <li>全部金額一起隱藏/顯示</li>
+                        <li>無法分別控制</li>
+                        <li>使用場景受限</li>
+                    </ul>
+                </div>
+                <div class="after-card">
+                    <h4>🟢 改進後</h4>
+                    <ul>
+                        <li>雙重隱私開關</li>
+                        <li>總市值與個股金額分離</li>
+                        <li>獨立控制，靈活使用</li>
+                        <li>適應更多使用場景</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="feature-section">
+            <h3>🔧 控制項說明</h3>
+            
+            <div class="control-demo">
+                <h5>📊 總市值隱私開關</h5>
+                <p><strong>位置：</strong>頂部總市值旁邊</p>
+                <p><strong>控制範圍：</strong>總市值、今日變化</p>
+                <p><strong>預設狀態：</strong>隱藏 (🙈)</p>
+                <div class="code-example">
+&lt;button id="summaryPrivacyBtn"&gt;
+    &lt;span id="summaryPrivacyIcon"&gt;🙈&lt;/span&gt;
+&lt;/button&gt;
+總市值: &lt;span class="summary-privacy-value"&gt;$1,234,567&lt;/span&gt;
+                </div>
+            </div>
+
+            <div class="control-demo">
+                <h5>💰 個股金額隱私開關</h5>
+                <p><strong>位置：</strong>表格「市值」欄位標題中</p>
+                <p><strong>控制範圍：</strong>成本價、市值、損益、股息收入、總報酬</p>
+                <p><strong>預設狀態：</strong>顯示 (👁️)</p>
+                <div class="code-example">
+&lt;th&gt;市值 
+    &lt;button id="stockPrivacyBtn"&gt;
+        &lt;span id="stockPrivacyIcon"&gt;👁️&lt;/span&gt;
+    &lt;/button&gt;
+&lt;/th&gt;
+                </div>
+            </div>
+        </div>
+
+        <div class="feature-section">
+            <h3>🎨 使用場景</h3>
+            <ul class="feature-list">
+                <li><strong>演示模式：</strong>隱藏總市值，顯示個股詳情</li>
+                <li><strong>隱私模式：</strong>隱藏總市值，隱藏個股金額</li>
+                <li><strong>分析模式：</strong>顯示總市值，顯示個股詳情</li>
+                <li><strong>截圖分享：</strong>根據需要選擇性隱藏</li>
+                <li><strong>公開展示：</strong>隱藏敏感的總資產資訊</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h4>🚀 智能預設設定</h4>
+            <p>總市值預設隱藏，個股金額預設顯示</p>
+            <p>這樣既保護了總資產隱私，又方便查看個股表現</p>
+        </div>
+
+        <div class="feature-section">
+            <h3>💻 技術實作</h3>
+            
+            <div class="code-example">
+// 雙隱私模式狀態管理
+this.summaryPrivacyMode = true;  // 總市值隱私：預設啟用
+this.stockPrivacyMode = false;   // 個股隱私：預設關閉
+
+// 分別控制不同元素
+applyPrivacyModes() {
+    // 總市值隱私
+    document.querySelectorAll('.summary-privacy-value')
+        .forEach(el => el.classList.toggle('hidden', this.summaryPrivacyMode));
+    
+    // 個股隱私
+    document.querySelectorAll('.stock-privacy-value')
+        .forEach(el => el.classList.toggle('hidden', this.stockPrivacyMode));
+}
+            </div>
+        </div>
+
+        <div class="usage-steps">
+            <h4>📋 測試步驟</h4>
+            <ol>
+                <li>開啟主系統，觀察預設狀態（總市值隱藏，個股顯示）</li>
+                <li>點擊總市值旁的 🙈 按鈕，切換總市值顯示狀態</li>
+                <li>點擊表格「市值」欄位中的 👁️ 按鈕，切換個股金額顯示</li>
+                <li>嘗試不同的組合：
+                    <ul>
+                        <li>🙈 + 👁️：隱藏總市值，顯示個股</li>
+                        <li>👁️ + 🙈：顯示總市值，隱藏個股</li>
+                        <li>🙈 + 🙈：全部隱藏</li>
+                        <li>👁️ + 👁️：全部顯示</li>
+                    </ul>
+                </li>
+                <li>檢查隱私提示訊息的變化</li>
+                <li>測試設定的持久化（重新整理頁面後設定是否保留）</li>
+            </ol>
+        </div>
+
+        <div class="feature-section">
+            <h3>🔍 檔案修改清單</h3>
+            <ul class="feature-list">
+                <li><strong>script.js</strong> - 新增雙隱私模式邏輯</li>
+                <li><strong>index.html</strong> - 更新按鈕和CSS類別</li>
+                <li><strong>styles.css</strong> - 新增表格隱私按鈕樣式</li>
+                <li><strong>localStorage</strong> - 分別儲存兩個隱私設定</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="index.html" class="demo-button">🚀 開啟主系統測試</a>
+            <a href="ui-improvements-test.html" class="demo-button">🎨 查看UI改進</a>
+        </div>
+
+        <div class="highlight-box" style="margin-top: 30px;">
+            <h4>💡 使用建議</h4>
+            <p>建議在不同場景下使用不同的隱私組合</p>
+            <p>系統會自動記住你的偏好設定</p>
+        </div>
+    </div>
+
+    <script>
+        // 添加一些互動效果
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('雙隱私開關測試頁面載入完成');
+            
+            // 為演示按鈕添加點擊效果
+            const buttons = document.querySelectorAll('.demo-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    // 添加點擊動畫
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = 'translateY(-2px)';
+                    }, 150);
+                });
+            });
+            
+            // 為功能卡片添加懸停效果
+            const cards = document.querySelectorAll('.before-card, .after-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px)';
+                    this.style.boxShadow = '0 6px 20px rgba(0,0,0,0.1)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

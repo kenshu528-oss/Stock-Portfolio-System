@@ -1,0 +1,1890 @@
+/**
+ * 存股紀錄系統 - 樣式表
+ * Stock Portfolio System - Stylesheet
+ * 
+ * 版權所有 (c) 2025 徐國洲
+ * Copyright (c) 2025 Xu Guo Zhou
+ * 
+ * 採用 CC BY-NC 4.0 授權條款 (禁止商業使用)
+ * Licensed under CC BY-NC 4.0 License (Non-Commercial)
+ */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft JhengHei', Arial, sans-serif;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+header h1 {
+    color: #2c3e50;
+    margin: 0;
+    flex: 1;
+}
+
+.summary-panel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.total-value h2 {
+    color: #27ae60;
+    font-size: 2em;
+}
+
+.daily-change {
+    font-size: 1.1em;
+    margin-top: 5px;
+}
+
+.daily-change.positive {
+    color: #e74c3c;
+}
+
+.daily-change.negative {
+    color: #27ae60;
+}
+
+.last-update {
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
+.controls {
+    margin-bottom: 20px;
+}
+
+/* 新的控制項佈局 */
+.controls-toggle {
+    display: none; /* 桌面版隱藏 */
+    margin-bottom: 10px;
+}
+
+.btn-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.controls-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.controls-primary {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.controls-secondary {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.controls-settings {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+}
+
+.btn-icon {
+    background: none;
+    border: 1px solid #bdc3c7;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-icon:hover {
+    background-color: #ecf0f1;
+}
+
+/* 手機版樣式 */
+@media (max-width: 768px) {
+    .controls.mobile-mode .controls-toggle {
+        display: block;
+    }
+    
+    .controls.mobile-mode .controls-content {
+        display: none;
+        flex-direction: column;
+        margin-top: 10px;
+    }
+    
+    .controls.mobile-mode .controls-content.expanded {
+        display: flex;
+    }
+    
+    .controls.mobile-mode .controls-primary,
+    .controls.mobile-mode .controls-secondary {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .controls.mobile-mode .btn {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    
+    .controls.mobile-mode .controls-settings {
+        margin-left: 0;
+        margin-top: 10px;
+        justify-content: center;
+    }
+}
+
+/* 桌面版強制顯示 */
+.controls.desktop-mode .controls-toggle {
+    display: none !important;
+}
+
+.controls.desktop-mode .controls-content {
+    display: flex !important;
+    flex-direction: row;
+}
+
+.controls.desktop-mode .controls-primary,
+.controls.desktop-mode .controls-secondary {
+    flex-direction: row;
+}
+
+.controls.desktop-mode .btn {
+    width: auto;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+.btn-refresh {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-refresh:hover {
+    background-color: #e67e22;
+}
+
+.accounts-tabs {
+    margin-bottom: 20px;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    border: 1px solid #bdc3c7;
+    background: white;
+    cursor: pointer;
+    border-radius: 5px 5px 0 0;
+    transition: all 0.3s;
+}
+
+.tab-btn.active {
+    background-color: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.tab-btn:hover:not(.active) {
+    background-color: #ecf0f1;
+}
+
+.stock-table-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-x: auto;
+}
+
+.stock-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+}
+
+.stock-table th,
+.stock-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.stock-table th {
+    background-color: #34495e;
+    color: white;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+}
+
+.stock-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.profit-positive {
+    color: #e74c3c;
+}
+
+.profit-negative {
+    color: #27ae60;
+}
+
+.delete-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.delete-btn:hover {
+    background-color: #c0392b;
+}
+
+.refresh-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 5px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.refresh-btn:hover {
+    background-color: #2980b9;
+}
+
+.error-indicator {
+    color: #e67e22;
+    font-size: 0.8em;
+    cursor: help;
+}
+
+.update-time {
+    color: #7f8c8d;
+    font-size: 0.75em;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.status-success {
+    background-color: #27ae60;
+}
+
+.status-error {
+    background-color: #e74c3c;
+}
+
+.source-info {
+    color: #95a5a6;
+    font-size: 0.7em;
+}
+
+.api-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background-color: #ecf0f1;
+    border-radius: 5px;
+}
+
+.api-status.success {
+    background-color: #d5f4e6;
+    color: #27ae60;
+}
+
+.api-status.error {
+    background-color: #fadbd8;
+    color: #e74c3c;
+}
+
+.api-status.warning {
+    background-color: #fef9e7;
+    color: #f39c12;
+}
+
+/* 可編輯欄位樣式 */
+.editable-cell {
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s;
+}
+
+.editable-cell:hover {
+    background-color: #f8f9fa;
+}
+
+.editable-cell .edit-icon {
+    opacity: 0;
+    font-size: 0.8em;
+    margin-left: 5px;
+    transition: opacity 0.2s;
+}
+
+.editable-cell:hover .edit-icon {
+    opacity: 0.6;
+}
+
+.editable-value {
+    display: inline-block;
+    min-width: 60px;
+}
+
+/* 編輯提示 */
+.edit-tooltip {
+    position: absolute;
+    background: #333;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.editable-cell:hover .edit-tooltip {
+    opacity: 1;
+}
+
+/* 雲端同步樣式 */
+.sync-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.btn-sync {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-sync:hover {
+    background-color: rgba(52, 152, 219, 0.1);
+}
+
+.sync-indicator {
+    font-size: 0.8em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background-color: #ecf0f1;
+    color: #7f8c8d;
+}
+
+.sync-indicator.synced {
+    background-color: #d5f4e6;
+    color: #27ae60;
+}
+
+.sync-indicator.error {
+    background-color: #fadbd8;
+    color: #e74c3c;
+}
+
+.sync-indicator.loading {
+    background-color: #fef9e7;
+    color: #f39c12;
+}
+
+/* 同步狀態動畫 */
+.sync-indicator.loading::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-left: 5px;
+    border: 1px solid #f39c12;
+    border-top: 1px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* 版本標籤樣式 */
+.version-tag {
+    font-size: 0.6em;
+    background-color: #3498db;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.version-tag:hover {
+    background-color: #2980b9;
+}
+
+/* 版權資訊樣式 */
+.copyright-info {
+    text-align: right;
+    color: #7f8c8d;
+    font-size: 0.8em;
+    margin-left: 20px;
+    white-space: nowrap;
+}
+
+.copyright-info a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.copyright-info a:hover {
+    text-decoration: underline;
+}
+
+/* 帳戶管理樣式 */
+.account-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.account-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #ecf0f1;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    background-color: #f8f9fa;
+}
+
+.account-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.account-name {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.stock-count {
+    color: #7f8c8d;
+    font-size: 0.85em;
+}
+
+.account-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.8em;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-edit {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-edit:hover {
+    background-color: #e67e22;
+}
+
+.btn-delete {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.btn-delete:hover:not(:disabled) {
+    background-color: #c0392b;
+}
+
+.btn-delete:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+}
+
+.btn-warning {
+    background-color: #f39c12;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #e67e22;
+}
+
+/* 隱私保護功能樣式 */
+.privacy-controls {
+    display: flex;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.btn-privacy {
+    background: none;
+    border: 1px solid #bdc3c7;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-privacy:hover {
+    background-color: #ecf0f1;
+    border-color: #95a5a6;
+}
+
+.btn-privacy-inline {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+.btn-privacy-inline:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: scale(1.05);
+}
+
+.privacy-value {
+    transition: all 0.3s ease;
+}
+
+/* 統一的隱私保護樣式 */
+.privacy-value.hidden,
+.summary-privacy-value.hidden,
+.stock-privacy-value.hidden {
+    color: transparent !important;
+    background: var(--text-secondary);
+    border-radius: 4px;
+    position: relative;
+    user-select: none;
+}
+
+.privacy-value.hidden::after,
+.summary-privacy-value.hidden::after,
+.stock-privacy-value.hidden::after {
+    content: "****";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #2c3e50;
+    font-weight: bold;
+    font-size: 0.9em;
+    pointer-events: none;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.privacy-hint {
+    opacity: 0.5;
+    font-size: 0.8em;
+    cursor: help;
+}
+
+/* 隱私模式提示 */
+.privacy-notice {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    margin-bottom: 10px;
+    display: none;
+}
+
+.privacy-notice.show {
+    display: block;
+}
+
+/* 搜尋狀態樣式 */
+.search-status {
+    font-size: 0.8em;
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+.search-status.loading {
+    color: #f39c12;
+}
+
+.search-status.success {
+    color: #27ae60;
+}
+
+.search-status.error {
+    color: #e74c3c;
+}
+
+.search-status.info {
+    color: #3498db;
+}
+
+/* Modal 樣式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    overflow-y: auto; /* 允許整個 modal 滾動 */
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh; /* 限制最大高度 */
+    overflow-y: auto; /* 內容超出時顯示滾動條 */
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .copyright-info {
+        text-align: left;
+        margin-left: 0;
+        font-size: 0.75em;
+    }
+    
+    .summary-panel {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .total-value h2 {
+        font-size: 1.5em;
+    }
+    
+    .controls {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .tab-buttons {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+}
+
+/* 載入動畫 */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+/* 深色
+模式樣式 */
+:root {
+    --bg-color: #f5f5f5;
+    --card-bg: white;
+    --text-color: #333;
+    --border-color: #ecf0f1;
+    --header-bg: #34495e;
+    --header-text: white;
+    --primary-color: #3498db;
+    --success-color: #27ae60;
+    --error-color: #e74c3c;
+    --warning-color: #f39c12;
+    --secondary-color: #95a5a6;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --card-bg: #2d2d2d;
+    --text-color: #e0e0e0;
+    --border-color: #404040;
+    --header-bg: #1e1e1e;
+    --header-text: #e0e0e0;
+    --primary-color: #4a9eff;
+    --success-color: #2ecc71;
+    --error-color: #e74c3c;
+    --warning-color: #f39c12;
+    --secondary-color: #7f8c8d;
+}
+
+/* 更新現有樣式使用 CSS 變數 */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+header {
+    background: var(--card-bg);
+    transition: background-color 0.3s;
+}
+
+.stock-table-container {
+    background: var(--card-bg);
+    transition: background-color 0.3s;
+}
+
+.stock-table th {
+    background-color: var(--header-bg);
+    color: var(--header-text);
+}
+
+.stock-table td {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+}
+
+.btn-refresh {
+    background-color: var(--warning-color);
+}
+
+.btn-info {
+    background-color: var(--primary-color);
+}
+
+/* 深色模式下的特殊調整 */
+[data-theme="dark"] .privacy-notice {
+    background-color: #3a3a2a;
+    border-color: #5a5a4a;
+    color: #f0e68c;
+}
+
+[data-theme="dark"] .tab-btn {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .tab-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+[data-theme="dark"] .editable-cell:hover {
+    background-color: #404040;
+}
+
+[data-theme="dark"] .stock-table tr:hover {
+    background-color: #353535;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .account-item {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}/* 股
+息管理樣式 */
+.btn-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #229954;
+}
+
+.modal-large {
+    max-width: 900px;
+    max-height: 90vh;
+}
+
+.dividend-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.dividend-tabs .tab-btn {
+    background: none;
+    border: none;
+    padding: 12px 24px;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    color: var(--text-color);
+}
+
+.dividend-tabs .tab-btn.active {
+    border-bottom-color: var(--success-color);
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.dividend-tabs .tab-btn:hover {
+    background-color: var(--border-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.dividend-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    transition: background-color 0.3s;
+}
+
+.summary-card h4 {
+    color: var(--text-color);
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.summary-card .amount {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: var(--success-color);
+}
+
+.dividend-table-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.dividend-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dividend-table th,
+.dividend-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dividend-table th {
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    position: sticky;
+    top: 0;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.dividend-preview {
+    background: var(--border-color);
+    padding: 15px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.dividend-preview h4 {
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.preview-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 5px 0;
+}
+
+.preview-item:last-child {
+    border-top: 1px solid var(--text-color);
+    padding-top: 10px;
+    font-weight: bold;
+    color: var(--success-color);
+}
+
+.settings-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.settings-section h4 {
+    margin-bottom: 15px;
+    color: var(--text-color);
+}
+
+.setting-item {
+    margin-bottom: 20px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.setting-description {
+    margin-top: 5px;
+    font-size: 0.9em;
+    color: var(--secondary-color);
+    line-height: 1.4;
+}
+
+.stock-settings {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.stock-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stock-setting-item:last-child {
+    border-bottom: none;
+}
+
+.stock-info {
+    flex: 1;
+}
+
+.stock-info .stock-name {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.stock-info .stock-code {
+    font-size: 0.9em;
+    color: var(--secondary-color);
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    .modal-large {
+        width: 95%;
+        max-height: 95vh;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .dividend-summary {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .dividend-tabs {
+        flex-direction: column;
+    }
+    
+    .dividend-tabs .tab-btn {
+        text-align: left;
+        border-bottom: none;
+        border-left: 3px solid transparent;
+    }
+    
+    .dividend-tabs .tab-btn.active {
+        border-left-color: var(--success-color);
+        border-bottom-color: transparent;
+    }
+}/* 股息
+管理樣式 */
+.dividend-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.dividend-tabs .tab-btn {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-secondary);
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.dividend-tabs .tab-btn:hover {
+    color: var(--primary-color);
+    background-color: var(--hover-bg);
+}
+
+.dividend-tabs .tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 股息統計卡片 */
+.dividend-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h4 {
+    margin: 0 0 10px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.summary-card .amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--success-color);
+    margin: 0;
+}
+
+/* 股息表格 */
+.dividend-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.dividend-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--card-bg);
+}
+
+.dividend-table th,
+.dividend-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dividend-table th {
+    background: var(--header-bg);
+    font-weight: 600;
+    color: var(--text-primary);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.dividend-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+/* 股息預覽 */
+.dividend-preview {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.dividend-preview h4 {
+    margin: 0 0 15px 0;
+    color: var(--text-primary);
+}
+
+.preview-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.preview-item:last-child {
+    border-bottom: none;
+    font-weight: 600;
+    color: var(--success-color);
+}
+
+.preview-label {
+    color: var(--text-secondary);
+}
+
+.preview-value {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* 設定頁面 */
+.settings-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.settings-section h4 {
+    margin: 0 0 20px 0;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-description {
+    flex: 1;
+    margin-right: 20px;
+}
+
+.setting-description h5 {
+    margin: 0 0 5px 0;
+    color: var(--text-primary);
+}
+
+.setting-description p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* 個股設定 */
+.stock-settings {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.stock-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: var(--card-bg);
+}
+
+.stock-info {
+    flex: 1;
+}
+
+.stock-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.stock-code {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+/* 表格中的股息相關樣式 */
+.dividend-info {
+    text-align: center;
+}
+
+.dividend-yield {
+    color: var(--success-color);
+    font-weight: 500;
+}
+
+.total-return {
+    text-align: center;
+    font-weight: 600;
+}
+
+.adjusted-price {
+    color: var(--warning-color);
+    font-style: italic;
+}
+
+.dividend-btn {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+}
+
+.dividend-btn:hover {
+    background: var(--success-hover);
+    transform: translateY(-1px);
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .dividend-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .summary-card {
+        padding: 15px;
+    }
+    
+    .summary-card .amount {
+        font-size: 20px;
+    }
+    
+    .dividend-table th,
+    .dividend-table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .stock-setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .setting-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+/* 深色模式下的股息管理樣式 */
+[data-theme="dark"] .summary-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .dividend-preview {
+    background: var(--card-bg);
+}
+
+[data-theme="dark"] .settings-section {
+    background: var(--card-bg);
+}/* 操
+作下拉選單樣式 */
+.action-cell {
+    position: relative;
+    text-align: center;
+}
+
+.action-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.action-toggle {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    min-width: 80px;
+    justify-content: center;
+}
+
+.action-toggle:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.action-toggle .action-icon {
+    font-size: 16px;
+}
+
+.action-toggle .dropdown-arrow {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.action-dropdown.active .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.action-menu {
+    position: fixed;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    min-width: 160px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.action-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.action-item:last-child {
+    border-bottom: none;
+}
+
+.action-item:hover {
+    background: var(--hover-bg);
+}
+
+.action-item:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.action-item:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.action-item .action-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.action-item .action-text {
+    flex: 1;
+    text-align: left;
+}
+
+/* 特定操作項目的顏色 */
+.refresh-action:hover {
+    background: rgba(52, 152, 219, 0.1);
+    color: var(--primary-color);
+}
+
+.dividend-action:hover {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--success-color);
+}
+
+.delete-action:hover {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+}
+
+/* 表格標題的下拉提示 */
+.dropdown-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: 4px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .action-toggle {
+        padding: 6px 10px;
+        font-size: 12px;
+        min-width: 70px;
+    }
+    
+    .action-menu {
+        min-width: 140px;
+        max-height: 250px;
+    }
+    
+    .action-item {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+    
+    .action-item .action-icon {
+        font-size: 14px;
+        width: 18px;
+    }
+}
+
+/* 深色模式下的下拉選單 */
+[data-theme="dark"] .action-menu {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .refresh-action:hover {
+    background: rgba(52, 152, 219, 0.2);
+}
+
+[data-theme="dark"] .dividend-action:hover {
+    background: rgba(39, 174, 96, 0.2);
+}
+
+[data-theme="dark"] .history-action:hover {
+    background: rgba(52, 152, 219, 0.2);
+}
+
+[data-theme="dark"] .delete-action:hover {
+    background: rgba(231, 76, 60, 0.2);
+}
+
+/* 確保選單不會被其他元素遮蓋 */
+.stock-table-container {
+    position: relative;
+    overflow: visible;
+}
+
+.action-menu {
+    /* 確保選單在最上層 */
+    z-index: 10000 !important;
+}
+
+/* 選單動畫優化 */
+.action-menu.show {
+    animation: menuFadeIn 0.2s ease-out;
+}
+
+@keyframes menuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}/*
+ 表格中的隱私按鈕樣式 */
+.btn-privacy-table {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    margin-left: 6px;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+
+.btn-privacy-table:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: scale(1.1);
+}
+
+.btn-privacy-table:active {
+    transform: scale(0.95);
+}
+
+/* 隱私提示樣式更新 */
+.privacy-hint {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-left: 4px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .btn-privacy-table {
+        font-size: 12px;
+        padding: 1px 3px;
+    }
+}
+
+/* 深色模式下的隱私按鈕 */
+[data-theme="dark"] .btn-privacy-inline {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.4);
+}
+
+[data-theme="dark"] .btn-privacy-inline:hover {
+    background: rgba(102, 126, 234, 0.3);
+    border-color: rgba(102, 126, 234, 0.6);
+}
+
+[data-theme="dark"] .btn-privacy-table {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.4);
+}
+
+[data-theme="dark"] .btn-privacy-table:hover {
+    background: rgba(102, 126, 234, 0.3);
+    border-color: rgba(102, 126, 234, 0.6);
+}
+
+/* 深色模式下的隱私遮罩 */
+[data-theme="dark"] .privacy-value.hidden::after,
+[data-theme="dark"] .summary-privacy-value.hidden::after,
+[data-theme="dark"] .stock-privacy-value.hidden::after {
+    color: #ffffff;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+}/*
+ 購買日期相關樣式 */
+.purchase-date-cell {
+    text-align: center;
+    font-size: 14px;
+}
+
+.purchase-dates {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.earliest-date {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.purchase-count {
+    color: var(--primary-color);
+    font-weight: 600;
+    cursor: help;
+    padding: 1px 4px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 3px;
+}
+
+.single-purchase {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.text-muted {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* 購買歷史操作項目樣式 */
+.history-action:hover {
+    background: rgba(52, 152, 219, 0.1);
+    color: var(--primary-color);
+}
+
+/* 新增股票表單中的購買日期欄位 */
+#purchaseDate {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    background: var(--card-bg);
+    color: var(--text-primary);
+}
+
+#purchaseDate:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .purchase-date-cell {
+        font-size: 12px;
+    }
+    
+    .purchase-dates {
+        gap: 1px;
+    }
+    
+    .purchase-count {
+        font-size: 11px;
+        padding: 0px 3px;
+    }
+}
+
+/* 深色模式下的購買日期樣式 */
+[data-theme="dark"] .purchase-count {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+[data-theme="dark"] #purchaseDate {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .history-action:hover {
+    background: rgba(52, 152, 219, 0.2);
+}/* 重置按
+鈕樣式 */
+.btn-warning {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+}
+
+.btn-warning:active {
+    transform: translateY(0);
+}
+
+/* 深色模式下的重置按鈕 */
+[data-theme="dark"] .btn-warning {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+}
+
+[data-theme="dark"] .btn-warning:hover {
+    background: linear-gradient(135deg, #d35400, #c0392b);
+    box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
+}

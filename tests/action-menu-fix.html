@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作選單修復測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .fix-section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 12px;
+            border-left: 5px solid #28a745;
+        }
+        .fix-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .problem-solution {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 25px 0;
+        }
+        .problem-card, .solution-card {
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid;
+        }
+        .problem-card {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+        .solution-card {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+        }
+        .demo-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .feature-list li:before {
+            content: "✅";
+            font-size: 18px;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .code-preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .test-steps {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-steps h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .test-steps ol {
+            line-height: 1.6;
+        }
+        @media (max-width: 768px) {
+            .problem-solution {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚙️ 操作選單修復完成</h1>
+            <p>解決下拉選單被截斷和定位問題</p>
+        </div>
+
+        <div class="fix-section">
+            <h3>🎯 問題修復報告</h3>
+            
+            <div class="problem-solution">
+                <div class="problem-card">
+                    <h4>🔴 發現的問題</h4>
+                    <ul>
+                        <li>操作下拉選單被表格容器截斷</li>
+                        <li>選單無法完整顯示所有項目</li>
+                        <li>在視窗邊緣時定位不當</li>
+                        <li>z-index 層級不夠高</li>
+                    </ul>
+                </div>
+                <div class="solution-card">
+                    <h4>🟢 修復方案</h4>
+                    <ul>
+                        <li>改用 fixed 定位，避免容器限制</li>
+                        <li>動態計算最佳顯示位置</li>
+                        <li>智能調整選單方向</li>
+                        <li>提高 z-index 到 10000</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <h3>🔧 技術改進詳細</h3>
+            
+            <ul class="feature-list">
+                <li><strong>定位方式改進：</strong>從 absolute 改為 fixed，避免被父容器截斷</li>
+                <li><strong>智能位置計算：</strong>根據按鈕位置和視窗大小動態調整選單位置</li>
+                <li><strong>邊界檢測：</strong>防止選單超出視窗邊界</li>
+                <li><strong>方向自適應：</strong>空間不足時自動調整到上方或左側</li>
+                <li><strong>層級提升：</strong>z-index 提高到 10000，確保在最上層</li>
+                <li><strong>響應式優化：</strong>手機版選單尺寸和位置適配</li>
+            </ul>
+        </div>
+
+        <div class="highlight-box">
+            <h4>🎨 新的選單特性</h4>
+            <p>選單現在會智能選擇最佳顯示位置，確保所有項目都能完整顯示</p>
+            <p>支援上下左右四個方向的自動調整</p>
+        </div>
+
+        <div class="fix-section">
+            <h3>💻 核心修復代碼</h3>
+            
+            <div class="code-preview">
+// 智能位置計算
+const buttonRect = button.getBoundingClientRect();
+const viewportHeight = window.innerHeight;
+const viewportWidth = window.innerWidth;
+
+// 計算最佳位置
+let top = buttonRect.bottom + 5;
+let left = buttonRect.right - 160;
+
+// 防止超出視窗底部
+if (top + estimatedMenuHeight > viewportHeight) {
+    top = buttonRect.top - estimatedMenuHeight - 5;
+}
+
+// 防止超出視窗左右邊界
+if (left < 10) left = buttonRect.left;
+if (left + 160 > viewportWidth - 10) {
+    left = viewportWidth - 170;
+}
+
+// 設定選單位置
+menu.style.top = `${top}px`;
+menu.style.left = `${left}px`;
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <h3>🎯 選單定位邏輯</h3>
+            
+            <div class="test-steps">
+                <h4>📍 位置計算規則</h4>
+                <ol>
+                    <li><strong>預設位置：</strong>按鈕下方，右對齊</li>
+                    <li><strong>底部檢測：</strong>如果會超出視窗底部，則顯示在按鈕上方</li>
+                    <li><strong>左側檢測：</strong>如果會超出視窗左側，則調整到按鈕左側</li>
+                    <li><strong>右側檢測：</strong>如果會超出視窗右側，則調整到視窗內</li>
+                    <li><strong>邊距保留：</strong>距離視窗邊緣至少保留 10px</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="fix-section">
+            <h3>✨ 額外改進</h3>
+            
+            <ul class="feature-list">
+                <li><strong>自動關閉：</strong>視窗大小變化或滾動時自動關閉選單</li>
+                <li><strong>動畫效果：</strong>淡入動畫和縮放效果</li>
+                <li><strong>深色模式：</strong>專用的深色模式樣式</li>
+                <li><strong>觸控優化：</strong>手機版按鈕和選單尺寸適配</li>
+                <li><strong>無障礙設計：</strong>鍵盤導航和螢幕閱讀器支援</li>
+            </ul>
+        </div>
+
+        <div class="fix-section">
+            <h3>🧪 測試建議</h3>
+            
+            <div class="test-steps">
+                <h4>📋 測試清單</h4>
+                <ol>
+                    <li><strong>基本功能：</strong>點擊操作按鈕，確認選單完整顯示</li>
+                    <li><strong>邊界測試：</strong>在視窗邊緣的股票行測試選單顯示</li>
+                    <li><strong>滾動測試：</strong>滾動頁面時選單應自動關閉</li>
+                    <li><strong>視窗調整：</strong>調整視窗大小時選單應自動關閉</li>
+                    <li><strong>手機版：</strong>在手機或小螢幕上測試選單顯示</li>
+                    <li><strong>深色模式：</strong>切換深色模式測試選單樣式</li>
+                    <li><strong>多選單：</strong>同時只能開啟一個選單</li>
+                </ol>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="index.html" class="demo-button">🚀 開啟主系統測試</a>
+            <a href="ui-improvements-test.html" class="demo-button">🎨 查看UI改進</a>
+        </div>
+
+        <div class="highlight-box" style="margin-top: 30px;">
+            <h4>✅ 修復完成</h4>
+            <p>操作選單現在能夠完整顯示所有項目</p>
+            <p>智能定位系統確保在任何位置都能正常使用</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('操作選單修復測試頁面載入完成');
+            
+            // 為按鈕添加點擊效果
+            const buttons = document.querySelectorAll('.demo-button');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    this.style.transform = 'translateY(-4px)';
+                    setTimeout(() => {
+                        this.style.transform = 'translateY(-2px)';
+                    }, 150);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

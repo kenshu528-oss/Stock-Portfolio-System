@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股息管理系統測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .feature-list li:before {
+            content: "✅ ";
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .version-info {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .test-button {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #219a52;
+        }
+    </style>
+</head>
+<body>
+    <div class="version-info">
+        <h1>🎉 存股紀錄系統 v1.2.1.0</h1>
+        <p>股息管理系統已完成實作！</p>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 新功能概覽</h3>
+        <ul class="feature-list">
+            <li>完整股息記錄管理</li>
+            <li>自動計算股息殖利率</li>
+            <li>股息調整成本價功能</li>
+            <li>真實總報酬率計算</li>
+            <li>年度股息統計分析</li>
+            <li>個股股息設定管理</li>
+            <li>股息預覽計算器</li>
+            <li>扣稅率自動計算</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>🔧 主要改進</h3>
+        <ul class="feature-list">
+            <li>表格新增「股息收入」和「總報酬」欄位</li>
+            <li>成本價欄位顯示調整後價格</li>
+            <li>新增股息管理按鈕 (💰)</li>
+            <li>完整的股息管理對話框</li>
+            <li>三個標籤頁：記錄、新增、設定</li>
+            <li>即時預覽股息計算</li>
+            <li>個股股息快速查看</li>
+            <li>版本自動遷移功能</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>🎯 使用方式</h3>
+        <ol>
+            <li><strong>開啟主系統：</strong> 
+                <button class="test-button" onclick="window.open('index.html', '_blank')">開啟存股系統</button>
+            </li>
+            <li><strong>新增股票：</strong> 先新增一些股票到你的投資組合</li>
+            <li><strong>股息管理：</strong> 點擊「股息管理」按鈕開始使用</li>
+            <li><strong>新增股息：</strong> 在「新增股息」頁面記錄股息收入</li>
+            <li><strong>查看統計：</strong> 在「股息記錄」頁面查看統計資料</li>
+            <li><strong>個股查看：</strong> 點擊表格中的 💰 按鈕查看個股股息</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>💡 測試建議</h3>
+        <ul class="feature-list">
+            <li>新增台積電 (2330) 測試股息記錄</li>
+            <li>嘗試不同的股息類型 (現金/股票)</li>
+            <li>測試扣稅率計算功能</li>
+            <li>查看調整後成本價變化</li>
+            <li>測試股息殖利率計算</li>
+            <li>驗證總報酬率顯示</li>
+            <li>測試個股股息設定</li>
+            <li>驗證隱私模式下的顯示</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>🔍 技術細節</h3>
+        <p><strong>版本升級：</strong> v1.2.0.3 → v1.2.1.0</p>
+        <p><strong>新增檔案：</strong> 無 (所有功能整合在現有檔案中)</p>
+        <p><strong>資料遷移：</strong> 自動為現有股票新增股息相關欄位</p>
+        <p><strong>相容性：</strong> 完全向下相容，不影響現有資料</p>
+        <p><strong>儲存格式：</strong> 擴展現有 localStorage 結構</p>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 更新日誌</h3>
+        <p><strong>v1.2.1.0 (2025-12-30)</strong></p>
+        <ul class="feature-list">
+            <li>完整股息管理系統</li>
+            <li>股息記錄與統計</li>
+            <li>自動調整成本價功能</li>
+            <li>真實報酬率計算</li>
+            <li>股息殖利率分析</li>
+            <li>個股股息設定管理</li>
+        </ul>
+    </div>
+
+    <script>
+        // 顯示當前時間
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const timeString = now.toLocaleString('zh-TW');
+            console.log(`股息管理系統測試頁面載入完成 - ${timeString}`);
+        });
+    </script>
+</body>
+</html>
