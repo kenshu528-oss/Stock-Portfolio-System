@@ -98,7 +98,22 @@ header h1 {
     color: white;
     border: none;
     padding: 12px;
-    border-radius: 5px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn-toggle:hover {
+    background-color: #2980b9;
+}
+
+.toggle-icon {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.toggle-text {
     font-size: 16px;
 }
 
@@ -819,10 +834,20 @@ header h1 {
     
     /* 手機版按鈕排版優化 */
     .controls-content {
-        display: flex !important;
+        display: none !important; /* 手機版預設隱藏 */
         flex-direction: column;
         gap: 15px;
         width: 100%;
+        margin-top: 10px;
+    }
+    
+    .controls-content.expanded {
+        display: flex !important; /* 展開時顯示 */
+    }
+    
+    /* 手機版顯示切換按鈕 */
+    .controls-toggle {
+        display: block !important;
     }
     
     .controls-primary {
@@ -904,9 +929,9 @@ header h1 {
         width: 100%;
     }
     
-    /* 隱藏手機版切換按鈕（因為我們直接顯示所有按鈕） */
+    /* 手機版顯示切換按鈕，預設隱藏功能 */
     .controls-toggle {
-        display: none !important;
+        display: block !important;
     }
     
     /* 手機版表格優化 */
