@@ -190,15 +190,55 @@ export const useAppStore = create<AppState & AppActions>()(
         resetState: () => set(initialState),
       }),
       {
-        name: 'stock-portfolio-storage-v6', // 新版本的 localStorage key
+        name: 'stock-portfolio-storage-v6', // 版本化的 localStorage key
         partialize: (state) => ({
           // 只持久化需要的狀態，不包含 UI 狀態和更新狀態
           currentAccount: state.currentAccount,
           accounts: state.accounts,
-          stocks: state.stocks,
+          stocks: state.stocks.map(stock => ({
+            ...stock,
+            // 確保日期對象正確序列化
+            purchaseDate: stock.purchaseDate instanceof Date ? stock.purchaseDate.toISOString() : stock.purchaseDate,
+            lastUpdated: stock.lastUpdated instanceof Date ? stock.lastUpdated.toISOString() : stock.lastUpdated,
+            dividendRecords: stock.dividendRecords?.map(dividend => ({
+              ...dividend,
+              exDividendDate: dividend.exDividendDate instanceof Date ? dividend.exDividendDate.toISOString() : dividend.exDividendDate
+            }))
+          })),
           isPrivacyMode: state.isPrivacyMode,
-          lastPriceUpdate: state.lastPriceUpdate,
+          lastPriceUpdate: state.lastPriceUpdate instanceof Date ? state.lastPriceUpdate.toISOString() : state.lastPriceUpdate,
         }),
+        // 添加錯誤處理和數據恢復
+        onRehydrateStorage: () => (state, error) => {
+          if (error) {
+            console.error('數據恢復失敗:', error);
+            // 清除損壞的數據
+            localStorage.removeItem('stock-portfolio-storage-v6');
+            console.log('已清除損壞的 localStorage 數據');
+            return;
+          }
+          
+          if (state) {
+            // 恢復日期對象
+            if (state.lastPriceUpdate && typeof state.lastPriceUpdate === 'string') {
+              state.lastPriceUpdate = new Date(state.lastPriceUpdate);
+            }
+            
+            if (state.stocks) {
+              state.stocks = state.stocks.map(stock => ({
+                ...stock,
+                purchaseDate: typeof stock.purchaseDate === 'string' ? new Date(stock.purchaseDate) : stock.purchaseDate,
+                lastUpdated: typeof stock.lastUpdated === 'string' ? new Date(stock.lastUpdated) : stock.lastUpdated,
+                dividendRecords: stock.dividendRecords?.map(dividend => ({
+                  ...dividend,
+                  exDividendDate: typeof dividend.exDividendDate === 'string' ? new Date(dividend.exDividendDate) : dividend.exDividendDate
+                }))
+              }));
+            }
+            
+            console.log('數據恢復成功');
+          }
+        },
       }
     ),
     {

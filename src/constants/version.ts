@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 0,
-  PATCH: 60,  // 修復 appStore persist 配置問題，移除複雜測試數據，解決應用程式空白頁面問題
+  PATCH: 61,  // 導入開發預防機制：ErrorBoundary、改進 appStore 錯誤處理、開發檢查腳本
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
