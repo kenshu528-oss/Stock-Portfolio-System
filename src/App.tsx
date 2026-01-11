@@ -10,6 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { CloudSyncSettings } from './components/CloudSyncSettings';
 import { addOperationLog } from './components/OperationLog';
 import { useAppStore } from './stores/appStore';
+import { useEnhancedStock } from './hooks/useEnhancedStock';
   // 移除未使用的導入
   // import DividendApiService from './services/dividendApiService';
   import type { StockRecord, StockFormData } from './types';
@@ -45,6 +46,9 @@ function App() {
     isPrivacyMode,
     togglePrivacyMode
   } = useAppStore();
+
+  // 增強版股票操作（疊加功能）
+  const { addStockWithEnhancements } = useEnhancedStock();
 
   // 雲端同步狀態
   const [isCloudSyncOpen, setIsCloudSyncOpen] = React.useState(false);
@@ -345,7 +349,7 @@ function App() {
     setCurrentAccount(accountName);
   };
 
-  // 新增股票相關函數（容錯版本）
+  // 新增股票相關函數（增強版，支援股息自動計算和債券ETF識別）
   const handleAddStock = async (stockData: StockFormData) => {
     console.log('新增股票:', stockData);
     addOperationLog('info', `開始新增股票 ${stockData.symbol} - ${stockData.name}`);
@@ -358,8 +362,7 @@ function App() {
       return;
     }
     
-    // 創建基本股票記錄（不依賴股息API）
-    const purchaseDate = new Date(stockData.purchaseDate);
+    // 創建基本股票記錄
     const shares = parseInt(stockData.shares);
     
     const newStock: StockRecord = {
@@ -370,68 +373,43 @@ function App() {
       shares: shares,
       costPrice: parseFloat(stockData.costPrice),
       adjustedCostPrice: parseFloat(stockData.costPrice), // 初始等於成本價
-      purchaseDate: purchaseDate,
+      purchaseDate: new Date(stockData.purchaseDate), // 轉換為 Date 對象
       currentPrice: stockData.price,
       lastUpdated: new Date(),
       priceSource: 'TWSE'
     };
     
-    // 先添加基本股票記錄
-    addStock(newStock);
-    console.log('股票記錄已創建:', newStock);
-    addOperationLog('success', `成功新增股票 ${stockData.symbol}，持股 ${shares} 股`);
-    
-    // 暫時禁用股息自動獲取功能，避免阻塞匯入流程
-    // TODO: 修復股息服務後重新啟用
-    /*
-    // 異步獲取股息資料（不阻塞主流程）
-    setTimeout(async () => {
-      try {
-        addOperationLog('info', `正在獲取 ${stockData.symbol} 的股息資料...`);
-        console.log(`🔍 開始獲取 ${stockData.symbol} 的股息資料，購買日期: ${purchaseDate.toISOString()}`);
-        
-        const historicalDividends = await DividendApiService.getHistoricalDividends(
-          stockData.symbol, 
-          purchaseDate
-        );
-        
-        console.log(`📊 獲取到 ${stockData.symbol} 的股息資料:`, historicalDividends);
+    try {
+      // 使用增強版 addStock（自動計算股息和識別債券ETF）
+      console.log('使用增強版新增股票功能...');
+      const result = await addStockWithEnhancements(newStock);
       
-      if (historicalDividends.length > 0) {
-        const dividendRecords: DividendRecord[] = historicalDividends.map((dividend, index) => ({
-          id: `${Date.now()}-${index}`,
-          stockId: newStock.id,
-          symbol: dividend.symbol,
-          exDividendDate: new Date(dividend.exDividendDate),
-          dividendPerShare: dividend.dividendPerShare,
-          totalDividend: dividend.dividendPerShare * shares,
-          shares: shares
-        }));
+      if (result.success) {
+        console.log('增強版股票記錄已創建:', result.stock);
+        addOperationLog('success', `成功新增股票 ${stockData.symbol}，持股 ${shares} 股`);
         
-        const totalDividendPerShare = dividendRecords.reduce(
-          (sum, record) => sum + record.dividendPerShare, 0
-        );
-        const adjustedCostPrice = parseFloat(stockData.costPrice) - totalDividendPerShare;
+        // 如果有股息資料，記錄日誌
+        if (result.stock.dividendRecords && result.stock.dividendRecords.length > 0) {
+          addOperationLog('info', `自動獲取到 ${result.stock.dividendRecords.length} 筆股息記錄`);
+        }
         
-        // 更新股票記錄（添加股息資料）
-        updateStock(newStock.id, {
-          dividendRecords,
-          adjustedCostPrice: Math.max(adjustedCostPrice, 0)
-        });
-        
-        console.log(`✅ 已為 ${stockData.symbol} 添加 ${dividendRecords.length} 筆股息記錄`);
-        addOperationLog('success', `已為 ${stockData.symbol} 添加 ${dividendRecords.length} 筆股息記錄`);
+        // 如果是債券ETF，記錄特殊稅率
+        if (result.stock.isBondETF) {
+          const taxRate = result.stock.transactionTaxRate || 0;
+          addOperationLog('info', `識別為債券ETF，證交稅率: ${taxRate}%`);
+        }
       } else {
-        console.log(`ℹ️ ${stockData.symbol} 暫無股息記錄`);
-        addOperationLog('info', `${stockData.symbol} 暫無股息記錄`);
+        // 增強功能失敗，但股票已通過原有邏輯添加
+        addOperationLog('warning', `股票已新增，但增強功能失敗: ${result.error}`);
       }
     } catch (error) {
-      console.error('獲取股息資料失敗，但股票已成功添加:', error);
-      addOperationLog('warning', `${stockData.symbol} 股息資料獲取失敗：${error instanceof Error ? error.message : '未知錯誤'}`);
-      // 股息獲取失敗不影響股票添加
+      console.error('增強版新增股票失敗:', error);
+      addOperationLog('error', `增強功能失敗，已回退到基本功能: ${error instanceof Error ? error.message : '未知錯誤'}`);
+      
+      // 回退到原有的 addStock（確保功能不會完全失效）
+      addStock(newStock);
+      addOperationLog('success', `成功新增股票 ${stockData.symbol}（基本模式）`);
     }
-    }, 1000); // 延遲1秒執行，確保股票記錄已保存
-    */
   };
 
   // 更新股票

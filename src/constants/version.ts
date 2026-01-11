@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 1, // 初始發布：完整的股票投資組合管理系統，包含帳戶管理、股票追蹤、股息管理等功能
+  PATCH: 2, // 功能增強：新增股息自動計算、債券ETF證交稅識別、疊加式安全開發
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
