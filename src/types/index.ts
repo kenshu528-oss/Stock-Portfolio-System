@@ -14,6 +14,9 @@ export interface StockRecord {
   lastUpdated: Date;             // 最後更新時間
   priceSource: 'TWSE' | 'Yahoo' | 'Investing'; // 價格來源
   dividendRecords?: DividendRecord[]; // 股息記錄（可選）
+  lastDividendUpdate?: string;   // 最後股息更新時間（ISO字串）
+  isBondETF?: boolean;           // 是否為債券ETF
+  transactionTaxRate?: number;   // 個別證交稅率（%，覆蓋預設值）
 }
 
 // 帳戶介面
