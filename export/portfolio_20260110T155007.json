@@ -1,0 +1,302 @@
+{
+  "version": "1.0.0",
+  "exportDate": "2026-01-10T15:50:07.665Z",
+  "accounts": [
+    {
+      "id": "1767947365067",
+      "name": "帳戶1",
+      "stockCount": 1,
+      "createdAt": "2026-01-09T08:29:25.067Z"
+    },
+    {
+      "id": "2",
+      "name": "帳戶2",
+      "stockCount": 7,
+      "createdAt": "2026-01-09T03:08:36.960Z"
+    },
+    {
+      "id": "1767947536839",
+      "name": "test2",
+      "stockCount": 0,
+      "createdAt": "2026-01-09T08:32:16.839Z"
+    },
+    {
+      "id": "1767947879554",
+      "name": "TEST1",
+      "stockCount": 0,
+      "createdAt": "2026-01-09T08:37:59.554Z"
+    },
+    {
+      "id": "1767947884406",
+      "name": "TEST3",
+      "stockCount": 0,
+      "createdAt": "2026-01-09T08:38:04.406Z"
+    }
+  ],
+  "stocks": [
+    {
+      "id": "1767947381668",
+      "accountId": "1767947365067",
+      "symbol": "00940",
+      "name": "Yuanta Taiwan Value High Dividend ETF",
+      "shares": 1000,
+      "costPrice": 9.35,
+      "adjustedCostPrice": 9.35,
+      "purchaseDate": "2026-01-09T00:00:00.000Z",
+      "currentPrice": 9.35,
+      "lastUpdated": "2026-01-10T01:59:04.073Z",
+      "priceSource": "Yahoo",
+      "dividendRecords": []
+    },
+    {
+      "id": "1767952499933",
+      "accountId": "2",
+      "symbol": "00919",
+      "name": "群益台灣精選高息",
+      "shares": 1000,
+      "costPrice": 22.94,
+      "adjustedCostPrice": 22.94,
+      "purchaseDate": "2026-01-09T00:00:00.000Z",
+      "currentPrice": 22.94,
+      "lastUpdated": "2026-01-10T01:59:04.983Z",
+      "priceSource": "Yahoo",
+      "dividendRecords": []
+    },
+    {
+      "id": "1767952519291",
+      "accountId": "2",
+      "symbol": "00919",
+      "name": "群益台灣精選高息",
+      "shares": 1000,
+      "costPrice": 22.94,
+      "adjustedCostPrice": 21.86,
+      "purchaseDate": "2025-01-09T00:00:00.000Z",
+      "currentPrice": 22.94,
+      "lastUpdated": "2026-01-10T01:59:05.799Z",
+      "priceSource": "Yahoo",
+      "dividendRecords": [
+        {
+          "id": "1767952519291-dividend-0",
+          "stockId": "1767952519291",
+          "symbol": "00919",
+          "exDividendDate": "2025-06-17T00:00:00.000Z",
+          "dividendPerShare": 0.54,
+          "totalDividend": 540,
+          "shares": 1000
+        },
+        {
+          "id": "1767952519291-dividend-1",
+          "stockId": "1767952519291",
+          "symbol": "00919",
+          "exDividendDate": "2025-12-16T00:00:00.000Z",
+          "dividendPerShare": 0.54,
+          "totalDividend": 540,
+          "shares": 1000
+        }
+      ]
+    },
+    {
+      "id": "1767952542748",
+      "accountId": "2",
+      "symbol": "00937B",
+      "name": "群益ESG投等債20+",
+      "shares": 250000,
+      "costPrice": 15,
+      "adjustedCostPrice": 14.856,
+      "purchaseDate": "2025-11-09T00:00:00.000Z",
+      "currentPrice": 15.17,
+      "lastUpdated": "2026-01-10T01:59:06.906Z",
+      "priceSource": "TWSE",
+      "dividendRecords": [
+        {
+          "id": "1767952542748-dividend-0",
+          "stockId": "1767952542748",
+          "symbol": "00937B",
+          "exDividendDate": "2025-11-18T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 18000,
+          "shares": 250000
+        },
+        {
+          "id": "1767952542748-dividend-1",
+          "stockId": "1767952542748",
+          "symbol": "00937B",
+          "exDividendDate": "2025-12-16T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 18000,
+          "shares": 250000
+        }
+      ]
+    },
+    {
+      "id": "1767952801079",
+      "accountId": "2",
+      "symbol": "00940",
+      "name": "元大台灣價值高息",
+      "shares": 1000,
+      "costPrice": 9.35,
+      "adjustedCostPrice": 9.35,
+      "purchaseDate": "2026-01-09T00:00:00.000Z",
+      "currentPrice": 9.35,
+      "lastUpdated": "2026-01-10T01:59:07.728Z",
+      "priceSource": "Yahoo",
+      "dividendRecords": []
+    },
+    {
+      "id": "1767953082397",
+      "accountId": "2",
+      "symbol": "00937B",
+      "name": "群益ESG投等債20+",
+      "shares": 1000,
+      "costPrice": 15,
+      "adjustedCostPrice": 14.136000000000001,
+      "purchaseDate": "2025-01-09T00:00:00.000Z",
+      "currentPrice": 15.17,
+      "lastUpdated": "2026-01-10T01:59:08.545Z",
+      "priceSource": "TWSE",
+      "dividendRecords": [
+        {
+          "id": "1767953082397-dividend-0",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-01-18T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-1",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-02-16T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-2",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-03-18T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-3",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-04-16T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-4",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-05-18T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-5",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-06-16T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-6",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-07-18T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-7",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-08-16T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-8",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-09-18T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-9",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-10-16T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-10",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-11-18T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        },
+        {
+          "id": "1767953082397-dividend-11",
+          "stockId": "1767953082397",
+          "symbol": "00937B",
+          "exDividendDate": "2025-12-16T00:00:00.000Z",
+          "dividendPerShare": 0.072,
+          "totalDividend": 72,
+          "shares": 1000
+        }
+      ]
+    },
+    {
+      "id": "1768059236615",
+      "accountId": "2",
+      "symbol": "00937B",
+      "name": "群益ESG投等債20+",
+      "shares": 1000,
+      "costPrice": 15.17,
+      "adjustedCostPrice": 15.17,
+      "purchaseDate": "2026-01-10T00:00:00.000Z",
+      "currentPrice": 15.17,
+      "lastUpdated": "2026-01-10T15:33:56.615Z",
+      "priceSource": "TWSE"
+    },
+    {
+      "id": "1768059245996",
+      "accountId": "2",
+      "symbol": "2887",
+      "name": "台新金",
+      "shares": 1000,
+      "costPrice": 20.85,
+      "adjustedCostPrice": 20.85,
+      "purchaseDate": "2026-01-10T00:00:00.000Z",
+      "currentPrice": 20.85,
+      "lastUpdated": "2026-01-10T15:34:05.996Z",
+      "priceSource": "TWSE"
+    }
+  ],
+  "metadata": {
+    "totalAccounts": 5,
+    "totalStocks": 8,
+    "exportOptions": {
+      "format": "json"
+    }
+  }
+}
