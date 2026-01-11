@@ -70,32 +70,49 @@ const AddStockForm: React.FC<AddStockFormProps> = ({
 
   // 搜尋股票（使用真實API）
   const handleSearch = async (query: string) => {
+    console.log('=== 搜尋開始 ===');
+    console.log('原始輸入:', query);
+    
     setSearchQuery(query);
     setSearchError(null);
     
     if (!query.trim()) {
+      console.log('空白輸入，返回');
       setSelectedStock(null);
       return;
     }
 
-    // 支援多種股票代碼格式：4位數字、5位數字、6位數字+字母、ETF格式
-    const isValidFormat = /^(\d{4}[A-Z]?|0\d{4}|00\d{3}[A-Z]?)$/i.test(query.trim());
+    // 支援多種搜尋格式：股票代碼 或 股票名稱
+    const trimmedQuery = query.trim();
+    const isStockCode = /^(\d{4}[A-Z]?|0\d{4}|00\d{3}[A-Z]?)$/i.test(trimmedQuery);
+    const isStockName = /^[\u4e00-\u9fff\u3400-\u4dbf\w\s]+$/i.test(trimmedQuery) && trimmedQuery.length >= 2;
+    const isValidFormat = isStockCode || isStockName;
+    
+    console.log(`輸入: "${trimmedQuery}"`);
+    console.log(`股票代碼: ${isStockCode}`);
+    console.log(`股票名稱: ${isStockName}`);
+    console.log(`格式驗證: ${isValidFormat}`);
     
     if (!isValidFormat) {
+      console.log('格式驗證失敗');
       setSelectedStock(null);
-      if (query.trim().length >= 3) {
-        setSearchError('請輸入有效的股票代碼格式（如：2330、0050、00646、00679B）');
+      if (trimmedQuery.length >= 2) {
+        setSearchError('請輸入有效的股票代碼（如：2330、0050）或股票名稱（如：台積電、鴻海）');
       }
       return;
     }
 
+    console.log('開始 API 搜尋...');
     setIsSearching(true);
     
     try {
       console.log(`搜尋股票: ${query}`);
+      console.log('調用 stockService.searchStock...');
       const result = await stockService.searchStock(query.trim());
+      console.log('API 回應結果:', result);
       
       if (result) {
+        console.log('設置 selectedStock:', result);
         setSelectedStock(result);
         setFormData(prev => ({
           ...prev,
@@ -106,8 +123,9 @@ const AddStockForm: React.FC<AddStockFormProps> = ({
         }));
         console.log(`找到股票:`, result);
       } else {
+        console.log('API 返回 null，沒有找到股票');
         setSelectedStock(null);
-        setSearchError(`找不到股票代碼 ${query} 的資訊，請確認代碼是否正確`);
+        setSearchError(`找不到股票 "${query}" 的資訊，請確認輸入是否正確`);
       }
     } catch (error) {
       console.error('搜尋股票失敗:', error);
@@ -145,7 +163,13 @@ const AddStockForm: React.FC<AddStockFormProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
-              placeholder="例如: 2330、0050、00646、00679B"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearch(searchQuery);
+                }
+              }}
+              placeholder="例如: 2330、台積電、0050、元大台灣50"
               className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               autoFocus
             />

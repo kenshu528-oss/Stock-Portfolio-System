@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 2, // 功能增強：新增股息自動計算、債券ETF證交稅識別、疊加式安全開發
+  PATCH: 11, // UI修復：添加SVG favicon解決瀏覽器404錯誤，改善用戶體驗
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

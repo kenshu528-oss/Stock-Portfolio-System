@@ -89,23 +89,26 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
       return;
     }
     
-    // 檢查是否為有效的股票代號格式
+    // 支援股票代碼和股票名稱搜尋
     const isValidStockCode = /^\d{4,6}[A-Z]?$/i.test(query);
+    const isValidStockName = /^[\u4e00-\u9fff\u3400-\u4dbf\w\s]+$/i.test(query) && query.length >= 2;
     
-    if (!isValidStockCode) {
+    if (!isValidStockCode && !isValidStockName) {
       setSearchResults([]);
       setShowResults(false);
       return;
     }
     
+    console.log(`QuickAddStock 搜尋: "${query}", 代碼: ${isValidStockCode}, 名稱: ${isValidStockName}`);
+    
     setIsSearching(true);
     try {
-      const results = await searchStocks(query.toUpperCase());
+      const results = await searchStocks(query); // 移除 toUpperCase，保持原始輸入
       setSearchResults(results);
       setShowResults(true);
       
       if (results.length === 0) {
-        setError('找不到相關股票，請檢查股票代號是否正確');
+        setError('找不到相關股票，請檢查輸入是否正確');
       }
     } catch (err) {
       console.error('搜尋錯誤:', err);

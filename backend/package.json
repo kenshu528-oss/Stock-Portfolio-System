@@ -1,6 +1,6 @@
 {
   "name": "stock-portfolio-backend",
-  "version": "1.0.2.0001",
+  "version": "1.0.2.0011",
   "description": "Backend proxy for stock portfolio system",
   "main": "server.js",
   "scripts": {

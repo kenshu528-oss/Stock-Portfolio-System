@@ -10,6 +10,71 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// 股票名稱對照表（常見台股）
+const STOCK_NAME_MAP = {
+  // 權值股
+  '台積電': { symbol: '2330', name: '台灣積體電路製造股份有限公司', market: '上市' },
+  '鴻海': { symbol: '2317', name: '鴻海精密工業股份有限公司', market: '上市' },
+  '聯發科': { symbol: '2454', name: '聯發科技股份有限公司', market: '上市' },
+  '台塑': { symbol: '1301', name: '台灣塑膠工業股份有限公司', market: '上市' },
+  '中華電': { symbol: '2412', name: '中華電信股份有限公司', market: '上市' },
+  '富邦金': { symbol: '2881', name: '富邦金融控股股份有限公司', market: '上市' },
+  '國泰金': { symbol: '2882', name: '國泰金融控股股份有限公司', market: '上市' },
+  '台達電': { symbol: '2308', name: '台達電子工業股份有限公司', market: '上市' },
+  '廣達': { symbol: '2382', name: '廣達電腦股份有限公司', market: '上市' },
+  '和碩': { symbol: '4938', name: '和碩聯合科技股份有限公司', market: '上市' },
+  
+  // ETF
+  '元大台灣50': { symbol: '0050', name: '元大台灣卓越50基金', market: '上市' },
+  '元大高股息': { symbol: '0056', name: '元大台灣高股息基金', market: '上市' },
+  '富邦台50': { symbol: '006208', name: '富邦台灣采吉50基金', market: '上市' },
+  '國泰永續高股息': { symbol: '00878', name: '國泰永續高股息ETF基金', market: '上市' },
+  '元大台灣ESG永續': { symbol: '00850', name: '元大台灣ESG永續ETF基金', market: '上市' },
+  
+  // 債券ETF
+  '元大美債20年': { symbol: '00679B', name: '元大美國20年期以上公債ETF基金', market: '上市' },
+  '國泰20年美債': { symbol: '00687B', name: '國泰20年期(以上)美國公債ETF基金', market: '上市' },
+  
+  // 科技股
+  '聯電': { symbol: '2303', name: '聯華電子股份有限公司', market: '上市' },
+  '日月光投控': { symbol: '3711', name: '日月光投資控股股份有限公司', market: '上市' },
+  '宏達電': { symbol: '2498', name: '宏達國際電子股份有限公司', market: '上市' },
+  '華碩': { symbol: '2357', name: '華碩電腦股份有限公司', market: '上市' },
+  '技嘉': { symbol: '2376', name: '技嘉科技股份有限公司', market: '上市' },
+  
+  // 金融股
+  '玉山金': { symbol: '2884', name: '玉山金融控股股份有限公司', market: '上市' },
+  '第一金': { symbol: '2892', name: '第一金融控股股份有限公司', market: '上市' },
+  '兆豐金': { symbol: '2886', name: '兆豐金融控股股份有限公司', market: '上市' },
+  '中信金': { symbol: '2891', name: '中國信託金融控股股份有限公司', market: '上市' },
+  
+  // 傳產股
+  '台泥': { symbol: '1101', name: '台灣水泥股份有限公司', market: '上市' },
+  '亞泥': { symbol: '1102', name: '亞洲水泥股份有限公司', market: '上市' },
+  '遠東新': { symbol: '1402', name: '遠東新世紀股份有限公司', market: '上市' },
+  '統一': { symbol: '1216', name: '統一企業股份有限公司', market: '上市' },
+  '中鋼': { symbol: '2002', name: '中國鋼鐵股份有限公司', market: '上市' }
+};
+
+// 根據股票名稱搜尋股票
+function searchStockByName(query) {
+  const searchTerm = query.trim();
+  
+  // 精確匹配
+  if (STOCK_NAME_MAP[searchTerm]) {
+    return STOCK_NAME_MAP[searchTerm];
+  }
+  
+  // 模糊匹配（包含搜尋）
+  for (const [name, info] of Object.entries(STOCK_NAME_MAP)) {
+    if (name.includes(searchTerm) || searchTerm.includes(name)) {
+      return info;
+    }
+  }
+  
+  return null;
+}
+
 // 股票資料快取
 const stockCache = new Map();
 const CACHE_DURATION = 60000; // 1分鐘快取
@@ -388,8 +453,9 @@ app.get('/api/search/:query', async (req, res) => {
     const { query } = req.params;
     const upperQuery = query.toUpperCase();
     
+    // 檢查是否為股票代碼格式
     if (/^\d{4,6}[A-Z]?$/.test(upperQuery)) {
-      // 對於台股，優先使用台灣證交所 API（返回中文名稱）
+      // 股票代碼搜尋邏輯
       try {
         const stockData = await getTWSEStockPrice(upperQuery);
         if (stockData) {
@@ -399,7 +465,6 @@ app.get('/api/search/:query', async (req, res) => {
         console.log(`證交所 API 失敗: ${upperQuery}`, twseError.message);
       }
       
-      // 如果證交所 API 失敗，再嘗試 Yahoo Finance API
       try {
         const stockData = await getYahooStockPrice(upperQuery);
         if (stockData) {
@@ -409,7 +474,6 @@ app.get('/api/search/:query', async (req, res) => {
         console.log(`Yahoo Finance API 失敗: ${upperQuery}`, error.message);
       }
       
-      // 兩個API都失敗，返回404錯誤，不提供虛假資料
       console.log(`所有API都失敗，找不到股票: ${upperQuery}`);
       return res.status(404).json({
         error: 'Stock not found',
@@ -418,6 +482,40 @@ app.get('/api/search/:query', async (req, res) => {
           '請確認股票代碼是否正確',
           '檢查是否為有效的台股代碼',
           '稍後再試或聯繫客服'
+        ]
+      });
+    } else {
+      // 股票名稱搜尋邏輯
+      console.log(`搜尋股票名稱: ${query}`);
+      const stockByName = searchStockByName(query);
+      if (stockByName) {
+        // 找到股票後，獲取即時價格
+        try {
+          const stockData = await getTWSEStockPrice(stockByName.symbol);
+          if (stockData) {
+            return res.json(stockData);
+          }
+        } catch (error) {
+          // 如果無法獲取即時價格，返回基本資訊
+          return res.json({
+            symbol: stockByName.symbol,
+            name: stockByName.name,
+            market: stockByName.market,
+            price: 0,
+            change: 0,
+            changePercent: 0,
+            source: 'Name Search'
+          });
+        }
+      }
+      
+      return res.status(404).json({
+        error: 'Stock not found',
+        message: `找不到股票名稱 "${query}" 的資訊`,
+        suggestions: [
+          '請確認股票名稱是否正確',
+          '嘗試使用股票代碼搜尋',
+          '檢查是否為完整的公司名稱'
         ]
       });
     }
