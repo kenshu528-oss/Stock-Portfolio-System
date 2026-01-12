@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 35, // 完善 RESET 功能：完全符合規格定義的預設狀態
+  PATCH: 36, // 修復雲端同步功能：移除環境限制，支援 GitHub Pages 直接調用 GitHub API
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0036',
+    date: '2026-01-12',
+    type: 'major',
+    title: '修復雲端同步功能：支援 GitHub Pages 跨平台同步',
+    description: '完全修復雲端同步功能，移除錯誤的環境限制，實現 GitHub Pages 上的完整雲端同步能力，支援跨平台（手機、電腦、家人）資料共享。',
+    changes: [
+      '移除錯誤的環境檢測限制，所有環境都支援雲端同步',
+      '確認 GitHub API 支援 CORS，可直接從瀏覽器調用',
+      '簡化 GitHubGistService 實作，移除不必要的代理邏輯',
+      '參考 Stock-Accumulation 成功案例的實作方式',
+      '更新環境檢測邏輯，正確識別雲端同步可用性',
+      '完整的版本歸檔和倉庫隔離規則遵循'
+    ],
+    fixes: [
+      '修復 GitHub Pages 上雲端同步功能顯示「不可用」的問題',
+      '修復過度工程化導致的 API 調用複雜性',
+      '修復環境檢測邏輯錯誤導致的功能限制'
+    ]
+  },
+  {
     version: '1.0.2.0035',
     date: '2026-01-12',
     type: 'minor',
