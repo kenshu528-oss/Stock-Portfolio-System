@@ -105,7 +105,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
     
     try {
       const exportData = {
-        version: '1.0.2.0035',
+        version: '1.0.2.0040',
         exportDate: new Date().toISOString(),
         accounts,
         stocks,
@@ -305,7 +305,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
           <div className="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
             <div className="flex items-start space-x-3">
               <svg className="w-6 h-6 text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
               <div>
                 <h3 className="text-yellow-400 font-medium mb-2">⚠️ 雲端同步功能不可用</h3>
@@ -438,7 +438,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
                     className="flex items-center space-x-2 text-blue-400 hover:text-blue-300"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
                     <span>{isConnecting ? '測試中...' : '測試連線'}</span>
                   </Button>
@@ -449,7 +449,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
                     className="flex items-center space-x-2 text-yellow-400 hover:text-yellow-300"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-3.586l4.293-4.293A6 6 0 0119 9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-3.586l4.293-4.293A6 6 0 0119 9z" />
                     </svg>
                     <span>取得 Token</span>
                   </Button>
@@ -461,7 +461,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
                       className="flex items-center space-x-2 text-red-400 hover:text-red-300"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                       <span>清除 Token</span>
                     </Button>
@@ -470,7 +470,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
 
                 <div className="text-xs text-yellow-400 flex items-start space-x-2">
                   <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                   <span>需要具有 'gist' 權限的 Personal Access Token</span>
                 </div>
@@ -528,7 +528,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
                   className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-3"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                   <span>{isUploading ? '上傳中...' : '上傳到雲端'}</span>
                 </Button>
@@ -540,7 +540,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
                   className="flex items-center justify-center space-x-2 border border-slate-600 text-slate-300 hover:text-white py-3"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
                   </svg>
                   <span>{isDownloading ? '下載中...' : '從雲端下載'}</span>
                 </Button>
@@ -551,7 +551,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
             <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-4">
               <div className="flex items-start space-x-2">
                 <svg className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="text-sm text-blue-300">
                   <p className="font-medium mb-1">使用說明</p>

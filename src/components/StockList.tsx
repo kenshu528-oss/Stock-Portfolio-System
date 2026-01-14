@@ -1,6 +1,7 @@
 import React from 'react';
 import StockRow from './StockRow';
 import type { StockRecord } from '../types';
+import { logger } from '../utils/logger';
 
 // 合併後的股票記錄介面
 interface MergedStockRecord extends StockRecord {
@@ -10,6 +11,8 @@ interface MergedStockRecord extends StockRecord {
 
 // 合併相同股票的記錄
 const mergeStockRecords = (stocks: StockRecord[]): MergedStockRecord[] => {
+  logger.trace('stock', `mergeStockRecords 調用`, { count: stocks.length });
+  
   const stockGroups = new Map<string, StockRecord[]>();
   
   // 按股票代號分組
@@ -70,6 +73,14 @@ const mergeStockRecords = (stocks: StockRecord[]): MergedStockRecord[] => {
         isExpanded: false
       };
       
+      logger.trace('stock', `創建合併記錄 ${symbol}`, {
+        currentPrice: mergedRecord.currentPrice,
+        lastUpdated: mergedRecord.lastUpdated,
+        originalRecordsCount: records.length,
+        latestRecordId: latestRecord.id,
+        latestRecordPrice: latestRecord.currentPrice
+      });
+      
       mergedStocks.push(mergedRecord);
     }
   });
@@ -107,10 +118,16 @@ const StockList: React.FC<StockListProps> = ({
     setExpandedStocks(newExpanded);
   };
   // 過濾當前帳戶的股票
-  const currentAccountStocks = stocks.filter(stock => stock.accountId === currentAccountId);
+  const currentAccountStocks = React.useMemo(() => {
+    logger.trace('stock', `過濾當前帳戶股票`, { total: stocks.length, accountId: currentAccountId });
+    return stocks.filter(stock => stock.accountId === currentAccountId);
+  }, [stocks, currentAccountId]);
   
   // 合併相同股票的記錄
-  const mergedStocks = mergeStockRecords(currentAccountStocks);
+  const mergedStocks = React.useMemo(() => {
+    logger.trace('stock', `重新計算合併股票記錄`, { count: currentAccountStocks.length });
+    return mergeStockRecords(currentAccountStocks);
+  }, [currentAccountStocks]);
 
   // 載入狀態
   if (isLoading) {

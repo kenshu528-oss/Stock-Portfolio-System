@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { useAppStore } from '../stores/appStore';
+import { getTransactionTaxRate } from '../services/bondETFService';
 import type { StockRecord } from '../types';
 
 interface DeleteConfirmDialogProps {
@@ -28,22 +29,30 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   const { accounts } = useAppStore();
   const account = accounts.find(acc => acc.id === stock.accountId);
   const brokerageFeeRate = account?.brokerageFee ?? 0.1425;
-  const transactionTaxRate = account?.transactionTax ?? 0.3;
   
-  // 計算買入成本（包含買入手續費）
+  // 計算買入成本（包含買入手續費，考慮最低手續費20元）
   const costBasis = stock.adjustedCostPrice || stock.costPrice;
   const grossBuyCost = stock.shares * costBasis;
-  const buyBrokerageFee = Math.round(grossBuyCost * (brokerageFeeRate / 100));
+  const buyBrokerageFee = Math.max(20, Math.round(grossBuyCost * (brokerageFeeRate / 100)));
   const totalBuyCost = grossBuyCost + buyBrokerageFee;
   
-  // 計算賣出收入（扣除賣出手續費和證交稅）
+  // 計算賣出收入（扣除賣出手續費和證交稅，考慮債券ETF稅率）
   const grossSellValue = stock.shares * stock.currentPrice;
-  const sellBrokerageFee = Math.round(grossSellValue * (brokerageFeeRate / 100));
-  const sellTransactionTax = Math.round(grossSellValue * (transactionTaxRate / 100));
+  const sellBrokerageFee = Math.max(20, Math.round(grossSellValue * (brokerageFeeRate / 100)));
+  
+  // 根據股票類型計算正確的證交稅率
+  const actualTaxRate = stock.transactionTaxRate ?? getTransactionTaxRate(stock.symbol, stock.name);
+  const sellTransactionTax = Math.round(grossSellValue * (actualTaxRate / 100));
+  
   const netSellValue = grossSellValue - sellBrokerageFee - sellTransactionTax;
   
-  // 計算真實損益
-  const gainLoss = netSellValue - totalBuyCost;
+  // 計算股息收入（安全地添加到損益中）
+  const dividendIncome = (stock.dividendRecords || []).reduce((total, dividend) => {
+    return total + (dividend.totalDividend || 0);
+  }, 0);
+  
+  // 計算真實損益（淨賣出收入 + 股息收入 - 總買入成本）
+  const gainLoss = netSellValue + dividendIncome - totalBuyCost;
   const marketValue = grossSellValue;
 
   return (

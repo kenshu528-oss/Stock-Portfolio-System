@@ -5,6 +5,7 @@ import OperationLog from './OperationLog';
 import { VersionInfo } from './VersionInfo';
 import { useAppStore } from '../stores/appStore';
 import { VERSION } from '../constants/version';
+import { logger } from '../utils/logger';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -12,6 +13,7 @@ interface HeaderProps {
   onPrivacyToggle?: () => void;
   isPrivacyMode?: boolean;
   onOpenCloudSync?: () => void;
+  onBatchProcessRights?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -19,7 +21,8 @@ const Header: React.FC<HeaderProps> = ({
   isMenuOpen, 
   onPrivacyToggle,
   isPrivacyMode = false,
-  onOpenCloudSync
+  onOpenCloudSync,
+  onBatchProcessRights
 }) => {
   const [showImportExport, setShowImportExport] = useState(false);
   const [showVersionInfo, setShowVersionInfo] = useState(false);
@@ -30,11 +33,21 @@ const Header: React.FC<HeaderProps> = ({
     priceUpdateProgress,
     lastPriceUpdate,
     showAdjustedCost,
-    toggleCostDisplayMode
+    toggleCostDisplayMode,
+    rightsAdjustmentMode,
+    toggleRightsAdjustmentMode
   } = useAppStore();
 
   const handleRefreshPrices = async () => {
+    logger.info('stock', '開始批量更新：股價 + 除權息');
+    
+    // updateAllStockPrices 已經包含了完整的更新邏輯：
+    // 1. 更新股價
+    // 2. 同時處理除權息資料（使用與StockRow相同的邏輯）
+    // 3. 計算調整後成本價
     await updateAllStockPrices();
+    
+    logger.success('stock', '批量更新完成');
   };
 
   // 匯出功能
@@ -70,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({
 
   // 匯入功能
   const handleImport = () => {
-    console.log('Header: 開始匯入流程');
+    logger.debug('import', '開始匯入流程');
     
     const input = document.createElement('input');
     input.type = 'file';
@@ -112,10 +125,17 @@ const Header: React.FC<HeaderProps> = ({
           }));
           
           // 使用 appStore 的 importData 方法
-          const { importData } = useAppStore.getState();
+          const { importData, setCurrentAccount } = useAppStore.getState();
           importData(processedAccounts, processedStocks, mode);
           
-          console.log('Header: 匯入完成');
+          // 自動切換到第一個帳戶（遵循 cloud-sync-development.md 規範）
+          if (processedAccounts.length > 0) {
+            const firstAccountName = processedAccounts[0].name;
+            setCurrentAccount(firstAccountName);
+            logger.info('import', `自動切換到帳戶: ${firstAccountName}`);
+          }
+          
+          logger.success('import', '匯入完成');
         } else {
           alert('檔案格式錯誤：缺少必要的帳戶或股票資料');
         }
@@ -140,6 +160,44 @@ const Header: React.FC<HeaderProps> = ({
     if (diffHours < 24) return `${diffHours}小時前`;
     
     return date.toLocaleDateString('zh-TW');
+  };
+
+  // 除權息模式文字說明 - 更清楚的描述
+  const getRightsAdjustmentModeText = (mode: typeof rightsAdjustmentMode): string => {
+    switch (mode) {
+      case 'excluding_rights': return '原始損益';
+      case 'including_rights': return '含除權息';
+      default: return '未知模式';
+    }
+  };
+
+  // 除權息模式圖示 - 簡化設計
+  const getRightsAdjustmentModeIcon = (mode: typeof rightsAdjustmentMode) => {
+    switch (mode) {
+      case 'excluding_rights':
+        // 原始損益圖示 - 簡單的柱狀圖
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+      case 'including_rights':
+        // 含除權息圖示 - 錢幣 + 股票符號
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="9" cy="9" r="4" strokeWidth={1.5} />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7v4m-1.5-2h3" />
+            <rect x="14" y="14" width="7" height="7" strokeWidth={1.5} />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 17.5h3M17.5 16v3" />
+          </svg>
+        );
+      default:
+        return (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+    }
   };
 
   // 雲端同步按鈕點擊處理
@@ -200,7 +258,10 @@ const Header: React.FC<HeaderProps> = ({
                 showAdjustedCost ? 'bg-slate-700' : ''
               }`}
               aria-label={showAdjustedCost ? '顯示原始成本' : '顯示調整成本'}
-              onClick={toggleCostDisplayMode}
+              onClick={() => {
+                logger.trace('global', '成本價切換');
+                toggleCostDisplayMode();
+              }}
               title={showAdjustedCost ? '目前顯示調整成本，點擊切換為原始成本' : '目前顯示原始成本，點擊切換為調整成本'}
             >
               {showAdjustedCost ? (
@@ -214,6 +275,27 @@ const Header: React.FC<HeaderProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               )}
+            </Button>
+
+            {/* Rights Adjustment Mode Toggle Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`text-white hover:bg-slate-700 ${
+                rightsAdjustmentMode === 'including_rights' ? 'bg-green-600 hover:bg-green-700' : ''
+              }`}
+              aria-label={`損益模式: ${getRightsAdjustmentModeText(rightsAdjustmentMode)}`}
+              onClick={() => {
+                logger.trace('global', '除權息模式切換');
+                toggleRightsAdjustmentMode();
+              }}
+              title={
+                rightsAdjustmentMode === 'excluding_rights'
+                  ? '原始損益：只看股價漲跌（點擊切換為含除權息）'
+                  : '含除權息：包含股息和配股的總報酬（點擊切換為原始損益）'
+              }
+            >
+              {getRightsAdjustmentModeIcon(rightsAdjustmentMode)}
             </Button>
 
             {/* 匯入匯出按鈕 - 僅桌面版 */}
@@ -290,7 +372,7 @@ const Header: React.FC<HeaderProps> = ({
               aria-label="設定"
               onClick={() => {
                 // TODO: Open settings
-                console.log('開啟設定');
+                logger.debug('global', '開啟設定');
               }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,9 +387,10 @@ const Header: React.FC<HeaderProps> = ({
                 variant="ghost"
                 size="sm"
                 className={`text-white hover:bg-slate-700 ${isUpdatingPrices ? 'opacity-75' : ''}`}
-                aria-label="重新整理股價"
+                aria-label="更新股價和除權息"
                 onClick={handleRefreshPrices}
                 disabled={isUpdatingPrices}
+                title="更新所有股票的股價和除權息資料"
               >
                 <svg 
                   className={`w-5 h-5 ${isUpdatingPrices ? 'animate-spin' : ''}`} 
@@ -342,9 +425,10 @@ const Header: React.FC<HeaderProps> = ({
               variant="ghost"
               size="sm"
               className={`text-white hover:bg-slate-700 ${isUpdatingPrices ? 'opacity-75' : ''}`}
-              aria-label="重新整理股價"
+              aria-label="更新股價和除權息"
               onClick={handleRefreshPrices}
               disabled={isUpdatingPrices}
+              title="更新所有股票的股價和除權息資料"
             >
               <svg 
                 className={`w-5 h-5 ${isUpdatingPrices ? 'animate-spin' : ''}`} 

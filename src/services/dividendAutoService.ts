@@ -25,7 +25,10 @@ async function fetchDividendData(symbol: string): Promise<DividendAPIResponse | 
     const response = await fetch(`http://localhost:3001/api/dividend/${symbol}`);
     
     if (!response.ok) {
-      console.warn(`股息API回應錯誤: ${response.status} for ${symbol}`);
+      // 404 是正常情況（股票無股息資料），不需要警告
+      if (response.status !== 404) {
+        console.warn(`股息API回應錯誤: ${response.status} for ${symbol}`);
+      }
       return null;
     }
     
@@ -55,13 +58,15 @@ export async function calculateHistoricalDividends(
   purchaseDate: Date
 ): Promise<DividendRecord[]> {
   try {
-    console.log(`開始計算 ${stock.symbol} 的歷史股息...`);
+    // 使用 DEBUG 等級，避免過多日誌
+    // console.log(`開始計算 ${stock.symbol} 的歷史股息...`);
     
     // 從API獲取股息資料
     const dividendData = await fetchDividendData(stock.symbol);
     
     if (!dividendData || dividendData.dividends.length === 0) {
-      console.log(`${stock.symbol} 無股息資料或API無回應`);
+      // 使用 DEBUG 等級，避免過多日誌
+      // console.log(`${stock.symbol} 無股息資料或API無回應`);
       return [];
     }
     
@@ -88,7 +93,8 @@ export async function calculateHistoricalDividends(
       }
     }
     
-    console.log(`${stock.symbol} 找到 ${validDividends.length} 筆有效股息記錄`);
+    // 使用 DEBUG 等級，避免過多日誌
+    // console.log(`${stock.symbol} 找到 ${validDividends.length} 筆有效股息記錄`);
     return validDividends.sort((a, b) => new Date(a.exDividendDate).getTime() - new Date(b.exDividendDate).getTime());
     
   } catch (error) {
@@ -107,14 +113,32 @@ export async function autoUpdateDividends(stock: StockRecord): Promise<StockReco
     // 計算歷史股息
     const dividends = await calculateHistoricalDividends(stock, stock.purchaseDate);
     
+    // 計算調整後成本價（成本價 - 累積每股股息）
+    let adjustedCostPrice = stock.costPrice;
+    if (dividends.length > 0) {
+      const totalDividendPerShare = dividends.reduce(
+        (sum, dividend) => sum + dividend.dividendPerShare, 
+        0
+      );
+      adjustedCostPrice = Math.max(stock.costPrice - totalDividendPerShare, 0);
+      
+      console.log(`${stock.symbol} 調整後成本價計算:`, {
+        原始成本: stock.costPrice,
+        累積股息: totalDividendPerShare,
+        調整後成本: adjustedCostPrice
+      });
+    }
+    
     // 更新股票記錄
     const updatedStock: StockRecord = {
       ...stock,
       dividendRecords: dividends,
+      adjustedCostPrice: adjustedCostPrice,
       lastDividendUpdate: new Date().toISOString()
     };
     
-    console.log(`${stock.symbol} 股息記錄已更新，共 ${dividends.length} 筆`);
+    // 使用 DEBUG 等級，避免過多日誌
+    // console.log(`${stock.symbol} 股息記錄已更新，共 ${dividends.length} 筆`);
     return updatedStock;
     
   } catch (error) {

@@ -41,7 +41,7 @@ class GitHubGistService {
         },
         'metadata.json': {
           content: JSON.stringify({
-            version: data.version || '1.0.2.0036',
+            version: data.version || '1.0.2.0109',
             lastUpdated: new Date().toISOString(),
             source: 'Stock Portfolio System',
             accounts: data.accounts?.length || 0,

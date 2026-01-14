@@ -1,7 +1,7 @@
 {
   "name": "stock-portfolio-system",
   "private": true,
-  "version": "1.0.2.0036",
+  "version": "1.0.2.0130",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,10 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest --run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:svg": "node scripts/check-svg-paths.js",
+    "check:version": "node scripts/check-version-consistency.js",
+    "check:all": "node scripts/check-svg-paths.js && node scripts/check-version-consistency.js"
   },
   "dependencies": {
     "react": "^18.2.0",

@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import EditableCell from './EditableCell';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import DividendManager from './DividendManager';
+import RightsEventManager from './RightsEventManager';
 import PurchaseHistoryManager from './PurchaseHistoryManager';
 import UIEnhancementService from './UIEnhancementService';
 import { useAppStore } from '../stores/appStore';
+import { getTransactionTaxRate } from '../services/bondETFService';
+import { RightsAdjustmentService } from '../services/rightsAdjustmentService';
+import { applyTestStockRights, getStockRightsSummary } from '../utils/testStockRights';
 import type { StockRecord } from '../types';
+import { logger } from '../utils/logger';
 
 interface StockRowProps {
   stock: StockRecord;
@@ -34,11 +40,12 @@ const StockRow: React.FC<StockRowProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDividendManagerOpen, setIsDividendManagerOpen] = useState(false);
+  const [isRightsEventManagerOpen, setIsRightsEventManagerOpen] = useState(false);
   const [isPurchaseHistoryOpen, setIsPurchaseHistoryOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   
-  // 從store獲取成本價顯示模式
-  const { showAdjustedCost } = useAppStore();
+  // 從store獲取成本價顯示模式和除權息計算模式
+  const { showAdjustedCost, rightsAdjustmentMode, includeDividendInGainLoss } = useAppStore();
 
   // 點擊外部關閉選單
   useEffect(() => {
@@ -57,10 +64,32 @@ const StockRow: React.FC<StockRowProps> = ({
     };
   }, [isMenuOpen]);
 
-  // 計算顯示的成本價
-  const displayCostPrice = showAdjustedCost && stock.adjustedCostPrice 
-    ? stock.adjustedCostPrice 
-    : stock.costPrice;
+  // 計算顯示的成本價 - 智能顯示邏輯
+  const displayCostPrice = (() => {
+    // 如果有調整後成本價且與原始成本價不同，優先顯示調整後成本價
+    if (stock.adjustedCostPrice && stock.adjustedCostPrice !== stock.costPrice) {
+      return showAdjustedCost ? stock.adjustedCostPrice : stock.costPrice;
+    }
+    // 否則顯示原始成本價
+    return stock.costPrice;
+  })();
+  
+  // 智能顯示模式：有除權息記錄時自動顯示相關資訊
+  const shouldShowCostInfo = stock.dividendRecords && stock.dividendRecords.length > 0;
+  
+  // 調試日誌：檢查adjustedCostPrice和顯示邏輯
+  if (stock.symbol === '00679B' || stock.symbol === '4763' || stock.symbol === '2208' || stock.symbol === '2867' || stock.symbol === '2886' || stock.symbol === '2890') {
+    logger.trace('stock', `調試 ${stock.symbol}`, {
+      costPrice: stock.costPrice,
+      adjustedCostPrice: stock.adjustedCostPrice,
+      hasDividendRecords: !!stock.dividendRecords?.length,
+      dividendRecordsCount: stock.dividendRecords?.length || 0,
+      showAdjustedCost,
+      shouldShowCostInfo,
+      displayCostPrice,
+      costPriceDifferent: stock.adjustedCostPrice !== stock.costPrice
+    });
+  }
   
   // 計算總股息（使用記錄中的總股息金額）
   const totalDividend = stock.dividendRecords?.reduce((sum, dividend) => {
@@ -74,21 +103,35 @@ const StockRow: React.FC<StockRowProps> = ({
   const brokerageFeeRate = account?.brokerageFee ?? 0.1425;
   const transactionTaxRate = account?.transactionTax ?? 0.3;
   
-  // 計算買入成本（包含買入手續費）
+  // 計算買入成本（包含買入手續費，考慮最低手續費20元）
   const costBasis = stock.adjustedCostPrice || stock.costPrice;
   const grossBuyCost = stock.shares * costBasis;
-  const buyBrokerageFee = Math.round(grossBuyCost * (brokerageFeeRate / 100));
+  const buyBrokerageFee = Math.max(20, Math.round(grossBuyCost * (brokerageFeeRate / 100)));
   const totalBuyCost = grossBuyCost + buyBrokerageFee;
   
-  // 計算賣出收入（扣除賣出手續費和證交稅）
+  // 計算賣出收入（扣除賣出手續費和證交稅，考慮債券ETF稅率）
   const grossSellValue = stock.shares * stock.currentPrice;
-  const sellBrokerageFee = Math.round(grossSellValue * (brokerageFeeRate / 100));
-  const sellTransactionTax = Math.round(grossSellValue * (transactionTaxRate / 100));
+  const sellBrokerageFee = Math.max(20, Math.round(grossSellValue * (brokerageFeeRate / 100)));
+  
+  // 根據股票類型計算正確的證交稅率
+  const actualTaxRate = stock.transactionTaxRate ?? getTransactionTaxRate(stock.symbol, stock.name);
+  const sellTransactionTax = Math.round(grossSellValue * (actualTaxRate / 100));
+  
   const netSellValue = grossSellValue - sellBrokerageFee - sellTransactionTax;
   
-  // 計算真實損益（淨賣出收入 - 總買入成本）
-  const gainLoss = netSellValue - totalBuyCost;
-  const gainLossPercent = totalBuyCost > 0 ? (gainLoss / totalBuyCost) * 100 : 0;
+  // 計算損益：使用完整的除權息邏輯（包含配股）
+  // 使用 RightsAdjustmentService 確保配股正確計算
+  const gainLoss = RightsAdjustmentService.calculateGainLossWithRights(
+    stock,
+    'full_rights', // 使用完整除權息模式
+    brokerageFeeRate,
+    transactionTaxRate
+  );
+  
+  // 計算損益率（基於調整後成本價）
+  const costBasisForPercent = stock.adjustedCostPrice || stock.costPrice;
+  const totalCostBasisForPercent = costBasisForPercent * stock.shares;
+  const gainLossPercent = totalCostBasisForPercent > 0 ? (gainLoss / totalCostBasisForPercent) * 100 : 0;
   
   // 市值等於總賣出價值
   const marketValue = grossSellValue;
@@ -127,18 +170,142 @@ const StockRow: React.FC<StockRowProps> = ({
   const handleUpdatePrice = async () => {
     setIsMenuOpen(false);
     try {
-      // 調用後端API更新股價
+      console.log(`🔄 開始更新 ${stock.symbol} 股價和除權息資料...`);
+      
+      // 1. 調用後端API更新股價
       const response = await fetch(`http://localhost:3001/api/stock/${stock.symbol}`);
       if (response.ok) {
         const data = await response.json();
-        onUpdateStock(stock.id, {
-          currentPrice: data.price,
-          lastUpdated: new Date(),
-          priceSource: data.source === 'Yahoo Finance' ? 'Yahoo' : 'TWSE'
-        });
+        
+        // 2. 同時更新除權息資料（使用與DividendManager相同的邏輯）
+        await updateDividendData();
+        
+        // 3. 更新股價資料
+        if (hasMultipleRecords && !isDetailRow && (stock as any).originalRecords) {
+          // 對於合併記錄，需要更新所有原始記錄
+          const originalRecords = (stock as any).originalRecords || [];
+          console.log(`更新合併記錄 ${stock.symbol} 的 ${originalRecords.length} 筆原始記錄`);
+          
+          originalRecords.forEach((record: any) => {
+            onUpdateStock(record.id, {
+              currentPrice: data.price,
+              lastUpdated: new Date(),
+              priceSource: data.source === 'Yahoo Finance' ? 'Yahoo' : 'TWSE'
+            });
+          });
+        } else {
+          // 單一記錄或詳細記錄，直接更新
+          onUpdateStock(stock.id, {
+            currentPrice: data.price,
+            lastUpdated: new Date(),
+            priceSource: data.source === 'Yahoo Finance' ? 'Yahoo' : 'TWSE'
+          });
+        }
+        
+        console.log(`✅ ${stock.symbol} 股價和除權息資料更新成功: ${data.price}`);
+      } else {
+        console.error(`❌ ${stock.symbol} 股價更新失敗: ${response.status}`);
       }
     } catch (error) {
-      console.error('更新股價失敗:', error);
+      console.error(`❌ ${stock.symbol} 更新失敗:`, error);
+    }
+  };
+
+  // 更新除權息資料的函數（與DividendManager邏輯一致）
+  const updateDividendData = async () => {
+    try {
+      console.log(`🔍 StockRow: 更新 ${stock.symbol} 的除權息資料`);
+      
+      // 動態導入服務（避免循環依賴）
+      const DividendApiService = (await import('../services/dividendApiService')).default;
+      
+      const apiDividends = await DividendApiService.getHistoricalDividends(
+        stock.symbol,
+        stock.purchaseDate
+      );
+      
+      if (apiDividends.length > 0) {
+        console.log(`✅ StockRow: 獲取到 ${apiDividends.length} 筆除權息資料`);
+        
+        // 檢查是否有未記錄的股息
+        const existingDates = new Set(
+          (stock.dividendRecords || []).map(d => {
+            const date = d.exDividendDate instanceof Date ? d.exDividendDate : new Date(d.exDividendDate);
+            return date.toISOString().split('T')[0];
+          })
+        );
+        
+        const missingApiDividends = apiDividends.filter(
+          d => !existingDates.has(d.exDividendDate)
+        );
+        
+        if (missingApiDividends.length > 0) {
+          console.log(`📊 StockRow: 發現 ${missingApiDividends.length} 筆新的除權息資料，合併到現有記錄`);
+          
+          // 創建新的股息記錄
+          const newDividendRecords = missingApiDividends.map((dividend, index) => ({
+            id: `api-${Date.now()}-${index}-${stock.id}`,
+            stockId: stock.id,
+            symbol: dividend.symbol,
+            exDividendDate: new Date(dividend.exDividendDate),
+            dividendPerShare: dividend.dividendPerShare,
+            totalDividend: dividend.dividendPerShare * stock.shares,
+            shares: stock.shares
+          }));
+
+          // 合併現有記錄和新記錄
+          const allDividendRecords = [...(stock.dividendRecords || []), ...newDividendRecords];
+
+          // 計算調整後成本價（基於所有股息記錄）
+          const totalDividendPerShare = allDividendRecords.reduce(
+            (sum, record) => sum + record.dividendPerShare, 0
+          );
+          const adjustedCostPrice = Math.max(stock.costPrice - totalDividendPerShare, 0);
+
+          // 更新股票記錄
+          onUpdateStock(stock.id, {
+            dividendRecords: allDividendRecords,
+            adjustedCostPrice,
+            lastDividendUpdate: new Date()
+          });
+
+          console.log(`✅ StockRow: ${stock.symbol} 除權息資料更新完成，總記錄: ${allDividendRecords.length}，調整後成本價: ${adjustedCostPrice.toFixed(2)}`);
+        } else {
+          console.log(`ℹ️ StockRow: ${stock.symbol} 除權息資料已是最新`);
+          
+          // 即使沒有新記錄，也要檢查現有記錄的調整後成本價計算
+          if (stock.dividendRecords && stock.dividendRecords.length > 0) {
+            console.log(`🔍 StockRow: ${stock.symbol} 檢查現有除權息記錄:`, stock.dividendRecords);
+            
+            const totalDividendPerShare = stock.dividendRecords.reduce(
+              (sum, record) => {
+                console.log(`📊 股息記錄: ${record.exDividendDate}, 每股股息: ${record.dividendPerShare}`);
+                return sum + record.dividendPerShare;
+              }, 0
+            );
+            
+            console.log(`💰 ${stock.symbol} 總每股股息: ${totalDividendPerShare}`);
+            console.log(`💰 ${stock.symbol} 原始成本價: ${stock.costPrice}`);
+            
+            const shouldBeAdjustedCostPrice = Math.max(stock.costPrice - totalDividendPerShare, 0);
+            console.log(`💰 ${stock.symbol} 應該的調整後成本價: ${shouldBeAdjustedCostPrice.toFixed(2)}`);
+            console.log(`💰 ${stock.symbol} 實際的調整後成本價: ${stock.adjustedCostPrice}`);
+            
+            // 如果計算結果與實際不符，強制更新
+            if (Math.abs(shouldBeAdjustedCostPrice - (stock.adjustedCostPrice || stock.costPrice)) > 0.01) {
+              console.log(`🔧 StockRow: ${stock.symbol} 調整後成本價不正確，強制更新`);
+              onUpdateStock(stock.id, {
+                adjustedCostPrice: shouldBeAdjustedCostPrice,
+                lastDividendUpdate: new Date()
+              });
+            }
+          }
+        }
+      } else {
+        console.log(`ℹ️ StockRow: ${stock.symbol} 無除權息資料`);
+      }
+    } catch (error) {
+      console.error(`❌ StockRow: 更新 ${stock.symbol} 除權息資料失敗:`, error);
     }
   };
 
@@ -152,6 +319,12 @@ const StockRow: React.FC<StockRowProps> = ({
     setIsMenuOpen(false);
     // 開啟股息管理介面
     setIsDividendManagerOpen(true);
+  };
+
+  const handleRightsEventManagement = () => {
+    setIsMenuOpen(false);
+    // 開啟除權息事件管理介面
+    setIsRightsEventManagerOpen(true);
   };
 
   // 處理刪除股票（合併記錄的特殊處理）
@@ -314,14 +487,9 @@ const StockRow: React.FC<StockRowProps> = ({
               max={99999}
               displayFormat={formatPrice}
             />
-            {showAdjustedCost && stock.adjustedCostPrice && stock.adjustedCostPrice !== stock.costPrice && (
-              <div className="text-xs text-slate-500 mt-1" title="調整後成本價">
-                已扣除股息
-              </div>
-            )}
-            {!showAdjustedCost && stock.adjustedCostPrice && stock.adjustedCostPrice !== stock.costPrice && (
-              <div className="text-xs text-slate-500 mt-1" title="原始成本價">
-                原始成本
+            {shouldShowCostInfo && (
+              <div className="text-xs mt-1">
+                <div className="text-blue-400">除息後: {formatPrice(stock.adjustedCostPrice)}</div>
               </div>
             )}
           </div>
@@ -352,11 +520,6 @@ const StockRow: React.FC<StockRowProps> = ({
           <span className={`font-medium ${UIEnhancementService.getGainLossColor(gainLoss)}`}>
             {formatGainLoss(gainLoss, gainLossPercent)}
           </span>
-          {stock.adjustedCostPrice && stock.adjustedCostPrice !== stock.costPrice && (
-            <div className="text-xs text-slate-500 mt-1" title="已調整股息成本">
-              調整後成本: {formatPrice(stock.adjustedCostPrice)}
-            </div>
-          )}
         </td>
 
         {/* 股息 */}
@@ -458,6 +621,23 @@ const StockRow: React.FC<StockRowProps> = ({
                     <span className="text-sm font-medium">股息記錄</span>
                   </button>
 
+                  {/* 除權息管理 */}
+                  <button
+                    onClick={handleRightsEventManagement}
+                    className="w-full mb-3 p-3 text-left text-white hover:bg-slate-700 transition-colors flex items-center rounded-lg bg-slate-700"
+                  >
+                    <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="6" width="6" height="4" strokeWidth={1.5} />
+                        <rect x="11" y="6" width="4" height="4" strokeWidth={1.5} />
+                        <rect x="17" y="6" width="4" height="4" strokeWidth={1.5} />
+                        <circle cx="12" cy="16" r="3" strokeWidth={1} />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 14v4m-1-2h2" />
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium">除權息管理</span>
+                  </button>
+
                   {/* 展開詳情（僅合併記錄顯示） */}
                   {hasMultipleRecords && (
                     <button
@@ -519,6 +699,24 @@ const StockRow: React.FC<StockRowProps> = ({
         onClose={() => setIsDividendManagerOpen(false)}
         stock={stock}
       />
+
+      {/* 除權息事件管理對話框 - 使用Portal避免DOM結構警告 */}
+      {isRightsEventManagerOpen && createPortal(
+        <RightsEventManager
+          stock={stock}
+          onStockUpdate={(updatedStock) => {
+            // 將完整股票對象轉換為更新格式
+            onUpdateStock(stock.id, {
+              shares: updatedStock.shares,
+              adjustedCostPrice: updatedStock.adjustedCostPrice,
+              dividendRecords: updatedStock.dividendRecords,
+              lastDividendUpdate: updatedStock.lastDividendUpdate
+            });
+          }}
+          onClose={() => setIsRightsEventManagerOpen(false)}
+        />,
+        document.body
+      )}
 
       {/* 購買歷史管理對話框 */}
       <PurchaseHistoryManager

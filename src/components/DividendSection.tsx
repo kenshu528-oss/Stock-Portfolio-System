@@ -11,22 +11,14 @@ interface DividendSectionProps {
 const DividendSection: React.FC<DividendSectionProps> = ({ stocks, onUpdateStock }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [logs, setLogs] = useState<string[]>([]);
-
-  const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setLogs(prev => [...prev.slice(-9), `[${timestamp}] ${message}`]); // 保留最近10條日誌
-  };
 
   const refreshDividends = async () => {
     setIsLoading(true);
     setError(null);
-    addLog('開始刷新股息資料...');
 
     try {
       for (const stock of stocks) {
         if (!stock.dividendRecords || stock.dividendRecords.length === 0) {
-          addLog(`處理股票: ${stock.symbol}`);
           
           try {
             const historicalDividends = await DividendApiService.getHistoricalDividends(
@@ -54,22 +46,15 @@ const DividendSection: React.FC<DividendSectionProps> = ({ stocks, onUpdateStock
                 dividendRecords,
                 adjustedCostPrice: Math.max(adjustedCostPrice, 0)
               });
-              
-              addLog(`✅ ${stock.symbol}: 更新 ${dividendRecords.length} 筆股息記錄`);
-            } else {
-              addLog(`ℹ️ ${stock.symbol}: 無股息資料`);
             }
           } catch (stockError) {
-            addLog(`❌ ${stock.symbol}: ${stockError instanceof Error ? stockError.message : '獲取失敗'}`);
+            console.error(`${stock.symbol} 股息獲取失敗:`, stockError);
           }
         }
       }
-      
-      addLog('股息資料刷新完成');
     } catch (globalError) {
       const errorMessage = globalError instanceof Error ? globalError.message : '未知錯誤';
       setError(errorMessage);
-      addLog(`❌ 全域錯誤: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +67,6 @@ const DividendSection: React.FC<DividendSectionProps> = ({ stocks, onUpdateStock
     );
     
     if (stocksNeedingDividends.length > 0) {
-      addLog(`發現 ${stocksNeedingDividends.length} 支股票需要股息資料`);
       // 延遲執行，避免阻塞主線程
       setTimeout(() => {
         refreshDividends().catch(err => {
@@ -128,19 +112,6 @@ const DividendSection: React.FC<DividendSectionProps> = ({ stocks, onUpdateStock
         {error && (
           <div className="bg-red-900/20 border border-red-500/30 rounded p-3 mb-4">
             <p className="text-red-400 text-sm">錯誤: {error}</p>
-          </div>
-        )}
-
-        {logs.length > 0 && (
-          <div className="bg-slate-900 rounded p-3 mb-4">
-            <h4 className="text-slate-300 text-sm font-medium mb-2">操作日誌</h4>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
-              {logs.map((log, index) => (
-                <div key={index} className="text-xs text-slate-400 font-mono">
-                  {log}
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
