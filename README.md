@@ -62,13 +62,50 @@ src/
 ├── components/          # React組件
 │   ├── ui/             # 基礎UI組件
 │   └── ...             # 功能組件
+├── services/           # API服務層
+├── stores/             # Zustand狀態管理
 ├── types/              # TypeScript類型定義
 ├── constants/          # 常數定義
 └── App.tsx            # 主應用程式
+
+backend/
+├── server.js           # Express後端服務器
+└── services/           # 後端服務
+
+docs/
+├── guides/             # 使用指南
+├── specifications/     # 技術規範
+├── research/           # 研究文檔
+└── checklists/         # 開發檢查清單
+
+.kiro/steering/         # STEERING開發規則
+scripts/                # 自動化腳本
 ```
 
 #### 版本管理
 採用四碼版本控制：`v{MAJOR}.{MINOR}.{RELEASE}.{PATCH}`
+
+#### 📚 文檔導航
+
+**使用指南** (`docs/guides/`)
+- [快速設定指南](docs/guides/QUICK_SETUP_GUIDE.md) - 新手入門
+- [本地開發指南](docs/guides/LOCAL_DEVELOPMENT_GUIDE.md) - 開發環境設定
+- [簡單使用說明](docs/guides/簡單使用說明.md) - 中文使用說明
+- [FinMind API 指南](docs/guides/FINMIND_API_GUIDE.md) - API 使用說明
+- [Logger 使用指南](docs/guides/LOGGER_USAGE_GUIDE.md) - 日誌系統
+- [債券 ETF 指南](docs/guides/BOND_ETF_DIVIDEND_GUIDE.md) - 債券 ETF 配息
+
+**技術規範** (`docs/specifications/`)
+- [開發規範](docs/specifications/DEVELOPMENT_SPECIFICATION.md)
+- [雲端同步標準](docs/specifications/UNIVERSAL_CLOUD_SYNC_STANDARDS.md)
+
+**開發檢查清單** (`docs/checklists/`)
+- [開發檢查清單](docs/checklists/DEVELOPMENT_CHECKLIST.md)
+- [雙 API 實作檢查清單](docs/checklists/DUAL_API_IMPLEMENTATION_CHECKLIST.md)
+
+**研究文檔** (`docs/research/`)
+- [OpenAPI 評估](docs/research/OPENAPI_EVALUATION.md)
+- [證交所 OpenAPI 研究](docs/research/TWSE_OPENAPI_RESEARCH.md)
 
 ### 📊 功能截圖
 
