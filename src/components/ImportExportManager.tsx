@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { useAppStore } from '../stores/appStore';
+import { identifyBondETF } from '../services/bondETFService';
 
 // 臨時的類型定義，避免導入錯誤
 interface ExportOptions {
@@ -46,7 +47,7 @@ const ImportExportManager: React.FC<ImportExportManagerProps> = ({
   
   console.log('ImportExportManager 準備渲染 Modal');
   
-  const { accounts, stocks, importData } = useAppStore();
+  const { accounts, stocks, importData, setCurrentAccount } = useAppStore();
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -146,16 +147,24 @@ const ImportExportManager: React.FC<ImportExportManagerProps> = ({
         createdAt: acc.createdAt ? new Date(acc.createdAt) : new Date()
       }));
 
-      // 處理股票資料
-      const stocks = data.stocks.map((stock: any) => ({
-        ...stock,
-        purchaseDate: new Date(stock.purchaseDate),
-        lastUpdated: new Date(stock.lastUpdated),
-        dividendRecords: stock.dividendRecords?.map((dividend: any) => ({
-          ...dividend,
-          exDividendDate: new Date(dividend.exDividendDate)
-        })) || []
-      }));
+      // 處理股票資料（加入債券ETF自動識別）
+      const stocks = data.stocks.map((stock: any) => {
+        // 自動識別債券ETF並設定正確的證交稅率
+        const bondInfo = identifyBondETF(stock.symbol, stock.name);
+        
+        return {
+          ...stock,
+          purchaseDate: new Date(stock.purchaseDate),
+          lastUpdated: new Date(stock.lastUpdated),
+          // 如果匯入資料沒有這些欄位，則自動設定
+          isBondETF: stock.isBondETF ?? bondInfo.isBondETF,
+          transactionTaxRate: stock.transactionTaxRate ?? bondInfo.transactionTaxRate,
+          dividendRecords: stock.dividendRecords?.map((dividend: any) => ({
+            ...dividend,
+            exDividendDate: new Date(dividend.exDividendDate)
+          })) || []
+        };
+      });
 
       const dividendsCount = stocks.reduce((sum: number, stock: any) => 
         sum + (stock.dividendRecords?.length || 0), 0
@@ -216,6 +225,13 @@ const ImportExportManager: React.FC<ImportExportManagerProps> = ({
     try {
       // 執行匯入
       importData(importResult.accounts, importResult.stocks, importMode);
+      
+      // 自動切換到第一個帳戶（遵循 cloud-sync-development.md 規範）
+      if (importResult.accounts.length > 0) {
+        const firstAccountName = importResult.accounts[0].name;
+        setCurrentAccount(firstAccountName);
+        console.log('自動切換到帳戶:', firstAccountName);
+      }
       
       // 顯示成功訊息
       alert(`✅ 匯入成功！\n帳戶: ${importResult.summary.accountsCount} 個\n股票: ${importResult.summary.stocksCount} 筆\n股息記錄: ${importResult.summary.dividendsCount} 筆`);

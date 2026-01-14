@@ -29,15 +29,43 @@ export interface Account {
   createdAt?: Date;              // 建立時間
 }
 
-// 股息記錄介面
+// 除權息記錄介面（完整版）
 export interface DividendRecord {
   id: string;                    // 唯一識別碼
   stockId: string;               // 關聯的股票記錄ID
   symbol: string;                // 股票代碼
-  exDividendDate: Date;          // 除息日期
-  dividendPerShare: number;      // 每股股息
-  totalDividend: number;         // 總股息金額
-  shares: number;                // 持股數（記錄當時）
+  exRightDate: Date;             // 除權息日期（統一命名）
+  
+  // 現金股利（除息）
+  cashDividendPerShare: number;  // 每股現金股利
+  totalCashDividend: number;     // 總現金股利金額
+  
+  // 股票股利（除權/配股）
+  stockDividendRatio: number;    // 配股比例（每1000股配X股）
+  stockDividendShares: number;   // 配得股數
+  
+  // 記錄時的持股狀況
+  sharesBeforeRight: number;     // 除權息前持股數
+  sharesAfterRight: number;      // 除權息後持股數（含配股）
+  
+  // 成本價調整
+  costPriceBeforeRight: number;  // 除權息前成本價
+  costPriceAfterRight: number;   // 除權息後調整成本價
+  
+  // 其他資訊
+  recordDate?: Date;             // 停止過戶日
+  paymentDate?: Date;            // 發放日
+  type: 'cash' | 'stock' | 'both'; // 除權息類型
+  
+  // 向後相容性（保留舊欄位）
+  /** @deprecated 使用 exRightDate 替代 */
+  exDividendDate?: Date;
+  /** @deprecated 使用 cashDividendPerShare 替代 */
+  dividendPerShare?: number;
+  /** @deprecated 使用 totalCashDividend 替代 */
+  totalDividend?: number;
+  /** @deprecated 使用 sharesBeforeRight 替代 */
+  shares?: number;
 }
 
 // 投資組合統計介面

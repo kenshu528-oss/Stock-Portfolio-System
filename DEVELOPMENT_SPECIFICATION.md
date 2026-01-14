@@ -4,7 +4,7 @@
 
 ### 基本資訊
 - **專案名稱**: Stock Portfolio System
-- **當前版本**: v1.0.2.0035
+- **當前版本**: v1.0.2.0072
 - **開發語言**: TypeScript + JavaScript
 - **前端框架**: React 18
 - **後端框架**: Node.js + Express
@@ -78,8 +78,213 @@ backend/
 - **CORS**: 跨域資源共享
 - **dotenv**: 環境變數管理
 
-### 外部 API 整合
-- **Yahoo Finance API**: 主要股價資料來源
+### 外部 API 整合 ⭐ 重點更新
+
+#### FinMind API (首選資料源) 🥇
+- **官方網站**: https://finmindtrade.com/
+- **API文檔**: https://api.finmindtrade.com/docs
+- **用途**: 台股專用開源財經數據，資料最準確
+- **優勢**: 專為台股設計，資料與官方完全一致
+- **限制**: 免費版有請求限制，需要token提升額度
+
+**支援的數據集**:
+```typescript
+// 股價資料
+dataset: 'TaiwanStockPrice'
+// 股息資料  
+dataset: 'TaiwanStockDividendResult'
+```
+
+**API端點規格**:
+```typescript
+// 股價查詢
+GET https://api.finmindtrade.com/api/v4/data
+Parameters:
+- dataset: 'TaiwanStockPrice'
+- data_id: string (股票代碼，如 '2330')
+- start_date: string (YYYY-MM-DD格式)
+- token?: string (可選，提升請求限制)
+
+// 股息查詢
+GET https://api.finmindtrade.com/api/v4/data
+Parameters:
+- dataset: 'TaiwanStockDividendResult'
+- data_id: string (股票代碼)
+- start_date: string (查詢起始日期)
+- token?: string (可選)
+```
+
+**回應格式**:
+```json
+{
+  "msg": "success",
+  "status": 200,
+  "data": [
+    {
+      "date": "2026-01-13",
+      "stock_id": "2330",
+      "open": 1000.0,
+      "close": 1010.0,
+      // ... 其他欄位
+    }
+  ]
+}
+```
+
+#### 台灣證交所 API (備用資料源) 🥈 ⭐ 完整產品支援
+- **用途**: 即時股價資料，支援所有證交所產品
+- **優勢**: 官方資料，即時性佳，涵蓋範圍最廣
+- **限制**: 格式複雜，需要特殊處理
+
+**支援的證交所產品** (v1.0.2.0072更新):
+```typescript
+// 完整的市場分類支援
+上市股票: 1000-2999 (如: 2330台積電)
+上櫃股票: 3000-8999 (如: 6188廣明)  
+興櫃股票: 7000-7999 (如: 7xxx系列)
+ETF基金: 00xxx[A-Z]? (如: 0050、00679B)
+債券產品: 5-6位數字 (如: 12345、123456)
+權證產品: 5位數字+字母 (如: 12345A)
+其他產品: 9000-9999 (特殊代碼)
+```
+
+**API端點規格** (完整支援):
+```typescript
+// 上市股票 (TSE)
+GET https://mis.twse.com.tw/stock/api/getStockInfo.jsp
+Parameters:
+- ex_ch: 'tse_{symbol}.tw'
+- json: 1
+- delay: 0
+
+// 上櫃股票/興櫃 (OTC)
+GET https://mis.twse.com.tw/stock/api/getStockInfo.jsp  
+Parameters:
+- ex_ch: 'otc_{symbol}.tw'
+- json: 1
+- delay: 0
+
+// ETF (上市/上櫃自動判斷)
+自動嘗試 tse_ 和 otc_ 端點
+```
+
+**API調用策略** (v1.0.2.0072優化):
+```typescript
+// 智能API調用順序
+1. 嘗試上市API (tse_)
+2. 如果失敗，嘗試上櫃API (otc_)  
+3. 如果仍失敗，嘗試興櫃API (otc_，不同解析)
+4. 最後回退到其他API (FinMind/Yahoo)
+```
+
+**資料欄位解析** (修復上櫃股票問題):
+```typescript
+// 上市股票欄位
+price: stockData.z || stockData.y  // 現價或昨收
+name: stockData.n                  // 股票名稱
+
+// 上櫃股票欄位 (特殊處理)
+price: stockData.z || stockData.pz || stockData.y  // 多欄位嘗試
+name: stockData.n || `${symbol} (上櫃)`            // 編碼問題備用
+```
+
+**特殊案例處理** 📋 (v1.0.2.0072修復):
+
+**6188搜尋問題解決** ✅:
+- **問題**: 6188(廣明)為上櫃股票，原邏輯只嘗試上市API
+- **解決**: 新增上櫃API支援，正確解析pz價格欄位
+- **結果**: 成功獲取6188股價資料 `{"symbol":"6188","name":"廣明","price":114}`
+
+**上櫃股票特殊處理** ✅:
+- **價格欄位**: 優先z，備用pz，最後y (昨收)
+- **名稱編碼**: 處理問號亂碼，提供備用格式
+- **市場標識**: 正確標記為"上櫃"市場
+
+#### Yahoo Finance API (最後備用) 🥉
+- **用途**: 國際股價資料，台股備用
+- **優勢**: 全球覆蓋，資料豐富
+- **限制**: 台股資料可能不完整
+
+**API端點**:
+```typescript
+// 股價查詢
+GET https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.TW
+
+// 股息查詢
+GET https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.TW?events=div
+```
+
+#### API調用優先級策略 🎯
+```typescript
+// 股價查詢優先級
+1. FinMind API (台股專用，最準確)
+2. 台灣證交所 API (官方即時資料)  
+3. Yahoo Finance API (國際備用)
+
+// 股息查詢優先級
+1. FinMind API (台股專用，歷史完整)
+2. GoodInfo API (網頁爬蟲，資料豐富)
+3. Yahoo Finance API (國際標準格式)
+```
+
+#### API資料完整性規則 ⚠️
+遵循 `api-data-integrity.md` STEERING規則：
+- ✅ **100%使用真實API資料**
+- ❌ **絕對禁止本地硬編碼股票對照表**
+- ❌ **絕對禁止API失敗時返回預設價格**
+- ❌ **絕對禁止混用真實API資料和虛假本地資料**
+
+**錯誤處理原則**:
+```typescript
+// ✅ 正確的錯誤處理
+if (!apiData) {
+  return res.status(404).json({
+    error: 'Stock not found',
+    message: '找不到股票代碼 XXXX 的資訊',
+    suggestions: [
+      '請確認股票代碼是否正確',
+      '檢查是否為有效的台股代碼',
+      '稍後再試或聯繫客服'
+    ]
+  });
+}
+
+// ❌ 禁止的錯誤處理
+if (!apiData) {
+  return { name: '股票名稱', price: 10.0 }; // 虛假資料
+}
+```
+
+#### 特殊案例處理 📋 (v1.0.2.0072完整更新)
+
+**6188搜尋問題完全解決** ✅:
+- **問題**: 6188(廣明)搜尋返回404錯誤
+- **根本原因**: 6188為上櫃股票，原API邏輯只嘗試上市端點
+- **解決方案**: 
+  - 新增完整的上櫃API支援 (otc_端點)
+  - 修復價格欄位解析 (z → pz → y)
+  - 處理股票名稱編碼問題
+- **測試結果**: ✅ `{"symbol":"6188","name":"廣明","price":114,"market":"上櫃"}`
+
+**證交所產品完整支援矩陣** 🎯:
+```typescript
+產品類型    代碼範圍        API端點    特殊處理
+上市股票    1000-2999      tse_      標準解析
+上櫃股票    3000-8999      otc_      pz價格欄位
+興櫃股票    7000-7999      otc_      備用名稱
+ETF基金     00xxx[A-Z]?    tse_+otc_ 雙端點嘗試
+債券產品    5-6位數字      智能判斷   特殊格式
+權證產品    5位數+字母     智能判斷   特殊格式
+其他產品    9000-9999      智能判斷   備用處理
+```
+
+**四碼搜尋原則** (已驗證正確):
+- **規則**: 要求至少4碼才開始API請求
+- **原因**: 台股代碼最少4碼，符合證交所規範
+- **效果**: 減少無效請求，提升系統效能
+- **狀態**: ✅ 實作正確，無需修改
+
+- **Yahoo Finance API**: 備用股價資料來源
 - **台灣證交所 API**: 備用股價資料來源
 - **GitHub Gist API**: 雲端資料同步
 
@@ -367,8 +572,8 @@ VITE_API_BASE_URL=http://localhost:3001
 
 ---
 
-**文件版本**: v1.0.2.0035  
-**最後更新**: 2026-01-12  
+**文件版本**: v1.0.2.0072  
+**最後更新**: 2026-01-13  
 **維護者**: Stock Portfolio System Development Team
 
 ## 📚 相關文檔

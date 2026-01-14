@@ -10,6 +10,8 @@ interface SidebarProps {
   onImport?: () => void;
   onOpenCloudSync?: () => void;
   onResetToDefault?: () => void;
+  onRefreshDividends?: () => void;
+  onBatchProcessRights?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -20,7 +22,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onExport,
   onImport,
   onOpenCloudSync,
-  onResetToDefault 
+  onResetToDefault,
+  onRefreshDividends,
+  onBatchProcessRights
 }) => {
   // Handle ESC key press and click outside
   useEffect(() => {
@@ -104,14 +108,32 @@ const Sidebar: React.FC<SidebarProps> = ({
             variant="ghost"
             className="w-full justify-start text-left h-12 px-4 text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg"
             onClick={() => {
-              // TODO: Open dividend manager
-              console.log('股息管理');
+              onRefreshDividends?.();
+              onClose(); // 關閉側邊選單
             }}
           >
             <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
             </svg>
-            股息管理
+            刷新股息資料
+          </Button>
+
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-left h-12 px-4 text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg"
+            onClick={() => {
+              onBatchProcessRights?.();
+              onClose(); // 關閉側邊選單
+            }}
+          >
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="6" width="6" height="4" strokeWidth={1.5} />
+              <rect x="11" y="6" width="4" height="4" strokeWidth={1.5} />
+              <rect x="17" y="6" width="4" height="4" strokeWidth={1.5} />
+              <circle cx="12" cy="16" r="3" strokeWidth={1} />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 14v4m-1-2h2" />
+            </svg>
+            批次處理除權息
           </Button>
 
           <Button

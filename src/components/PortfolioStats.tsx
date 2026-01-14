@@ -1,5 +1,7 @@
 import React from 'react';
 import { useAppStore } from '../stores/appStore';
+import { getTransactionTaxRate } from '../services/bondETFService';
+import { RightsAdjustmentService } from '../services/rightsAdjustmentService';
 import type { StockRecord, PortfolioStats as PortfolioStatsType } from '../types';
 
 interface PortfolioStatsProps {
@@ -16,7 +18,7 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
   className = ''
 }) => {
   // 獲取股價更新狀態和帳戶資訊
-  const { lastPriceUpdate, isUpdatingPrices, accounts } = useAppStore();
+  const { lastPriceUpdate, isUpdatingPrices, accounts, includeDividendInGainLoss, rightsAdjustmentMode } = useAppStore();
   
   // 過濾當前帳戶的股票
   const currentAccountStocks = stocks.filter(stock => stock.accountId === currentAccountId);
@@ -63,37 +65,68 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
       sum + (stock.shares * stock.currentPrice), 0
     );
 
-    // 計算總買入成本（包含買入手續費）
+    // 計算總買入成本（包含買入手續費，考慮最低手續費20元）
     const totalBuyCost = currentAccountStocks.reduce((sum, stock) => {
       const costBasis = stock.adjustedCostPrice || stock.costPrice;
       const grossCost = stock.shares * costBasis;
-      const buyBrokerageFee = Math.round(grossCost * (brokerageFeeRate / 100));
+      const buyBrokerageFee = Math.max(20, Math.round(grossCost * (brokerageFeeRate / 100)));
       return sum + grossCost + buyBrokerageFee;
     }, 0);
 
-    // 計算總賣出收入（扣除賣出手續費和證交稅）
+    // 計算總賣出收入（扣除賣出手續費和證交稅，考慮債券ETF稅率）
     const totalNetSellValue = currentAccountStocks.reduce((sum, stock) => {
       const grossSellValue = stock.shares * stock.currentPrice;
-      const sellBrokerageFee = Math.round(grossSellValue * (brokerageFeeRate / 100));
-      const sellTransactionTax = Math.round(grossSellValue * (transactionTaxRate / 100));
+      const sellBrokerageFee = Math.max(20, Math.round(grossSellValue * (brokerageFeeRate / 100)));
+      
+      // 根據股票類型計算正確的證交稅率
+      const actualTaxRate = stock.transactionTaxRate ?? getTransactionTaxRate(stock.symbol, stock.name);
+      const sellTransactionTax = Math.round(grossSellValue * (actualTaxRate / 100));
+      
       return sum + grossSellValue - sellBrokerageFee - sellTransactionTax;
     }, 0);
 
-    // 計算真實總損益（淨賣出收入 - 總買入成本）
-    const totalGainLoss = totalNetSellValue - totalBuyCost;
+    // 計算總損益：根據兩個按鈕的狀態決定計算方式
+    const totalGainLoss = currentAccountStocks.reduce((sum, stock) => {
+      let gainLoss: number;
+      
+      if (includeDividendInGainLoss) {
+        // 第一個按鈕：含股息 - 使用第二個按鈕的除權息模式
+        gainLoss = RightsAdjustmentService.calculateGainLossWithRights(
+          stock, 
+          rightsAdjustmentMode,
+          brokerageFeeRate,
+          transactionTaxRate
+        );
+      } else {
+        // 第一個按鈕：不含股息 - 使用基礎損益計算（考慮交易成本但不含股息）
+        
+        // 計算買入成本（包含買入手續費）
+        const costBasis = stock.adjustedCostPrice || stock.costPrice;
+        const grossBuyCost = stock.shares * costBasis;
+        const buyBrokerageFee = Math.max(20, Math.round(grossBuyCost * (brokerageFeeRate / 100)));
+        const totalBuyCost = grossBuyCost + buyBrokerageFee;
+        
+        // 計算賣出收入（扣除賣出手續費和證交稅）
+        const grossSellValue = stock.shares * stock.currentPrice;
+        const sellBrokerageFee = Math.max(20, Math.round(grossSellValue * (brokerageFeeRate / 100)));
+        const actualTaxRate = stock.transactionTaxRate ?? getTransactionTaxRate(stock.symbol, stock.name);
+        const sellTransactionTax = Math.round(grossSellValue * (actualTaxRate / 100));
+        const netSellValue = grossSellValue - sellBrokerageFee - sellTransactionTax;
+        
+        // 基礎損益 = 淨賣出收入 - 總買入成本
+        gainLoss = netSellValue - totalBuyCost;
+      }
+      
+      return sum + gainLoss;
+    }, 0);
+
+    // 計算總股息收入（向後相容處理）
+    const totalDividend = currentAccountStocks.reduce((sum, stock) => {
+      return sum + RightsAdjustmentService.getTotalCashDividend(stock);
+    }, 0);
 
     // 計算總損益率
     const totalGainLossPercent = totalBuyCost > 0 ? (totalGainLoss / totalBuyCost) * 100 : 0;
-
-    // 計算總股息收入（根據當前股數重新計算）
-    const totalDividend = currentAccountStocks.reduce((sum, stock) => {
-      if (stock.dividendRecords && stock.dividendRecords.length > 0) {
-        return sum + stock.dividendRecords.reduce((dividendSum, dividend) => 
-          dividendSum + (stock.shares * dividend.dividendPerShare), 0
-        );
-      }
-      return sum;
-    }, 0);
 
     // 計算總報酬（損益 + 股息）
     const totalReturn = totalGainLoss + totalDividend;

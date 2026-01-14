@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import { SearchIcon, CheckIcon, XIcon } from './ui/Icons';
-import type { StockFormData } from '../types';
+import type { StockFormData, StockSearchResult } from '../types';
 
 // 使用內建圖示替代 lucide-react
 const PlusIcon = () => (
@@ -15,13 +15,6 @@ interface QuickAddStockProps {
   currentAccount: string;
   onSubmit: (stockData: StockFormData) => void;
   className?: string;
-}
-
-interface StockSearchResult {
-  symbol: string;
-  name: string;
-  price: number;
-  market: string;
 }
 
 const QuickAddStock: React.FC<QuickAddStockProps> = ({
@@ -51,8 +44,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // 從後端API搜尋股票
   const searchStocks = async (query: string): Promise<StockSearchResult[]> => {
     try {
-      // 1. 優先使用後端API搜尋
-      const response = await fetch(`http://localhost:3001/api/search/${encodeURIComponent(query)}`);
+      // 使用正確的股票API端點
+      const response = await fetch(`http://localhost:3001/api/stock/${encodeURIComponent(query)}`);
       
       if (response.ok) {
         const stockData = await response.json();
@@ -73,7 +66,7 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     } catch (error) {
       console.error('搜尋API錯誤:', error);
       
-      // 2. API失敗時，嘗試從本地快取或顯示錯誤
+      // API失敗時顯示錯誤
       throw new Error('搜尋服務暫時無法使用，請稍後再試');
     }
   };
@@ -83,7 +76,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     setSearchQuery(query);
     setError('');
     
-    if (query.length < 2) {
+    // 台股代碼至少需要四碼才開始搜尋
+    if (query.length < 4) {
       setSearchResults([]);
       setShowResults(false);
       return;
@@ -91,11 +85,14 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     
     // 支援股票代碼和股票名稱搜尋
     const isValidStockCode = /^\d{4,6}[A-Z]?$/i.test(query);
-    const isValidStockName = /^[\u4e00-\u9fff\u3400-\u4dbf\w\s]+$/i.test(query) && query.length >= 2;
+    const isValidStockName = /^[\u4e00-\u9fff\u3400-\u4dbf\w\s]+$/i.test(query) && query.length >= 4;
     
     if (!isValidStockCode && !isValidStockName) {
       setSearchResults([]);
       setShowResults(false);
+      if (query.length >= 4) {
+        setError('請輸入有效的股票代碼（4-6位數字）或股票名稱');
+      }
       return;
     }
     
@@ -207,14 +204,14 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             <Input
               ref={searchInputRef}
               type="text"
-              placeholder="輸入股票代號或名稱..."
+              placeholder="輸入股票代號（至少4碼）或名稱..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               onKeyDown={handleKeyDown}
               className="pr-20"
             />
             
-            {/* 搜尋圖示或載入指示器 */}
+            {/* 搜尋圖示、清除按鈕或載入指示器 */}
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
               {isSearching ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
@@ -231,6 +228,21 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                     <XIcon size="sm" className="text-white" />
                   </button>
                 </>
+              ) : searchQuery.length > 0 ? (
+                // 當輸入框有文字時顯示清除按鈕
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchResults([]);
+                    setShowResults(false);
+                    setError('');
+                    searchInputRef.current?.focus();
+                  }}
+                  className="p-1.5 bg-slate-600 hover:bg-slate-500 rounded-full transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-110"
+                  title="清除輸入"
+                >
+                  <XIcon size="sm" className="text-slate-300" />
+                </button>
               ) : (
                 <div className="flex items-center">
                   <SearchIcon 
@@ -271,12 +283,22 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
           )}
           
           {/* 無搜尋結果 */}
-          {showResults && searchResults.length === 0 && !isSearching && searchQuery.length >= 2 && (
+          {showResults && searchResults.length === 0 && !isSearching && searchQuery.length >= 4 && (
             <div className="absolute top-full left-0 right-0 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50 mt-1">
               <div className="p-4 text-center text-slate-400">
                 <SearchIcon />
                 <p>找不到相關股票</p>
-                <p className="text-sm">請檢查股票代號或名稱是否正確</p>
+                <p className="text-sm">請檢查股票代號（4-6碼）或名稱是否正確</p>
+              </div>
+            </div>
+          )}
+          
+          {/* 輸入提示 */}
+          {searchQuery.length > 0 && searchQuery.length < 4 && (
+            <div className="absolute top-full left-0 right-0 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50 mt-1">
+              <div className="p-3 text-center text-slate-400">
+                <p className="text-sm">請輸入至少4碼股票代號</p>
+                <p className="text-xs text-slate-500">例如：2330、00679B、6188</p>
               </div>
             </div>
           )}

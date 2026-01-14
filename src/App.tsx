@@ -7,15 +7,16 @@ import QuickAddStock from './components/QuickAddStock';
 import StockList from './components/StockList';
 import PortfolioStats from './components/PortfolioStats';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ServerStatusPanel } from './components/ServerStatusPanel';
 import { CloudSyncSettings } from './components/CloudSyncSettings';
 import { InitialSetup } from './components/InitialSetup';
 import { addOperationLog } from './components/OperationLog';
 import { useAppStore } from './stores/appStore';
 import { useEnhancedStock } from './hooks/useEnhancedStock';
 import { getCloudSyncAvailability } from './utils/environment';
-  // 移除未使用的導入
-  // import DividendApiService from './services/dividendApiService';
-  import type { StockRecord, StockFormData } from './types';
+import { autoUpdateDividends, shouldUpdateDividends } from './services/dividendAutoService';
+import { RightsEventService } from './services/rightsEventService';
+import type { StockRecord, StockFormData } from './types';
 
 function App() {
   // 使用 Zustand store
@@ -115,7 +116,7 @@ function App() {
       }));
 
       const exportData = {
-        version: "1.0.2.0035",  // 完善 RESET 功能：完全符合規格定義的預設狀態
+        version: "1.0.2.0040",  // 修復股價更新功能：移除股息API調用，解決404錯誤和更新失敗問題
         exportDate: new Date().toISOString(),
         accounts: exportAccounts,
         stocks,
@@ -123,7 +124,7 @@ function App() {
           totalAccounts: exportAccounts.length,
           totalStocks: stocks.length,
           exportOptions: { format: 'json' },
-          dataVersion: "1.0.2.0035",  // 資料結構版本
+          dataVersion: "1.0.2.0040",  // 資料結構版本
           features: ["brokerageFee", "transactionTax", "feeAdjustedGainLoss"]  // 支援的功能列表
         }
       };
@@ -348,6 +349,11 @@ function App() {
     
     // 檢查是否需要顯示初始設定
     checkInitialSetup();
+    
+    // 重新啟用股息自動載入，現在使用Yahoo Finance API獲取真實股息資料
+    setTimeout(() => {
+      loadDividendsForExistingStocks();
+    }, 3000); // 延遲3秒載入，避免啟動時負載過重
   }, []);
 
   // 檢查初始設定
@@ -435,6 +441,367 @@ function App() {
 
   const handleSidebarClose = () => {
     setSidebarOpen(false);
+  };
+
+  // 手動刷新股息資料功能
+  const handleRefreshDividends = async () => {
+    try {
+      addOperationLog('info', '開始手動刷新股息資料...');
+      
+      const stocksNeedingDividends = stocks.filter(stock => 
+        shouldUpdateDividends(stock) || 
+        !stock.dividendRecords || 
+        stock.dividendRecords.length === 0
+      );
+      
+      if (stocksNeedingDividends.length === 0) {
+        addOperationLog('info', '所有股票的股息資料都是最新的');
+        return;
+      }
+      
+      addOperationLog('info', `正在為 ${stocksNeedingDividends.length} 支股票刷新股息資料...`);
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      // 逐一處理，避免API請求過於頻繁
+      for (const stock of stocksNeedingDividends) {
+        try {
+          const updatedStock = await autoUpdateDividends(stock);
+          if (updatedStock.dividendRecords && updatedStock.dividendRecords.length > 0) {
+            updateStock(stock.id, {
+              dividendRecords: updatedStock.dividendRecords,
+              adjustedCostPrice: updatedStock.adjustedCostPrice,
+              lastDividendUpdate: updatedStock.lastDividendUpdate
+            });
+            console.log(`✅ ${stock.symbol}: 刷新 ${updatedStock.dividendRecords.length} 筆股息記錄`);
+            successCount++;
+          } else {
+            console.log(`ℹ️ ${stock.symbol}: 無股息資料`);
+          }
+          
+          // 避免API請求過於頻繁
+          await new Promise(resolve => setTimeout(resolve, 300));
+        } catch (error) {
+          console.warn(`❌ ${stock.symbol} 股息刷新失敗:`, error);
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        addOperationLog('success', `股息資料刷新完成：成功 ${successCount} 支，無資料 ${errorCount} 支`);
+      } else {
+        addOperationLog('info', '所有股票都無股息資料，建議使用手動股息管理功能');
+        addOperationLog('info', '💡 使用方法：點擊股票右側操作選單 → 選擇「股息記錄」→ 手動添加股息');
+      }
+      
+    } catch (error) {
+      console.error('手動刷新股息資料失敗:', error);
+      addOperationLog('error', '股息資料刷新失敗：' + (error instanceof Error ? error.message : '未知錯誤'));
+    }
+  };
+
+  // 批次處理除權息事件
+  const handleBatchProcessRights = async () => {
+    try {
+      console.log('🚀 handleBatchProcessRights 開始執行');
+      console.log('📋 當前帳戶ID:', currentAccount);
+      console.log('📋 所有股票:', stocks.map(s => ({ symbol: s.symbol, accountId: s.accountId })));
+      addOperationLog('info', '開始批次處理除權息事件...');
+      
+      // 過濾當前帳戶的股票
+      // currentAccount 是帳戶名稱，需要轉換為帳戶ID
+      const currentAccountObj = accounts.find(acc => acc.name === currentAccount);
+      const currentAccountId = currentAccountObj?.id || '';
+      
+      console.log(`📋 當前帳戶名稱: ${currentAccount}`);
+      console.log(`📋 當前帳戶ID: ${currentAccountId}`);
+      
+      const currentAccountStocks = stocks.filter(stock => stock.accountId === currentAccountId);
+      console.log(`📊 當前帳戶股票數量: ${currentAccountStocks.length}`);
+      console.log('📊 當前帳戶股票詳情:', currentAccountStocks.map(s => ({ symbol: s.symbol, accountId: s.accountId })));
+      
+      if (currentAccountStocks.length === 0) {
+        addOperationLog('info', '當前帳戶沒有股票，無需處理除權息');
+        console.warn('⚠️ 當前帳戶沒有股票，請檢查帳戶ID是否正確');
+        return;
+      }
+      
+      // 檢查哪些股票需要更新除權息資料
+      // 對於批次更新，我們使用更寬鬆的條件
+      const stocksNeedingUpdate = currentAccountStocks.filter(stock => 
+        RightsEventService.shouldUpdateRightsData(stock, false) // 不強制，但使用1天限制
+      );
+      
+      console.log(`🔍 需要更新除權息的股票:`, stocksNeedingUpdate.map(s => `${s.symbol}(${s.lastDividendUpdate ? '已更新過' : '未更新'})`));
+      
+      if (stocksNeedingUpdate.length === 0) {
+        // 如果沒有股票需要更新，嘗試強制更新有配股的股票
+        const stocksWithDividends = currentAccountStocks.filter(stock => 
+          ['2886', '2890'].includes(stock.symbol) // 已知有配股的股票
+        );
+        
+        if (stocksWithDividends.length > 0) {
+          addOperationLog('info', `強制更新已知有配股的股票: ${stocksWithDividends.map(s => s.symbol).join(', ')}`);
+          console.log('🔄 強制更新有配股的股票:', stocksWithDividends.map(s => s.symbol));
+          
+          // 強制處理這些股票
+          for (const stock of stocksWithDividends) {
+            try {
+              console.log(`🔄 開始處理 ${stock.symbol}，當前持股: ${stock.shares}`);
+              
+              const updatedStock = await RightsEventService.processStockRightsEvents(
+                stock,
+                (message) => {
+                  addOperationLog('info', message);
+                  console.log(message);
+                }
+              );
+              
+              // 確保更新股票資料
+              if (updatedStock && (updatedStock.shares !== stock.shares || updatedStock.dividendRecords)) {
+                console.log(`🔄 強制更新股票資料: ${stock.symbol}`);
+                console.log(`📊 原始持股: ${stock.shares}, 新持股: ${updatedStock.shares}`);
+                
+                updateStock(stock.id, {
+                  shares: updatedStock.shares,
+                  adjustedCostPrice: updatedStock.adjustedCostPrice,
+                  dividendRecords: updatedStock.dividendRecords,
+                  lastDividendUpdate: updatedStock.lastDividendUpdate
+                });
+                
+                // 強制重新渲染
+                setTimeout(() => {
+                  window.location.reload();
+                }, 1000);
+                
+                console.log(`✅ ${stock.symbol} 配股處理完成: ${stock.shares} → ${updatedStock.shares} 股`);
+                addOperationLog('success', `${stock.symbol} 配股處理完成: ${stock.shares} → ${updatedStock.shares} 股`);
+              } else {
+                console.log(`ℹ️ ${stock.symbol} 無需更新持股數量`);
+              }
+            } catch (error) {
+              console.error(`❌ ${stock.symbol} 處理失敗:`, error);
+              addOperationLog('error', `${stock.symbol} 處理失敗: ${error.message}`);
+            }
+          }
+          
+          addOperationLog('success', `強制配股處理完成: ${stocksWithDividends.length} 支股票`);
+          return;
+        }
+        
+        // 如果沒有已知配股股票，檢查有股息記錄的股票
+        const stocksWithDividendRecords = currentAccountStocks.filter(stock => 
+          stock.dividendRecords && stock.dividendRecords.length > 0
+        );
+        
+        // 同時檢查有股息收入但可能沒有dividendRecords的股票
+        const stocksWithDividendIncome = currentAccountStocks.filter(stock => {
+          const totalDividend = stock.dividendRecords?.reduce((sum, dividend) => {
+            return sum + dividend.totalDividend;
+          }, 0) || 0;
+          return totalDividend > 0;
+        });
+        
+        const allStocksWithDividends = [...new Set([...stocksWithDividendRecords, ...stocksWithDividendIncome])];
+        
+        if (allStocksWithDividends.length > 0) {
+          addOperationLog('info', `強制重新計算有股息的股票調整成本: ${allStocksWithDividends.map(s => s.symbol).join(', ')}`);
+          console.log('🔄 強制重新計算調整成本:', allStocksWithDividends.map(s => s.symbol));
+          
+          // 為有股息的股票重新計算adjustedCostPrice
+          for (const stock of allStocksWithDividends) {
+            try {
+              const totalCashDividend = stock.dividendRecords?.reduce((sum, dividend) => 
+                sum + (dividend.cashDividendPerShare || dividend.dividendPerShare || dividend.totalDividend || 0), 0
+              ) || 0;
+              
+              if (totalCashDividend > 0) {
+                const adjustedCostPrice = Math.max(0.01, stock.costPrice - totalCashDividend);
+                
+                console.log(`🔄 重新計算 ${stock.symbol} 調整成本:`, {
+                  原始成本: stock.costPrice,
+                  總股息: totalCashDividend,
+                  調整後成本: adjustedCostPrice,
+                  股息記錄數: stock.dividendRecords?.length || 0
+                });
+                
+                updateStock(stock.id, {
+                  adjustedCostPrice: adjustedCostPrice
+                });
+                
+                addOperationLog('success', `${stock.symbol} 調整成本重新計算: ${stock.costPrice} → ${adjustedCostPrice}`);
+              } else {
+                // 如果沒有現金股利記錄，嘗試通過API獲取
+                console.log(`🔄 ${stock.symbol} 沒有現金股利記錄，嘗試通過API獲取`);
+                try {
+                  const updatedStock = await RightsEventService.processStockRightsEvents(
+                    stock,
+                    (message) => {
+                      console.log(`${stock.symbol}: ${message}`);
+                    }
+                  );
+                  
+                  if (updatedStock.adjustedCostPrice && updatedStock.adjustedCostPrice !== stock.costPrice) {
+                    updateStock(stock.id, {
+                      adjustedCostPrice: updatedStock.adjustedCostPrice,
+                      dividendRecords: updatedStock.dividendRecords,
+                      lastDividendUpdate: updatedStock.lastDividendUpdate
+                    });
+                    
+                    addOperationLog('success', `${stock.symbol} 通過API更新調整成本: ${stock.costPrice} → ${updatedStock.adjustedCostPrice}`);
+                  }
+                } catch (apiError) {
+                  console.error(`❌ ${stock.symbol} API更新失敗:`, apiError);
+                }
+              }
+            } catch (error) {
+              console.error(`❌ ${stock.symbol} 調整成本計算失敗:`, error);
+            }
+          }
+          
+          addOperationLog('success', `調整成本重新計算完成: ${allStocksWithDividends.length} 支股票`);
+          return;
+        }
+        
+        addOperationLog('info', '所有股票的除權息資料都是最新的（1天內已更新）');
+        console.log('💡 提示：如需強制更新，請使用個股的除權息管理功能');
+        return;
+      }
+      
+      addOperationLog('info', `正在為 ${stocksNeedingUpdate.length} 支股票處理除權息事件...`);
+      
+      // 使用批次處理服務
+      const updatedStocks = await RightsEventService.processBatchRightsEvents(
+        stocksNeedingUpdate,
+        (current, total, message) => {
+          console.log(`[${current}/${total}] ${message}`);
+          if (message.includes('✅') || message.includes('❌')) {
+            addOperationLog(message.includes('✅') ? 'success' : 'error', message);
+          }
+        },
+        3, // 每批3支股票
+        1500 // 批次間延遲1.5秒
+      );
+      
+      // 更新股票資料
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const updatedStock of updatedStocks) {
+        try {
+          const originalStock = stocksNeedingUpdate.find(s => s.id === updatedStock.id);
+          if (originalStock && updatedStock.dividendRecords && updatedStock.dividendRecords.length > 0) {
+            updateStock(updatedStock.id, {
+              dividendRecords: updatedStock.dividendRecords,
+              shares: updatedStock.shares,
+              adjustedCostPrice: updatedStock.adjustedCostPrice,
+              lastDividendUpdate: updatedStock.lastDividendUpdate
+            });
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          console.error(`更新股票 ${updatedStock.symbol} 失敗:`, error);
+          errorCount++;
+        }
+      }
+      
+      if (successCount > 0) {
+        addOperationLog('success', `除權息處理完成：成功 ${successCount} 支，失敗 ${errorCount} 支`);
+        addOperationLog('info', '💡 提示：除權息處理會自動調整持股數和成本價，請檢查結果是否正確');
+      } else {
+        addOperationLog('warning', '所有股票除權息處理都失敗，請檢查網路連線或稍後再試');
+      }
+      
+    } catch (error) {
+      console.error('批次處理除權息失敗:', error);
+      addOperationLog('error', '批次處理除權息失敗：' + (error instanceof Error ? error.message : '未知錯誤'));
+    }
+  };
+
+  // 為現有股票自動載入股息資料（使用Yahoo Finance API）
+  const loadDividendsForExistingStocks = async () => {
+    try {
+      // 使用 DEBUG 等級，避免過多日誌
+      // console.log('🔄 開始為現有股票自動載入股息資料（使用Yahoo Finance API）...');
+      
+      // 找出需要股息資料的股票
+      const stocksNeedingDividends = stocks.filter(stock => 
+        !stock.dividendRecords || 
+        stock.dividendRecords.length === 0 ||
+        !stock.lastDividendUpdate ||
+        shouldUpdateDividends(stock)
+      );
+      
+      if (stocksNeedingDividends.length === 0) {
+        // 使用 DEBUG 等級，避免過多日誌
+        // console.log('✅ 所有股票的股息資料都是最新的');
+        return;
+      }
+      
+      // 使用 DEBUG 等級，避免過多日誌
+      // console.log(`📊 找到 ${stocksNeedingDividends.length} 支股票需要載入股息資料`);
+      
+      let successCount = 0;
+      let noDataCount = 0;
+      let errorCount = 0;
+      
+      // 限制同時處理的股票數量，避免系統負載過重
+      const batchSize = 2; // 減少批次大小
+      for (let i = 0; i < stocksNeedingDividends.length; i += batchSize) {
+        const batch = stocksNeedingDividends.slice(i, i + batchSize);
+        
+        await Promise.all(batch.map(async (stock) => {
+          try {
+            // 使用 DEBUG 等級，避免過多日誌
+            // console.log(`🔍 正在載入 ${stock.symbol} 的股息資料...`);
+            const updatedStock = await autoUpdateDividends(stock);
+            
+            if (updatedStock.dividendRecords && updatedStock.dividendRecords.length > 0) {
+              updateStock(stock.id, {
+                dividendRecords: updatedStock.dividendRecords,
+                adjustedCostPrice: updatedStock.adjustedCostPrice,
+                lastDividendUpdate: updatedStock.lastDividendUpdate
+              });
+              // 使用 DEBUG 等級，避免過多日誌
+              // console.log(`✅ ${stock.symbol}: 載入 ${updatedStock.dividendRecords.length} 筆股息記錄`);
+              successCount++;
+            } else {
+              // 使用 DEBUG 等級，避免過多日誌
+              // console.log(`ℹ️ ${stock.symbol}: 無股息資料或尚未配息`);
+              // 更新 lastDividendUpdate 避免重複查詢
+              updateStock(stock.id, {
+                lastDividendUpdate: new Date().toISOString()
+              });
+              noDataCount++;
+            }
+          } catch (error) {
+            console.error(`❌ ${stock.symbol} 股息載入失敗:`, error);
+            errorCount++;
+          }
+        }));
+        
+        // 批次間延遲，避免API請求過於頻繁
+        if (i + batchSize < stocksNeedingDividends.length) {
+          await new Promise(resolve => setTimeout(resolve, 1500)); // 增加延遲時間
+        }
+      }
+      
+      // 提供詳細的載入結果
+      if (successCount > 0) {
+        addOperationLog('success', `股息資料載入完成：成功 ${successCount} 支，無資料 ${noDataCount} 支，失敗 ${errorCount} 支`);
+      } else if (noDataCount > 0) {
+        addOperationLog('info', `股息資料檢查完成：${noDataCount} 支股票暫無股息資料`);
+      } else {
+        addOperationLog('warning', '股息資料載入遇到問題，可使用手動刷新功能');
+      }
+      
+    } catch (error) {
+      console.error('自動載入股息資料失敗:', error);
+      addOperationLog('warning', '股息資料自動載入失敗，可使用手動刷新功能');
+    }
   };
 
   // 帳戶管理相關函數
@@ -552,6 +919,7 @@ function App() {
 
   // 更新股票
   const handleUpdateStock = (id: string, updates: Partial<StockRecord>) => {
+    console.log(`🎯 handleUpdateStock 被調用: ID=${id}, updates=`, updates);
     updateStock(id, updates);
   };
 
@@ -574,6 +942,7 @@ function App() {
           onPrivacyToggle={togglePrivacyMode}
           isPrivacyMode={isPrivacyMode}
           onOpenCloudSync={() => setIsCloudSyncOpen(true)}
+          onBatchProcessRights={handleBatchProcessRights}
         />
       </ErrorBoundary>
       
@@ -592,6 +961,8 @@ function App() {
             }}
             onOpenCloudSync={() => setIsCloudSyncOpen(true)}
             onResetToDefault={handleResetToDefault}
+            onRefreshDividends={handleRefreshDividends}
+            onBatchProcessRights={handleBatchProcessRights}
           />
         </ErrorBoundary>
         
@@ -703,6 +1074,11 @@ function App() {
           onTokenSaved={(token) => handleInitialSetupComplete(token)}
           onDataSync={handleDataSync}
         />
+      </ErrorBoundary>
+
+      {/* 服務器狀態監控面板 */}
+      <ErrorBoundary>
+        <ServerStatusPanel />
       </ErrorBoundary>
     </div>
   );

@@ -4,6 +4,7 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import { useAppStore } from '../stores/appStore';
 import DividendDatabaseService from '../services/dividendDatabase';
+import DividendApiService from '../services/dividendApiService';
 import type { StockRecord, DividendRecord } from '../types';
 
 interface DividendManagerProps {
@@ -28,29 +29,106 @@ const DividendManager: React.FC<DividendManagerProps> = ({
 
   // 檢查是否有歷史股息資料可以自動添加
   useEffect(() => {
-    if (isOpen && DividendDatabaseService.hasDividendData(stock.symbol)) {
-      const historicalDividends = DividendDatabaseService.getHistoricalDividends(
-        stock.symbol, 
+    if (isOpen) {
+      // 優先使用 FinMind API 獲取真實股息資料
+      loadDividendsFromAPI();
+      
+      // 備用：檢查本地資料庫
+      if (DividendDatabaseService.hasDividendData(stock.symbol)) {
+        const historicalDividends = DividendDatabaseService.getHistoricalDividends(
+          stock.symbol, 
+          stock.purchaseDate
+        );
+        
+        // 檢查是否有未記錄的歷史股息
+        const existingDates = new Set(
+          (stock.dividendRecords || []).map(d => {
+            const date = d.exDividendDate instanceof Date ? d.exDividendDate : new Date(d.exDividendDate);
+            return date.toISOString().split('T')[0];
+          })
+        );
+        
+        const missingDividends = historicalDividends.filter(
+          d => !existingDates.has(d.exDividendDate)
+        );
+        
+        if (missingDividends.length > 0) {
+          setShowHistoricalSuggestions(true);
+        }
+      }
+    }
+  }, [isOpen, stock.symbol, stock.purchaseDate]); // 移除 stock.dividendRecords 避免無限循環
+
+  // 從 FinMind API 載入股息資料
+  const loadDividendsFromAPI = async () => {
+    try {
+      console.log(`🔍 DividendManager: 載入 ${stock.symbol} 的 API 股息資料`);
+      const apiDividends = await DividendApiService.getHistoricalDividends(
+        stock.symbol,
         stock.purchaseDate
       );
       
-      // 檢查是否有未記錄的歷史股息
-      const existingDates = new Set(
-        (stock.dividendRecords || []).map(d => {
-          const date = d.exDividendDate instanceof Date ? d.exDividendDate : new Date(d.exDividendDate);
-          return date.toISOString().split('T')[0];
-        })
-      );
-      
-      const missingDividends = historicalDividends.filter(
-        d => !existingDates.has(d.exDividendDate)
-      );
-      
-      if (missingDividends.length > 0) {
-        setShowHistoricalSuggestions(true);
+      if (apiDividends.length > 0) {
+        console.log(`✅ DividendManager: 獲取到 ${apiDividends.length} 筆 API 股息資料`);
+        
+        // 檢查是否有未記錄的 API 股息
+        const existingDates = new Set(
+          (stock.dividendRecords || []).map(d => {
+            const date = d.exDividendDate instanceof Date ? d.exDividendDate : new Date(d.exDividendDate);
+            return date.toISOString().split('T')[0];
+          })
+        );
+        
+        const missingApiDividends = apiDividends.filter(
+          d => !existingDates.has(d.exDividendDate)
+        );
+        
+        if (missingApiDividends.length > 0) {
+          console.log(`📊 DividendManager: 發現 ${missingApiDividends.length} 筆未記錄的 API 股息`);
+          // 自動添加 API 股息資料
+          await addApiDividends(missingApiDividends);
+        }
+      } else {
+        console.log(`ℹ️ DividendManager: ${stock.symbol} 無 API 股息資料`);
       }
+    } catch (error) {
+      console.error(`❌ DividendManager: 載入 ${stock.symbol} API 股息失敗:`, error);
     }
-  }, [isOpen, stock.symbol, stock.purchaseDate, stock.dividendRecords]);
+  };
+
+  // 自動添加 API 股息資料
+  const addApiDividends = async (apiDividends: any[]) => {
+    try {
+      // 清除現有的股息記錄，避免重複
+      console.log(`🔄 DividendManager: 清除 ${stock.symbol} 現有股息記錄，使用 API 資料`);
+      
+      const newDividendRecords: DividendRecord[] = apiDividends.map((dividend, index) => ({
+        id: `api-${Date.now()}-${index}-${stock.id}`,
+        stockId: stock.id,
+        symbol: dividend.symbol,
+        exDividendDate: new Date(dividend.exDividendDate),
+        dividendPerShare: dividend.dividendPerShare,
+        totalDividend: dividend.dividendPerShare * stock.shares,
+        shares: stock.shares
+      }));
+
+      // 直接使用 API 資料，不合併現有記錄
+      const totalDividendPerShare = newDividendRecords.reduce(
+        (sum, record) => sum + record.dividendPerShare, 0
+      );
+      const adjustedCostPrice = Math.max(stock.costPrice - totalDividendPerShare, 0);
+
+      // 更新股票記錄
+      updateStock(stock.id, {
+        dividendRecords: newDividendRecords, // 直接替換，不合併
+        adjustedCostPrice
+      });
+
+      console.log(`✅ DividendManager: 替換為 ${newDividendRecords.length} 筆 API 股息記錄`);
+    } catch (error) {
+      console.error('❌ DividendManager: 自動添加 API 股息失敗:', error);
+    }
+  };
 
   // 自動添加歷史股息
   const handleAddHistoricalDividends = () => {

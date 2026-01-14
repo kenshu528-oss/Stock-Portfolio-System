@@ -130,3 +130,38 @@ MIT License - 詳見 [LICENSE](LICENSE) 文件
 ---
 
 **⚠️ 免責聲明**: 本系統僅供個人投資記錄使用，不構成投資建議。投資有風險，請謹慎評估。
+
+##
+ 🔍 代碼質量檢查
+
+本專案使用自動化檢查腳本確保代碼質量。
+
+### 快速檢查命令
+
+```bash
+# 檢查 SVG path 格式
+npm run check:svg
+
+# 檢查版本號一致性
+npm run check:version
+
+# 執行所有檢查（提交前必須執行）
+npm run check:all
+```
+
+### 開發流程
+
+1. **開發功能** → 修改代碼
+2. **執行檢查** → `npm run check:all`
+3. **修復錯誤** → 根據提示修復
+4. **提交代碼** → git commit
+
+### 詳細說明
+
+- 📋 **開發檢查清單**：參考 `DEVELOPMENT_CHECKLIST.md`
+- 📚 **代碼質量標準**：參考 `.kiro/steering/code-quality-standards.md`
+- 🎯 **STEERING 規則**：參考 `.kiro/steering/` 目錄下的所有規範
+
+---
+
+**重要**：提交代碼前必須執行 `npm run check:all` 並確保所有檢查通過！
