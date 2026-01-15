@@ -1,12 +1,13 @@
 // 股價API服務
 
 import { StockPrice, StockSearchResult } from '../types';
+import { getApiBaseUrl } from '../config/api';
 
 // API配置
 const API_CONFIG = {
   // 使用本地後端代理服務
   BACKEND_PROXY: {
-    baseUrl: 'http://localhost:3001/api',
+    baseUrl: getApiBaseUrl(),
     timeout: 10000
   },
   // 台灣證交所API（備用）

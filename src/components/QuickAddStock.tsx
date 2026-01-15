@@ -41,11 +41,15 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
+import { API_ENDPOINTS } from '../config/api';
+
+// ... 其他 imports
+
   // 從後端API搜尋股票
   const searchStocks = async (query: string): Promise<StockSearchResult[]> => {
     try {
-      // 使用正確的股票API端點
-      const response = await fetch(`http://localhost:3001/api/stock/${encodeURIComponent(query)}`);
+      // 使用統一的 API 配置
+      const response = await fetch(API_ENDPOINTS.searchStock(query));
       
       if (response.ok) {
         const stockData = await response.json();
