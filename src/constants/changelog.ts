@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0149',
+    date: '2026-01-15',
+    type: 'hotfix',
+    title: '修復生產環境 CORS 錯誤',
+    description: '修復 Netlify 生產環境中 ServerStatusPanel 持續嘗試連接 localhost:5173 導致的 CORS 錯誤。ServerStatusPanel 現在只在開發環境中運行，生產環境自動禁用。',
+    changes: [
+      '在 ServerStatusPanel 組件中添加環境檢測',
+      '生產環境 (import.meta.env.DEV === false) 時返回 null',
+      '開發環境保持原有功能不變'
+    ],
+    fixes: [
+      '修復生產環境 Console 中大量 CORS 錯誤',
+      '修復 "Access to fetch at http://localhost:5173/ blocked by CORS policy" 錯誤',
+      '消除生產環境中不必要的 localhost 請求'
+    ]
+  },
+  {
     version: '1.0.2.0148',
     date: '2026-01-15',
     type: 'patch',

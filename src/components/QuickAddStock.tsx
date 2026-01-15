@@ -3,6 +3,7 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import { SearchIcon, CheckIcon, XIcon } from './ui/Icons';
 import type { StockFormData, StockSearchResult } from '../types';
+import { API_ENDPOINTS } from '../config/api';
 
 // 使用內建圖示替代 lucide-react
 const PlusIcon = () => (
@@ -40,10 +41,6 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-
-import { API_ENDPOINTS } from '../config/api';
-
-// ... 其他 imports
 
   // 從後端API搜尋股票
   const searchStocks = async (query: string): Promise<StockSearchResult[]> => {
