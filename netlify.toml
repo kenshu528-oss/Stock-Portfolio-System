@@ -9,6 +9,7 @@
   # Node.js 版本
   [build.environment]
     NODE_VERSION = "18"
+    NETLIFY = "true"
 
 # 重定向規則（支援 SPA 路由）
 [[redirects]]

@@ -9,7 +9,7 @@ export default defineConfig({
     host: 'localhost',
     open: '/index.html'
   },
-  base: process.env.NODE_ENV === 'production' ? '/Stock-Portfolio-System/' : './',
+  base: process.env.NETLIFY === 'true' ? '/' : (process.env.NODE_ENV === 'production' ? '/Stock-Portfolio-System/' : './'),
   test: {
     globals: true,
     environment: 'jsdom',
