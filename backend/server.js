@@ -13,7 +13,7 @@ app.use(express.json());
 
 // 股票資料快取
 const stockCache = new Map();
-const CACHE_DURATION = 60000; // 1分鐘快取
+const CACHE_DURATION = 5000; // 🔬 實驗：改為 5 秒快取，測試即時性
 
 // 清理過期快取
 setInterval(() => {
@@ -429,37 +429,69 @@ app.get('/api/stock/:symbol', async (req, res) => {
     let stockData = null;
     let chineseName = null; // 儲存中文名稱
     
-    // 方法1: 優先使用FinMind API（台股專用，中文名稱，資料最準確）
+    // 🔬 實驗：優先使用 Yahoo Finance（測試即時性）
+    // 方法1: 優先使用 Yahoo Finance API（即時性最高）
     try {
-      console.log(`${upperSymbol}: 優先嘗試FinMind API（中文名稱）`);
-      stockData = await getFinMindStockPrice(upperSymbol);
+      console.log(`${upperSymbol}: 🔬 實驗：優先嘗試 Yahoo Finance API（測試即時性）`);
+      stockData = await getYahooStockPrice(upperSymbol);
       if (stockData && stockData.price > 0) {
-        console.log(`✅ FinMind成功獲取 ${upperSymbol} 中文名稱股價資料`);
+        console.log(`✅ Yahoo Finance 成功獲取 ${upperSymbol} 股價資料（即時）`);
+        
+        // 嘗試從 FinMind 獲取中文名稱（不影響股價）
+        try {
+          const finmindData = await getFinMindStockPrice(upperSymbol);
+          if (finmindData && finmindData.name && finmindData.name !== upperSymbol) {
+            stockData.name = finmindData.name;
+            stockData.source = 'Yahoo+FinMind'; // 標記混合來源
+            console.log(`📝 使用 FinMind 中文名稱: ${finmindData.name}`);
+          }
+        } catch (e) {
+          console.log(`FinMind 名稱獲取失敗（不影響股價）`);
+        }
+        
         stockCache.set(cacheKey, {
           data: stockData,
           timestamp: Date.now()
         });
-        return res.json(stockData); // FinMind成功，直接返回
-      } else if (stockData && stockData.name && stockData.name !== upperSymbol) {
-        // FinMind獲取到中文名稱但股價失敗，保存中文名稱
-        chineseName = stockData.name;
-        console.log(`📝 FinMind獲取到中文名稱: ${chineseName}，但股價失敗，嘗試其他API`);
+        return res.json(stockData); // Yahoo Finance 成功，直接返回
       }
-    } catch (finmindError) {
-      console.log(`FinMind API 失敗: ${upperSymbol}`, finmindError.message);
+    } catch (yahooError) {
+      console.log(`Yahoo Finance API 失敗: ${upperSymbol}`, yahooError.message);
     }
     
-    // 方法2: 如果FinMind失敗，嘗試台灣證交所API（中文名稱）
+    // 方法2: 如果 Yahoo Finance 失敗，嘗試 FinMind API（台股專用，中文名稱）
     if (!stockData || stockData.price <= 0) {
       try {
-        console.log(`${upperSymbol}: FinMind失敗，嘗試證交所API（中文名稱）`);
+        console.log(`${upperSymbol}: Yahoo Finance 失敗，嘗試 FinMind API（中文名稱）`);
+        stockData = await getFinMindStockPrice(upperSymbol);
+        if (stockData && stockData.price > 0) {
+          console.log(`✅ FinMind 成功獲取 ${upperSymbol} 中文名稱股價資料`);
+          stockCache.set(cacheKey, {
+            data: stockData,
+            timestamp: Date.now()
+          });
+          return res.json(stockData); // FinMind 成功，返回結果
+        } else if (stockData && stockData.name && stockData.name !== upperSymbol) {
+          // FinMind 獲取到中文名稱但股價失敗，保存中文名稱
+          chineseName = stockData.name;
+          console.log(`📝 FinMind 獲取到中文名稱: ${chineseName}，但股價失敗，嘗試其他API`);
+        }
+      } catch (finmindError) {
+        console.log(`FinMind API 失敗: ${upperSymbol}`, finmindError.message);
+      }
+    }
+    
+    // 方法3: 最後嘗試台灣證交所 API（中文名稱，作為最後備用）
+    if (!stockData || stockData.price <= 0) {
+      try {
+        console.log(`${upperSymbol}: 前兩個 API 都失敗，嘗試證交所 API（中文名稱）`);
         stockData = await getTWSEStockPrice(upperSymbol);
         if (stockData && stockData.price > 0) {
-          // 如果有FinMind的中文名稱，優先使用
+          // 如果有 FinMind 的中文名稱，優先使用
           if (chineseName) {
             stockData.name = chineseName;
             stockData.source = 'FinMind+TWSE'; // 標記混合來源
-            console.log(`✅ 證交所獲取股價，使用FinMind中文名稱: ${chineseName}`);
+            console.log(`✅ 證交所獲取股價，使用 FinMind 中文名稱: ${chineseName}`);
           } else {
             console.log(`✅ 證交所成功獲取 ${upperSymbol} 中文名稱股價資料`);
           }
@@ -471,31 +503,6 @@ app.get('/api/stock/:symbol', async (req, res) => {
         }
       } catch (twseError) {
         console.log(`證交所 API 失敗: ${upperSymbol}`, twseError.message);
-      }
-    }
-    
-    // 方法3: 最後嘗試Yahoo Finance API（英文名稱，作為最後備用）
-    if (!stockData || stockData.price <= 0) {
-      try {
-        console.log(`${upperSymbol}: 前兩個API都失敗，嘗試Yahoo Finance API（英文名稱）`);
-        stockData = await getYahooStockPrice(upperSymbol);
-        if (stockData && stockData.price > 0) {
-          // 如果有FinMind的中文名稱，優先使用
-          if (chineseName) {
-            stockData.name = chineseName;
-            stockData.source = 'FinMind+Yahoo'; // 標記混合來源
-            console.log(`✅ Yahoo Finance獲取股價，使用FinMind中文名稱: ${chineseName}`);
-          } else {
-            console.log(`✅ Yahoo Finance成功獲取 ${upperSymbol} 英文名稱股價資料`);
-          }
-          stockCache.set(cacheKey, {
-            data: stockData,
-            timestamp: Date.now()
-          });
-          return res.json(stockData); // Yahoo Finance成功，返回結果
-        }
-      } catch (yahooError) {
-        console.log(`Yahoo Finance API 失敗: ${upperSymbol}`, yahooError.message);
       }
     }
     

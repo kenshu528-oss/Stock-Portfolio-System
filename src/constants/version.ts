@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 138, // 修復合併記錄損益計算錯誤：合併記錄應該分別計算每筆原始記錄的損益再加總，而不是用加權平均成本價計算
+  PATCH: 139, // 實驗：Yahoo Finance 優先 + 快取時間改為 5 秒，測試股價即時性
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
