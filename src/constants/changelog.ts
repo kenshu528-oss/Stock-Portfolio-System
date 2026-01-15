@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0137',
+    date: '2026-01-14',
+    type: 'patch',
+    title: '更新README和LICENSE：更新到v1.0.2.0136版本說明，修改授權為僅供個人使用禁止商業用途',
+    description: '根據用戶要求更新專案文檔和授權條款。1) 更新README.md的更新日誌，添加v1.0.2.0136的完整變更說明（7個版本的修復內容）。2) 修改LICENSE從MIT License改為「個人使用授權-禁止商業用途」，明確規定允許個人使用、學習、研究，但禁止商業用途、販售、出租等。3) 在README中添加使用限制說明，清楚列出允許和禁止的使用方式。確保用戶了解本軟體僅供個人試用，不能用於商業化。',
+    changes: [
+      '更新 README.md 更新日誌：添加 v1.0.2.0136 的完整變更說明',
+      '修改 LICENSE：從 MIT License 改為個人使用授權',
+      '添加使用限制說明：明確列出允許和禁止的使用方式',
+      '添加商業用途定義：清楚說明什麼是商業用途',
+      '添加免責聲明和投資風險警告',
+      '提供中英文雙語授權條款'
+    ],
+    fixes: [
+      '修復 README 版本資訊過舊的問題',
+      '修復 MIT License 允許商業用途的問題',
+      '確保授權條款符合「僅供個人試用，不能商業化」的要求'
+    ]
+  },
+  {
     version: '1.0.2.0136',
     date: '2026-01-14',
     type: 'patch',
