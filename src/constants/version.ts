@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 136, // 修復Sidebar選單內容過多無法滾動：添加overflow-y-auto和maxHeight，支援滾動查看所有選項
+  PATCH: 137, // 更新README和LICENSE：更新到v1.0.2.0136版本說明，修改授權為僅供個人使用禁止商業用途
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
