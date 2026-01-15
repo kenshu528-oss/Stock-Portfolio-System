@@ -120,13 +120,30 @@ const StockRow: React.FC<StockRowProps> = ({
   const netSellValue = grossSellValue - sellBrokerageFee - sellTransactionTax;
   
   // 計算損益：根據除權息模式切換計算方式
-  // 使用 RightsAdjustmentService 確保配股正確計算
-  const gainLoss = RightsAdjustmentService.calculateGainLossWithRights(
-    stock,
-    rightsAdjustmentMode, // 使用當前的除權息模式
-    brokerageFeeRate,
-    transactionTaxRate
-  );
+  // 🔍 特殊處理：如果是合併記錄，需要分別計算每筆原始記錄的損益再加總
+  const gainLoss = (() => {
+    if (hasMultipleRecords && !isDetailRow && (stock as any).originalRecords) {
+      // 合併記錄：分別計算每筆原始記錄的損益，然後加總
+      const originalRecords = (stock as any).originalRecords || [];
+      return originalRecords.reduce((sum: number, record: StockRecord) => {
+        const recordGainLoss = RightsAdjustmentService.calculateGainLossWithRights(
+          record,
+          rightsAdjustmentMode,
+          brokerageFeeRate,
+          transactionTaxRate
+        );
+        return sum + recordGainLoss;
+      }, 0);
+    } else {
+      // 單一記錄或詳細記錄：直接計算
+      return RightsAdjustmentService.calculateGainLossWithRights(
+        stock,
+        rightsAdjustmentMode,
+        brokerageFeeRate,
+        transactionTaxRate
+      );
+    }
+  })();
   
   // 計算損益率（基於調整後成本價）
   const costBasisForPercent = stock.adjustedCostPrice || stock.costPrice;
