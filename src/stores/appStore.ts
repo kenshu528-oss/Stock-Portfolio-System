@@ -39,6 +39,8 @@ const updateStockDividendData = async (stock: StockRecord, state: any, forceReca
 };
 
 // 定義應用程式狀態介面
+import { API_ENDPOINTS } from '../config/api';
+
 export interface AppState {
   // UI 狀態
   isSidebarOpen: boolean;
@@ -411,7 +413,7 @@ export const useAppStore = create<AppState & AppActions>()(
                 const priceController = new AbortController();
                 const priceTimeout = setTimeout(() => priceController.abort(), 10000); // 10秒超時
                 
-                const priceResponse = await fetch(`http://localhost:3001/api/stock/${stock.symbol}`, {
+                const priceResponse = await fetch(API_ENDPOINTS.getStock(stock.symbol), {
                   signal: priceController.signal
                 });
                 clearTimeout(priceTimeout);

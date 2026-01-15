@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getFrontendUrl, API_ENDPOINTS } from '../config/api';
 
 interface ServerStatus {
   name: string;
@@ -39,13 +40,13 @@ export const ServerStatusPanel: React.FC = () => {
   const [servers, setServers] = useState<ServerStatus[]>([
     {
       name: '前端服務器',
-      url: 'http://localhost:5173',
+      url: getFrontendUrl(),
       status: 'checking',
       lastCheck: null
     },
     {
       name: '後端API服務器',
-      url: 'http://localhost:3001/health',
+      url: API_ENDPOINTS.health(),
       status: 'checking',
       lastCheck: null
     }

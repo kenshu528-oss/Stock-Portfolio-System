@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface StockSearchResult {
   symbol: string;
@@ -34,7 +35,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
     if (!searchQuery.trim()) return [];
     
     try {
-      const response = await fetch(`http://localhost:3001/api/search/${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(API_ENDPOINTS.searchStock(searchQuery));
       if (response.ok) {
         const stockData = await response.json();
         return [{

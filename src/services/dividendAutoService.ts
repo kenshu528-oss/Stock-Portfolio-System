@@ -2,6 +2,7 @@
 // 遵循 api-data-integrity.md：使用真實API資料，不提供虛假預設資料
 
 import type { StockRecord, DividendRecord } from '../types';
+import { API_ENDPOINTS } from '../config/api';
 
 export interface DividendAPIResponse {
   symbol: string;
@@ -22,7 +23,7 @@ export interface DividendAPIResponse {
 async function fetchDividendData(symbol: string): Promise<DividendAPIResponse | null> {
   try {
     // 嘗試從後端API獲取股息資料
-    const response = await fetch(`http://localhost:3001/api/dividend/${symbol}`);
+    const response = await fetch(API_ENDPOINTS.getDividend(symbol));
     
     if (!response.ok) {
       // 404 是正常情況（股票無股息資料），不需要警告

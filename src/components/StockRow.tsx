@@ -12,6 +12,7 @@ import { RightsAdjustmentService } from '../services/rightsAdjustmentService';
 import { applyTestStockRights, getStockRightsSummary } from '../utils/testStockRights';
 import type { StockRecord } from '../types';
 import { logger } from '../utils/logger';
+import { API_ENDPOINTS } from '../config/api';
 
 interface StockRowProps {
   stock: StockRecord;
@@ -190,7 +191,7 @@ const StockRow: React.FC<StockRowProps> = ({
       console.log(`🔄 開始更新 ${stock.symbol} 股價和除權息資料...`);
       
       // 1. 調用後端API更新股價
-      const response = await fetch(`http://localhost:3001/api/stock/${stock.symbol}`);
+      const response = await fetch(API_ENDPOINTS.getStock(stock.symbol));
       if (response.ok) {
         const data = await response.json();
         

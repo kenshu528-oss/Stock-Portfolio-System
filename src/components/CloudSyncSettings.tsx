@@ -318,7 +318,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
                       <p className="mb-2"><strong>方法一：本機開發環境</strong></p>
                       <code className="block bg-black/30 p-2 rounded text-xs font-mono mb-2">
                         npm run dev<br/>
-                        # 開啟: http://localhost:5173
+                        # 開啟開發伺服器
                       </code>
                       
                       <p className="mb-2 mt-3"><strong>方法二：完整部署</strong></p>

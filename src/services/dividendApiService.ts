@@ -1,6 +1,9 @@
 // 股息API服務 - 從證交所動態獲取完整除權息資料
 import { logger } from '../utils/logger';
 
+import { API_ENDPOINTS } from '../config/api';
+import { logger } from '../utils/logger';
+
 export interface DividendApiRecord {
   symbol: string;
   exDividendDate: string;
@@ -88,7 +91,7 @@ export class DividendApiService {
    */
   private static async fetchFromAlternativeAPI(symbol: string): Promise<DividendApiRecord[]> {
     try {
-      const response = await fetch(`http://localhost:3001/api/dividend/${symbol}`);
+      const response = await fetch(API_ENDPOINTS.getDividend(symbol));
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
