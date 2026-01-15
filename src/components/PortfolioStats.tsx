@@ -20,8 +20,19 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
   // 獲取股價更新狀態和帳戶資訊
   const { lastPriceUpdate, isUpdatingPrices, accounts, rightsAdjustmentMode } = useAppStore();
   
-  // 過濾當前帳戶的股票
+  // 過濾當前帳戶的股票（使用原始記錄，不合併）
   const currentAccountStocks = stocks.filter(stock => stock.accountId === currentAccountId);
+  
+  // 🔍 調試：檢查是否有重複的股票代碼
+  const stockSymbols = currentAccountStocks.map(s => s.symbol);
+  const uniqueSymbols = new Set(stockSymbols);
+  if (stockSymbols.length !== uniqueSymbols.size) {
+    console.log('⚠️ PortfolioStats: 發現重複股票代碼', {
+      total: stockSymbols.length,
+      unique: uniqueSymbols.size,
+      symbols: stockSymbols
+    });
+  }
 
   // 格式化最後更新時間
   const formatLastUpdateTime = (date: Date | null): string => {

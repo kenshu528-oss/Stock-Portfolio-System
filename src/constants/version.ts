@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 137, // 更新README和LICENSE：更新到v1.0.2.0136版本說明，修改授權為僅供個人使用禁止商業用途
+  PATCH: 138, // 修復合併記錄損益計算錯誤：合併記錄應該分別計算每筆原始記錄的損益再加總，而不是用加權平均成本價計算
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

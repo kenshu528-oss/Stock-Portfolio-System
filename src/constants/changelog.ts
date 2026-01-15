@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0138',
+    date: '2026-01-14',
+    type: 'hotfix',
+    title: '修復合併記錄損益計算錯誤：合併記錄應該分別計算每筆原始記錄的損益再加總',
+    description: '修復嚴重的損益計算錯誤。問題：當同一股票有多筆記錄時（如00937B有4筆），StockList顯示的合併記錄損益（50,556）與PortfolioStats顯示的總損益（61,985）不一致。原因：合併記錄使用加權平均成本價計算損益，但這樣會產生誤差。正確做法：合併記錄應該分別計算每筆原始記錄的損益，然後加總。修復：在StockRow中，如果是合併記錄，遍歷originalRecords分別計算每筆的損益，然後加總。這樣確保合併記錄的損益 = 原始記錄損益的總和 = PortfolioStats的總損益。',
+    changes: [
+      '修復 StockRow.tsx 合併記錄損益計算邏輯',
+      '合併記錄：分別計算每筆原始記錄的損益，然後加總',
+      '單一記錄：保持原有計算邏輯不變',
+      '添加調試日誌：PortfolioStats 檢查重複股票代碼'
+    ],
+    fixes: [
+      '修復合併記錄損益與總損益不一致的問題',
+      '修復加權平均成本價計算損益的誤差',
+      '確保 StockList 顯示的損益 = PortfolioStats 的總損益',
+      '確保損益計算邏輯統一使用 RightsAdjustmentService'
+    ]
+  },
+  {
     version: '1.0.2.0137',
     date: '2026-01-14',
     type: 'patch',
