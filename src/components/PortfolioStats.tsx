@@ -23,15 +23,17 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
   // 過濾當前帳戶的股票（使用原始記錄，不合併）
   const currentAccountStocks = stocks.filter(stock => stock.accountId === currentAccountId);
   
-  // 🔍 調試：檢查是否有重複的股票代碼
-  const stockSymbols = currentAccountStocks.map(s => s.symbol);
-  const uniqueSymbols = new Set(stockSymbols);
-  if (stockSymbols.length !== uniqueSymbols.size) {
-    console.log('⚠️ PortfolioStats: 發現重複股票代碼', {
-      total: stockSymbols.length,
-      unique: uniqueSymbols.size,
-      symbols: stockSymbols
-    });
+  // 🔍 調試：檢查是否有重複的股票代碼（DEBUG 等級）
+  if (process.env.NODE_ENV === 'development') {
+    const stockSymbols = currentAccountStocks.map(s => s.symbol);
+    const uniqueSymbols = new Set(stockSymbols);
+    if (stockSymbols.length !== uniqueSymbols.size) {
+      console.debug('PortfolioStats: 發現重複股票代碼（合併記錄）', {
+        total: stockSymbols.length,
+        unique: uniqueSymbols.size,
+        symbols: stockSymbols
+      });
+    }
   }
 
   // 格式化最後更新時間
