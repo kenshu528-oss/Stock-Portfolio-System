@@ -37,6 +37,9 @@ interface ServerStatus {
 }
 
 export const ServerStatusPanel: React.FC = () => {
+  // 只在開發環境中顯示
+  const isDevelopment = import.meta.env.DEV;
+  
   const [servers, setServers] = useState<ServerStatus[]>([
     {
       name: '前端服務器',
@@ -118,12 +121,19 @@ export const ServerStatusPanel: React.FC = () => {
     }
   };
 
-  // 定期檢查狀態
+  // 定期檢查狀態（只在開發環境）
   useEffect(() => {
+    if (!isDevelopment) return;
+    
     checkAllServers();
     const interval = setInterval(checkAllServers, 30000); // 每30秒檢查一次
     return () => clearInterval(interval);
-  }, []);
+  }, [isDevelopment]); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  // 生產環境不顯示
+  if (!isDevelopment) {
+    return null;
+  }
 
   // 獲取狀態圖示和顏色
   const getStatusDisplay = (status: ServerStatus['status']) => {
