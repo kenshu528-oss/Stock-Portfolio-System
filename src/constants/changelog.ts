@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0139',
+    date: '2026-01-15',
+    type: 'patch',
+    title: '實驗：Yahoo Finance 優先 + 快取時間改為 5 秒，測試股價即時性',
+    description: '根據用戶反映股價更新不夠即時的問題，進行實驗性調整。1) 修改後端 API 優先順序：Yahoo Finance（首選）→ FinMind（備用）→ 證交所（最後備用）。2) 將快取時間從 60 秒縮短為 5 秒，提高股價更新頻率。3) Yahoo Finance 獲取股價後，同時嘗試從 FinMind 獲取中文名稱，確保顯示中文股票名稱。4) 移除 PortfolioStats 的重複股票代碼警告日誌，改為 DEBUG 等級，減少 Console 噪音。這是實驗性調整，用於測試 Yahoo Finance 是否比 FinMind 更即時。',
+    changes: [
+      '修改後端 server.js：Yahoo Finance 優先獲取股價',
+      '快取時間從 60 秒改為 5 秒（實驗性）',
+      'Yahoo Finance 獲取股價後，同時從 FinMind 獲取中文名稱',
+      '資料來源標記為 Yahoo+FinMind（混合來源）',
+      'PortfolioStats 重複股票代碼警告改為 DEBUG 等級'
+    ],
+    fixes: [
+      '改善股價更新即時性（實驗中）',
+      '減少 Console 日誌噪音',
+      '確保顯示中文股票名稱'
+    ]
+  },
+  {
     version: '1.0.2.0138',
     date: '2026-01-14',
     type: 'hotfix',
