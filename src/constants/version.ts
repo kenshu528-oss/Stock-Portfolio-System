@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 159, // 修復手機版水平溢出：添加 overflow-x-hidden 和優化 Header
+  PATCH: 160, // 修復表格欄位重複：移除重複的現價和市值欄位
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

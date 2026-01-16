@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0160',
+    date: '2026-01-16',
+    type: 'fix',
+    title: '修復手機版表格欄位重複和對齊問題',
+    description: '移除 StockRow 中重複的現價和市值欄位，修復手機版和桌面版欄位不對齊的問題。',
+    changes: [
+      '移除重複的現價欄位（第7個 td）',
+      '移除重複的市值欄位（第8個 td）',
+      '確保欄位順序：代碼、名稱、現價、市值、持股數、成本價、損益率、股息、操作'
+    ],
+    fixes: [
+      '修復手機版表格欄位重複顯示',
+      '修復手機版和桌面版欄位不對齊',
+      '修復表格標題和內容錯位'
+    ]
+  },
+  {
     version: '1.0.2.0159',
     date: '2026-01-16',
     type: 'fix',
