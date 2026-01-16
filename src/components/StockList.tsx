@@ -142,48 +142,48 @@ const StockList: React.FC<StockListProps> = ({
   }
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg max-w-full">
+    <div className="bg-slate-800 border border-slate-700 rounded-lg w-full">
       {/* 手機版提示 */}
       <div className="md:hidden px-3 py-2 bg-slate-900 border-b border-slate-700">
         <p className="text-xs text-slate-400 flex items-center">
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           左右滑動查看更多資訊
         </p>
       </div>
       
-      {/* 表格容器 - 添加橫向滾動 */}
-      <div className="overflow-x-auto overflow-y-visible -webkit-overflow-scrolling-touch">
-        <table className="w-full divide-y divide-slate-700">
+      {/* 表格容器 - 確保可以橫向滾動 */}
+      <div className="overflow-x-auto overflow-y-visible" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <table className="w-full min-w-[800px] divide-y divide-slate-700">
           {/* 表頭 */}
           <thead className="bg-slate-900 sticky top-0 z-10">
             <tr>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="px-2 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-16">
                 代碼
               </th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="px-2 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-24">
                 名稱
               </th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="px-2 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-16">
                 現價
               </th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="px-2 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-20">
                 市值
               </th>
-              <th className="hidden md:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="px-2 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-16">
                 持股數
               </th>
-              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="px-2 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-16">
                 成本價
               </th>
-              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="px-2 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-16">
                 損益率
               </th>
-              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+              <th className="px-2 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-16">
                 股息
               </th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap sticky right-0 bg-slate-900">
+              <th className="px-1 py-2 text-center text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap w-12">
                 操作
               </th>
             </tr>

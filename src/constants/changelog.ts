@@ -12,6 +12,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0163',
+    date: '2026-01-16',
+    type: 'patch',
+    title: '手機版 RWD 全面優化與 API 修復',
+    description: '優化手機版表格顯示，所有欄位置中對齊，移除操作欄固定定位，修復除權息 API 路徑錯誤。',
+    changes: [
+      'StockList: 表格標題全部置中 (text-center)',
+      'StockList: 移除操作欄的 sticky right-0，讓它可以隨表格滾動',
+      'StockList: 優化欄位寬度 (代碼 w-16, 名稱 w-24, 操作 w-12)',
+      'StockList: 增加表格最小寬度到 800px，確保所有欄位可見',
+      'StockRow: 所有 td 改為 text-center 置中對齊',
+      'StockRow: 移除 hidden md:table-cell 和 hidden lg:table-cell',
+      'StockRow: 所有欄位在手機版都可見，可水平滾動查看',
+      'StockRow: 縮小操作欄寬度 (w-12) 和 padding (px-1)',
+      'Header: 版號按鈕添加 whitespace-nowrap 和響應式字體 (text-[10px] sm:text-xs)',
+      'Header: 移除容器的 overflow-hidden，讓版號完整顯示',
+      'App.tsx: 移除主容器的 overflow-x-hidden，允許內部元素水平滾動',
+      'API: 修復 dividend API 路徑從查詢參數改為路徑參數 (/api/dividend/:symbol)'
+    ],
+    fixes: [
+      '修復手機版版號不顯示的問題',
+      '修復手機版無法水平滑動查看所有欄位',
+      '修復操作欄被固定在右側的問題',
+      '修復表格欄位未置中對齊',
+      '修復除權息更新 API 404 錯誤',
+      '修復手機版只能看到前4個欄位的問題'
+    ]
+  },
+  {
     version: '1.0.2.0162',
     date: '2026-01-16',
     type: 'fix',
