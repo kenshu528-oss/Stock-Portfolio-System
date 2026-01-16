@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 158, // 手機版股票列表橫向滾動優化：添加滑動提示和固定操作欄
+  PATCH: 159, // 修復手機版水平溢出：添加 overflow-x-hidden 和優化 Header
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

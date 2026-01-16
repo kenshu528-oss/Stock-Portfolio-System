@@ -155,7 +155,7 @@ const StockList: React.FC<StockListProps> = ({
       
       {/* 表格容器 - 添加橫向滾動 */}
       <div className="overflow-x-auto overflow-y-visible -webkit-overflow-scrolling-touch">
-        <table className="w-full min-w-[600px] divide-y divide-slate-700">
+        <table className="w-full divide-y divide-slate-700">
           {/* 表頭 */}
           <thead className="bg-slate-900 sticky top-0 z-10">
             <tr>

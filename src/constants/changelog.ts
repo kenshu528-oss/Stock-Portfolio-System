@@ -12,6 +12,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0159',
+    date: '2026-01-16',
+    type: 'fix',
+    title: '修復手機版水平溢出和 Header 按鈕問題',
+    description: '修復整體頁面水平溢出、Header 按鈕被推出螢幕、表格右側空白等問題。',
+    changes: [
+      'Header: 添加 w-full 和 max-w-full 防止溢出',
+      'Header: 優化 flex 布局，使用 gap 替代 space-x',
+      'Header: 標題字體進一步縮小 (text-xs sm:text-sm md:text-lg)',
+      'Header: 按鈕圖示響應式 (w-4 h-4 md:w-5 md:h-5)',
+      'App: 主容器添加 overflow-x-hidden',
+      'App: main 添加 max-w-full 防止溢出',
+      'StockList: 移除 min-w-[600px]，改用 w-full',
+      'StockRow: 操作欄背景色跟隨行背景變化'
+    ],
+    fixes: [
+      '修復整個頁面水平溢出問題',
+      '修復 Header 按鈕被推出螢幕',
+      '修復表格右側大片空白',
+      '修復操作欄背景色不一致',
+      '確保只有表格內容可以橫向滾動'
+    ]
+  },
+  {
     version: '1.0.2.0158',
     date: '2026-01-16',
     type: 'patch',
