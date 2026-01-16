@@ -300,15 +300,15 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
               <span className="text-white font-medium">{currentAccountStocks.length} 檔</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">總報酬:</span>
+              <span className="text-slate-400">總報酬率:</span>
               <span className={`font-medium ${getGainLossColor(stats.totalReturn)}`}>
-                {isPrivacyMode ? '****' : `${stats.totalReturn >= 0 ? '+' : ''}${stats.totalReturn.toFixed(0)}`}
+                {isPrivacyMode ? '**%' : `${stats.totalReturn >= 0 ? '+' : ''}${((stats.totalReturn / stats.totalCost) * 100).toFixed(2)}%`}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">平均成本:</span>
-              <span className="text-white font-medium">
-                {isPrivacyMode ? '****' : `$${(stats.totalCost / currentAccountStocks.length).toFixed(0)}`}
+              <span className="text-slate-400">含息報酬:</span>
+              <span className={`font-medium ${getGainLossColor(stats.totalReturn)}`}>
+                {isPrivacyMode ? '****' : `${stats.totalReturn >= 0 ? '+' : ''}${stats.totalReturn.toFixed(0)}`}
               </span>
             </div>
           </div>

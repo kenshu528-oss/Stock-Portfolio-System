@@ -412,9 +412,9 @@ const StockRow: React.FC<StockRowProps> = ({
           : 'hover:bg-slate-700'
       }`}>
         {/* 股票代碼 - 固定寬度 */}
-        <td className="px-2 md:px-4 py-2 md:py-3 w-16 md:w-auto whitespace-nowrap">
-          <div>
-            <div className="flex items-center">
+        <td className="px-2 py-2 text-center whitespace-nowrap w-16">
+          <div className="flex flex-col items-center">
+            <div className="flex items-center justify-center">
               {/* 展開/收合按鈕 */}
               {hasMultipleRecords && !isDetailRow && (
                 <button
@@ -459,7 +459,7 @@ const StockRow: React.FC<StockRowProps> = ({
         </td>
 
         {/* 股票名稱 - 限制寬度 */}
-        <td className="px-2 md:px-4 py-2 md:py-3 max-w-[100px] md:max-w-none">
+        <td className="px-2 py-2 text-center w-24">
           <div className="truncate">
             <span className={`text-xs ${isDetailRow ? 'text-slate-500' : 'text-slate-300'}`}>
               {UIEnhancementService.fixStockNameDisplay(stock)}
@@ -467,22 +467,22 @@ const StockRow: React.FC<StockRowProps> = ({
           </div>
         </td>
 
-        {/* 現價 - 手機版優先顯示 */}
-        <td className="px-2 md:px-4 py-2 md:py-3 whitespace-nowrap">
+        {/* 現價 */}
+        <td className="px-2 py-2 text-center whitespace-nowrap w-16">
           <span className="text-slate-300 text-xs font-medium">
             {formatPrice(stock.currentPrice)}
           </span>
         </td>
 
-        {/* 市值 - 手機版優先顯示 */}
-        <td className="px-2 md:px-4 py-2 md:py-3 whitespace-nowrap">
+        {/* 市值 */}
+        <td className="px-2 py-2 text-center whitespace-nowrap w-20">
           <span className="text-slate-300 font-medium text-xs">
             {formatMarketValue(marketValue)}
           </span>
         </td>
 
-        {/* 持股數（可編輯）- 桌面版顯示 */}
-        <td className="hidden md:table-cell px-4 py-3 whitespace-nowrap">
+        {/* 持股數（可編輯）*/}
+        <td className="px-2 py-2 text-center whitespace-nowrap w-16">
           <EditableCell
             value={stock.shares}
             onSave={handleSharesUpdate}
@@ -493,9 +493,9 @@ const StockRow: React.FC<StockRowProps> = ({
           />
         </td>
 
-        {/* 成本價（可編輯）- 桌面版顯示 */}
-        <td className="hidden lg:table-cell px-4 py-3">
-          <div>
+        {/* 成本價（可編輯）*/}
+        <td className="px-2 py-2 text-center w-16">
+          <div className="flex flex-col items-center">
             <EditableCell
               value={displayCostPrice}
               onSave={handleCostPriceUpdate}
@@ -512,23 +512,23 @@ const StockRow: React.FC<StockRowProps> = ({
           </div>
         </td>
 
-        {/* 損益率 - 桌面版顯示 */}
-        <td className="hidden lg:table-cell px-4 py-3">
+        {/* 損益率 */}
+        <td className="px-2 py-2 text-center w-16">
           <div className={UIEnhancementService.getGainLossColor(gainLoss)}>
             {formatGainLoss(gainLoss, gainLossPercent)}
           </div>
         </td>
 
-        {/* 股息 - 桌面版顯示 */}
-        <td className="hidden lg:table-cell px-4 py-3">
+        {/* 股息 */}
+        <td className="px-2 py-2 text-center w-16">
           {totalDividend > 0 ? (
-            <div>
-              <span className="text-green-400 font-medium">
+            <div className="flex flex-col items-center">
+              <span className="text-green-400 font-medium text-xs">
                 +{UIEnhancementService.formatNumber(totalDividend, 0)}
               </span>
               {stock.dividendRecords && stock.dividendRecords.length > 0 && (
                 <div className="text-xs text-slate-500 mt-1">
-                  {stock.dividendRecords.length} 次配息
+                  {stock.dividendRecords.length} 次
                 </div>
               )}
             </div>
@@ -537,8 +537,8 @@ const StockRow: React.FC<StockRowProps> = ({
           )}
         </td>
 
-        {/* 操作 - 手機版固定在右側 */}
-        <td className={`px-2 md:px-4 py-2 md:py-3 text-right whitespace-nowrap sticky right-0 ${
+        {/* 操作 - 移除固定定位，讓它可以隨表格滾動 */}
+        <td className={`px-1 py-2 text-center whitespace-nowrap w-12 ${
           isDetailRow ? 'bg-slate-850' : 'bg-slate-800'
         }`}>
           {isDetailRow ? (

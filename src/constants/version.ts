@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 162, // 修復手機版組件寬度：添加 max-w-full 防止溢出
+  PATCH: 163, // 手機版 RWD 優化：表格置中、顯示所有欄位、修復 API 路徑
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

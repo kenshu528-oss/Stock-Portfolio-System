@@ -878,8 +878,8 @@ function App() {
         />
       </ErrorBoundary>
       
-      {/* Body 容器 - 這裡才添加 overflow-x-hidden */}
-      <div className="overflow-x-hidden">
+      {/* Body 容器 - 移除 overflow-x-hidden，讓內部元素可以水平滾動 */}
+      <div>
         <div className="flex">
           {/* Sidebar */}
           <ErrorBoundary>

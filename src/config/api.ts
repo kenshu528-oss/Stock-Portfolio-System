@@ -24,7 +24,7 @@ export const API_ENDPOINTS = {
   searchStock: (query: string) => `${getApiBaseUrl()}/api/stock-search?query=${encodeURIComponent(query)}`,
   
   // 股息相關
-  getDividend: (symbol: string) => `${getApiBaseUrl()}/api/dividend?symbol=${encodeURIComponent(symbol)}`,
+  getDividend: (symbol: string) => `${getApiBaseUrl()}/api/dividend/${encodeURIComponent(symbol)}`,
   
   // 健康檢查
   health: () => {
