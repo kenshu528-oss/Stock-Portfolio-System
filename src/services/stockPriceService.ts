@@ -37,7 +37,7 @@ export class StockPriceService {
   async getStockPrice(symbol: string): Promise<StockPrice | null> {
     try {
       console.log(`從後端代理獲取 ${symbol} 股價...`);
-      const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/stock/${symbol}`, {
+      const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/api/stock/${symbol}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -101,7 +101,7 @@ export class StockPriceService {
     try {
       console.log(`從後端代理獲取 ${symbol} 股票名稱...`);
       // 使用 /api/stock 端點獲取股票資訊（包含名稱）
-      const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/stock/${symbol}`, {
+      const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/api/stock/${symbol}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -135,7 +135,7 @@ export class StockPriceService {
       if (this.isValidStockSymbol(trimmedQuery)) {
         console.log(`從後端代理搜尋 ${trimmedQuery}...`);
         // 使用 /api/stock 端點獲取股票資訊
-        const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/stock/${trimmedQuery}`, {
+        const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/api/stock/${trimmedQuery}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',

@@ -905,12 +905,12 @@ function App() {
             {/* Account tabs */}
             <ErrorBoundary>
               <div className="mb-3">
-                <nav className="flex space-x-8 border-b border-slate-700">
+                <nav className="flex space-x-2 md:space-x-8 border-b border-slate-700 overflow-x-auto">
                   {accounts.map((account) => (
                     <button
                       key={account.id}
                       onClick={() => handleAccountSwitch(account.name)}
-                      className={`border-b-2 py-2 px-1 text-sm font-medium whitespace-nowrap transition-colors ${
+                      className={`border-b-2 py-2 px-1 text-xs md:text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
                         currentAccount === account.name
                           ? 'border-blue-500 text-blue-400'
                           : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-600'
@@ -920,7 +920,7 @@ function App() {
                     </button>
                   ))}
                   <button 
-                    className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-slate-400 hover:text-slate-300 hover:border-slate-600"
+                    className="border-b-2 border-transparent py-2 px-1 text-xs md:text-sm font-medium text-slate-400 hover:text-slate-300 hover:border-slate-600 flex-shrink-0"
                     onClick={() => setAccountManagerOpen(true)}
                     aria-label="新增帳戶"
                   >
@@ -932,23 +932,27 @@ function App() {
               </div>
             </ErrorBoundary>
 
-            {/* Portfolio stats */}
+            {/* Portfolio stats - 手機模式隱藏 */}
             <ErrorBoundary>
-              <PortfolioStats
-                stocks={stocks}
-                currentAccountId={accounts.find(acc => acc.name === currentAccount)?.id || ''}
-                isPrivacyMode={isPrivacyMode}
-                className="mb-3"
-              />
+              <div className="hidden md:block">
+                <PortfolioStats
+                  stocks={stocks}
+                  currentAccountId={accounts.find(acc => acc.name === currentAccount)?.id || ''}
+                  isPrivacyMode={isPrivacyMode}
+                  className="mb-3"
+                />
+              </div>
             </ErrorBoundary>
             
-            {/* Quick Add Stock - 快速新增股票 */}
+            {/* Quick Add Stock - 手機模式隱藏 */}
             <ErrorBoundary>
-              <QuickAddStock
-                currentAccount={currentAccount}
-                onSubmit={handleAddStock}
-                className="mb-3"
-              />
+              <div className="hidden md:block">
+                <QuickAddStock
+                  currentAccount={currentAccount}
+                  onSubmit={handleAddStock}
+                  className="mb-3"
+                />
+              </div>
             </ErrorBoundary>
             
             {/* Stock list */}
