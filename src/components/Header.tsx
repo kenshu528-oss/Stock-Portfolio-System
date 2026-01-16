@@ -237,7 +237,51 @@ const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-          {/* 桌面版功能按鈕 - 手機版隱藏 */}
+        {/* Right side - Action buttons */}
+        <div className="flex items-center space-x-1">
+          {/* 手機版：只顯示更新按鈕和選單 */}
+          <div className="flex md:hidden items-center space-x-1">
+            {/* 股價更新按鈕 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`text-white hover:bg-slate-700 ${isUpdatingPrices ? 'opacity-75' : ''}`}
+              aria-label="更新股價"
+              onClick={handleRefreshPrices}
+              disabled={isUpdatingPrices}
+            >
+              <svg 
+                className={`w-5 h-5 ${isUpdatingPrices ? 'animate-spin' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </Button>
+            
+            {/* 新增股票按鈕 - 手機版 */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white hover:bg-slate-700"
+              aria-label="新增股票"
+              onClick={() => {
+                // 觸發 Sidebar 的新增股票功能
+                onMenuToggle();
+                setTimeout(() => {
+                  const addStockBtn = document.querySelector('[data-action="add-stock"]') as HTMLElement;
+                  addStockBtn?.click();
+                }, 100);
+              }}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </Button>
+          </div>
+
+          {/* 桌面版：完整功能按鈕 */}
           <div className="hidden md:flex items-center space-x-1">
             {/* Operation Log Button */}
             <OperationLog />
@@ -388,29 +432,7 @@ const Header: React.FC<HeaderProps> = ({
               )}
             </div>
           </div>
-
-          {/* 手機版簡化按鈕 */}
-          <div className="flex md:hidden items-center space-x-2">
-            {/* 股價更新按鈕 - 手機版保留 */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`text-white hover:bg-slate-700 ${isUpdatingPrices ? 'opacity-75' : ''}`}
-              aria-label="更新股價和除權息"
-              onClick={handleRefreshPrices}
-              disabled={isUpdatingPrices}
-              title="更新所有股票的股價和除權息資料"
-            >
-              <svg 
-                className={`w-5 h-5 ${isUpdatingPrices ? 'animate-spin' : ''}`} 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </Button>
-          </div>
+        </div>
       </div>
       
       {/* 版本資訊對話框 */}

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 155, // 修復股價更新 API 路徑錯誤：統一使用 /api/stock/:symbol
+  PATCH: 156, // 手機模式 UI 優化：緊湊布局 + 恢復功能顯示
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

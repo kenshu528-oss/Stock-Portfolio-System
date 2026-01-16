@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0156',
+    date: '2026-01-16',
+    type: 'patch',
+    title: '手機模式 UI 優化（第2版）',
+    description: '修復手機模式下的 UI 問題：恢復功能顯示並優化布局，解決右上方留白問題。',
+    changes: [
+      'Header 右上方添加手機版按鈕（更新股價 + 新增股票）',
+      'PortfolioStats 改用 2x2 grid 布局（手機模式）',
+      'PortfolioStats 隱藏圖示、縮小字體和間距（手機模式）',
+      'QuickAddStock 縮小 padding 和 gap（手機模式）',
+      '恢復 PortfolioStats 和 QuickAddStock 的顯示'
+    ],
+    fixes: [
+      '修復手機模式下右上方大片留白',
+      '修復投資組合統計功能消失的問題',
+      '修復新增股票功能消失的問題',
+      '優化手機模式下的空間利用率'
+    ]
+  },
+  {
     version: '1.0.2.0155',
     date: '2026-01-16',
     type: 'fix',
