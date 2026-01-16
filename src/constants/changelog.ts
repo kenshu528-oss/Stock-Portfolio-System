@@ -12,6 +12,30 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0157',
+    date: '2026-01-16',
+    type: 'patch',
+    title: '手機模式 RWD 全面優化',
+    description: '修復 334px 寬度下的所有 CSS 跑版問題，優化響應式布局。',
+    changes: [
+      'Header: 使用 flex-1 和 min-w-0 防止文字溢出，縮小按鈕尺寸',
+      'Header: 標題使用 truncate，版本號在小螢幕隱藏',
+      'PortfolioStats: 統一卡片高度 (min-h-[80px])，使用 break-all 防止數字溢出',
+      'QuickAddStock: 輸入框改為 col-span-6（手機版佔半寬）',
+      'StockRow: 隱藏持股數、成本價、損益率、股息欄位（手機版）',
+      'StockRow: 縮小 padding、字體和圖示尺寸（手機版）',
+      'StockList: 表格標題同步響應式隱藏'
+    ],
+    fixes: [
+      '修復 Header 文字與按鈕重疊',
+      '修復 Header 右側留白',
+      '修復投資組合卡片高度不一致',
+      '修復 QuickAddStock 輸入框被截斷',
+      '修復股票列表欄位分配不均',
+      '修復股票名稱佔據過多垂直空間'
+    ]
+  },
+  {
     version: '1.0.2.0156',
     date: '2026-01-16',
     type: 'patch',

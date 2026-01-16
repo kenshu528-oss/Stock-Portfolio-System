@@ -333,9 +333,9 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
           )}
         </div>
         
-        {/* 持股數 - 佔2欄 */}
+        {/* 持股數 - 手機版佔6欄，桌面版佔2欄 */}
         <div className="col-span-6 md:col-span-2">
-          <label className="block text-sm font-medium text-slate-400 mb-1">
+          <label className="block text-xs md:text-sm font-medium text-slate-400 mb-1">
             持股數
           </label>
           <Input
@@ -345,28 +345,30 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             onChange={(e) => setShares(e.target.value)}
             onKeyDown={handleKeyDown}
             min="1"
+            className="w-full"
           />
         </div>
         
-        {/* 成本價 - 佔2欄 */}
+        {/* 成本價 - 手機版佔6欄，桌面版佔2欄 */}
         <div className="col-span-6 md:col-span-2">
-          <label className="block text-sm font-medium text-slate-400 mb-1">
+          <label className="block text-xs md:text-sm font-medium text-slate-400 mb-1">
             成本價
           </label>
           <Input
             type="number"
-            placeholder="18.50"
+            placeholder="預設18.50"
             value={costPrice}
             onChange={(e) => setCostPrice(e.target.value)}
             onKeyDown={handleKeyDown}
+            min="0"
             step="0.01"
-            min="0.01"
+            className="w-full"
           />
         </div>
         
-        {/* 購買日期 - 佔2欄 */}
+        {/* 購買日期 - 手機版佔6欄，桌面版佔2欄 */}
         <div className="col-span-6 md:col-span-2">
-          <label className="block text-sm font-medium text-slate-400 mb-1">
+          <label className="block text-xs md:text-sm font-medium text-slate-400 mb-1">
             購買日期
           </label>
           <Input
@@ -374,11 +376,13 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             value={purchaseDate}
             onChange={(e) => setPurchaseDate(e.target.value)}
             onKeyDown={handleKeyDown}
+            max={new Date().toISOString().split('T')[0]}
+            className="w-full"
           />
         </div>
         
-        {/* 新增按鈕 - 佔2欄 */}
-        <div className="col-span-6 md:col-span-2">
+        {/* 新增按鈕 - 手機版佔6欄，桌面版佔2欄 */}
+        <div className="col-span-6 md:col-span-2 flex items-end">
           <Button
             onClick={handleSubmit}
             disabled={!isFormValid()}

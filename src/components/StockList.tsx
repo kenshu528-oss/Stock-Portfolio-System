@@ -148,31 +148,31 @@ const StockList: React.FC<StockListProps> = ({
           {/* 表頭 */}
           <thead className="bg-slate-900">
             <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                股票代碼
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                代碼
               </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                股票名稱
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                名稱
               </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="hidden md:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 持股數
               </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 成本價
               </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 現價
               </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 市值
               </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 損益率
               </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 股息
               </th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 操作
               </th>
             </tr>
