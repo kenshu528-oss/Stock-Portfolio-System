@@ -411,19 +411,19 @@ const StockRow: React.FC<StockRowProps> = ({
           ? 'bg-slate-850 hover:bg-slate-800 border-l-2 border-blue-500' 
           : 'hover:bg-slate-700'
       }`}>
-        {/* 股票代碼 */}
-        <td className="px-4 py-3">
+        {/* 股票代碼 - 手機版縮小寬度 */}
+        <td className="px-2 md:px-4 py-2 md:py-3 w-20 md:w-auto">
           <div>
             <div className="flex items-center">
               {/* 展開/收合按鈕 */}
               {hasMultipleRecords && !isDetailRow && (
                 <button
                   onClick={onToggleExpansion}
-                  className="mr-2 p-1 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
+                  className="mr-1 md:mr-2 p-1 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
                   title={isExpanded ? '收合詳細記錄' : '展開詳細記錄'}
                 >
                   <svg 
-                    className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+                    className={`w-3 h-3 md:w-4 md:h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
                     fill="none" 
                     stroke="currentColor" 
                     viewBox="0 0 24 24"
@@ -435,15 +435,15 @@ const StockRow: React.FC<StockRowProps> = ({
               
               {/* 詳細記錄的縮排指示 */}
               {isDetailRow && (
-                <div className="mr-2 flex items-center">
-                  <div className="w-4 h-4 flex items-center justify-center">
+                <div className="mr-1 md:mr-2 flex items-center">
+                  <div className="w-3 h-3 md:w-4 md:h-4 flex items-center justify-center">
                     <div className="w-2 h-px bg-slate-600"></div>
                   </div>
-                  <span className="text-xs text-slate-500 mr-2 bg-slate-700 px-2 py-1 rounded">#{detailIndex}</span>
+                  <span className="text-xs text-slate-500 mr-1 md:mr-2 bg-slate-700 px-1 md:px-2 py-0.5 md:py-1 rounded">#{detailIndex}</span>
                 </div>
               )}
               
-              <span className={`font-mono font-medium ${
+              <span className={`font-mono font-medium text-xs md:text-sm ${
                 isDetailRow ? 'text-slate-500' : 'text-blue-400'
               }`}>
                 {stock.symbol}
@@ -453,7 +453,7 @@ const StockRow: React.FC<StockRowProps> = ({
             {/* 多筆記錄指示 - 移到股票代碼下方 */}
             {hasMultipleRecords && !isDetailRow && (
               <div className="mt-1">
-                <span className="text-xs px-2 py-1 bg-blue-600 rounded-full text-white font-medium">
+                <span className="text-xs px-1.5 md:px-2 py-0.5 md:py-1 bg-blue-600 rounded-full text-white font-medium">
                   {(stock as any).originalRecords?.length || 1}筆
                 </span>
               </div>
@@ -461,19 +461,19 @@ const StockRow: React.FC<StockRowProps> = ({
           </div>
         </td>
 
-        {/* 股票名稱 */}
-        <td className="px-4 py-3">
-          <div>
-            <span className={`${isDetailRow ? 'text-slate-500' : 'text-slate-300'}`}>
+        {/* 股票名稱 - 手機版限制寬度 */}
+        <td className="px-2 md:px-4 py-2 md:py-3 max-w-[80px] md:max-w-none">
+          <div className="truncate">
+            <span className={`text-xs md:text-sm ${isDetailRow ? 'text-slate-500' : 'text-slate-300'}`}>
               {UIEnhancementService.fixStockNameDisplay(stock)}
             </span>
             {isDetailRow && (
-              <div className="text-xs text-slate-500 mt-1">
+              <div className="text-xs text-slate-500 mt-1 hidden md:block">
                 買入日期: {new Date(stock.purchaseDate).toLocaleDateString('zh-TW')}
               </div>
             )}
             {hasMultipleRecords && !isDetailRow && (stock as any).originalRecords && (
-              <div className="text-xs text-slate-500 mt-1">
+              <div className="text-xs text-slate-500 mt-1 hidden md:block">
                 {(() => {
                   const records = (stock as any).originalRecords;
                   const dates = records.map((r: any) => new Date(r.purchaseDate));
@@ -491,8 +491,8 @@ const StockRow: React.FC<StockRowProps> = ({
           </div>
         </td>
 
-        {/* 持股數（可編輯） */}
-        <td className="px-4 py-3">
+        {/* 持股數（可編輯）- 手機版隱藏 */}
+        <td className="hidden md:table-cell px-4 py-3">
           <EditableCell
             value={stock.shares}
             onSave={handleSharesUpdate}
@@ -503,8 +503,8 @@ const StockRow: React.FC<StockRowProps> = ({
           />
         </td>
 
-        {/* 成本價（可編輯） */}
-        <td className="px-4 py-3">
+        {/* 成本價（可編輯）- 手機版隱藏 */}
+        <td className="hidden lg:table-cell px-4 py-3">
           <div>
             <EditableCell
               value={displayCostPrice}
@@ -522,12 +522,12 @@ const StockRow: React.FC<StockRowProps> = ({
           </div>
         </td>
 
-        {/* 現價 */}
-        <td className="px-4 py-3">
-          <span className="text-slate-300">
+        {/* 現價 - 手機版縮小 */}
+        <td className="px-2 md:px-4 py-2 md:py-3">
+          <span className="text-slate-300 text-xs md:text-sm">
             {formatPrice(stock.currentPrice)}
           </span>
-          <div className="text-xs text-slate-500 mt-1">
+          <div className="text-xs text-slate-500 mt-1 hidden md:block">
             {stock.priceSource} • {new Date(stock.lastUpdated).toLocaleTimeString('zh-TW', {
               hour: '2-digit',
               minute: '2-digit'
@@ -535,22 +535,22 @@ const StockRow: React.FC<StockRowProps> = ({
           </div>
         </td>
 
-        {/* 市值 */}
-        <td className="px-4 py-3">
-          <span className="text-slate-300 font-medium">
+        {/* 市值 - 手機版縮小 */}
+        <td className="px-2 md:px-4 py-2 md:py-3">
+          <span className="text-slate-300 font-medium text-xs md:text-sm">
             {formatMarketValue(marketValue)}
           </span>
         </td>
 
-        {/* 損益率 */}
-        <td className="px-4 py-3">
+        {/* 損益率 - 手機版隱藏 */}
+        <td className="hidden lg:table-cell px-4 py-3">
           <div className={UIEnhancementService.getGainLossColor(gainLoss)}>
             {formatGainLoss(gainLoss, gainLossPercent)}
           </div>
         </td>
 
-        {/* 股息 */}
-        <td className="px-4 py-3">
+        {/* 股息 - 手機版隱藏 */}
+        <td className="hidden lg:table-cell px-4 py-3">
           {totalDividend > 0 ? (
             <div>
               <span className="text-green-400 font-medium">
@@ -567,17 +567,17 @@ const StockRow: React.FC<StockRowProps> = ({
           )}
         </td>
 
-        {/* 操作 */}
-        <td className="px-4 py-3 text-right">
+        {/* 操作 - 手機版縮小 */}
+        <td className="px-2 md:px-4 py-2 md:py-3 text-right">
           {isDetailRow ? (
             // 詳細記錄的簡化操作
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-1 md:space-x-2">
               <button
                 onClick={() => onDeleteStock(stock.id)}
                 className="text-red-400 hover:text-red-300 transition-colors p-1 rounded hover:bg-slate-600"
                 title="刪除此筆記錄"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                 </svg>
               </button>
@@ -587,11 +587,11 @@ const StockRow: React.FC<StockRowProps> = ({
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="text-slate-300 hover:text-white transition-colors p-2 rounded hover:bg-slate-600 border border-slate-600"
+                className="text-slate-300 hover:text-white transition-colors p-1 md:p-2 rounded hover:bg-slate-600 border border-slate-600"
                 title="更多操作"
                 aria-label={`${stock.symbol} 操作選單`}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 24 24">
                   <circle cx="12" cy="5" r="2"/>
                   <circle cx="12" cy="12" r="2"/>
                   <circle cx="12" cy="19" r="2"/>
