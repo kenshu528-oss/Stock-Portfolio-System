@@ -12,6 +12,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0158',
+    date: '2026-01-16',
+    type: 'patch',
+    title: '手機版股票列表橫向滾動優化',
+    description: '解決手機版股票列表資訊擠壓問題，添加橫向滾動和固定操作欄。',
+    changes: [
+      '添加橫向滾動：表格容器使用 overflow-x-auto',
+      '添加滑動提示：手機版顯示「左右滑動查看更多資訊」',
+      '表格最小寬度：min-w-[600px] 確保完整顯示',
+      '調整欄位順序：代碼、名稱、現價、市值優先顯示',
+      '固定操作欄：使用 sticky right-0 固定在右側',
+      '優化間距：縮小 padding 和按鈕尺寸',
+      '添加 whitespace-nowrap 防止文字換行'
+    ],
+    fixes: [
+      '修復手機版股票列表資訊嚴重擠壓',
+      '修復欄位無法完全呈現的問題',
+      '修復操作按鈕被遮擋',
+      '提升手機版可讀性和操作性'
+    ]
+  },
+  {
     version: '1.0.2.0157',
     date: '2026-01-16',
     type: 'patch',

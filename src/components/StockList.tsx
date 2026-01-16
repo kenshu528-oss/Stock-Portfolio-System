@@ -143,36 +143,47 @@ const StockList: React.FC<StockListProps> = ({
 
   return (
     <div className="bg-slate-800 border border-slate-700 rounded-lg">
-      <div className="overflow-x-auto overflow-y-visible">
-        <table className="min-w-full divide-y divide-slate-700">
+      {/* 手機版提示 */}
+      <div className="md:hidden px-3 py-2 bg-slate-900 border-b border-slate-700">
+        <p className="text-xs text-slate-400 flex items-center">
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          左右滑動查看更多資訊
+        </p>
+      </div>
+      
+      {/* 表格容器 - 添加橫向滾動 */}
+      <div className="overflow-x-auto overflow-y-visible -webkit-overflow-scrolling-touch">
+        <table className="w-full min-w-[600px] divide-y divide-slate-700">
           {/* 表頭 */}
-          <thead className="bg-slate-900">
+          <thead className="bg-slate-900 sticky top-0 z-10">
             <tr>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 代碼
               </th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 名稱
               </th>
-              <th className="hidden md:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                持股數
-              </th>
-              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                成本價
-              </th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 現價
               </th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 市值
               </th>
-              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="hidden md:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                持股數
+              </th>
+              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                成本價
+              </th>
+              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 損益率
               </th>
-              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="hidden lg:table-cell px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap">
                 股息
               </th>
-              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-2 md:px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider whitespace-nowrap sticky right-0 bg-slate-900">
                 操作
               </th>
             </tr>
