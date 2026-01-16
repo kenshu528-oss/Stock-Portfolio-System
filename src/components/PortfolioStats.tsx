@@ -211,9 +211,9 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* 總市值 */}
-          <div className="bg-slate-900 rounded-lg p-4">
+          <div className="bg-slate-900 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-400">總市值</p>
@@ -230,16 +230,16 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
           </div>
 
           {/* 總成本 */}
-          <div className="bg-slate-900 rounded-lg p-4">
+          <div className="bg-slate-900 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400">總成本</p>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-xs font-medium text-slate-400">總成本</p>
+                <p className="text-xl font-bold text-white">
                   {formatCurrency(stats.totalCost)}
                 </p>
               </div>
               <div className="p-2 bg-slate-500/10 rounded-lg">
-                <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
@@ -247,21 +247,21 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
           </div>
 
           {/* 總損益 */}
-          <div className="bg-slate-900 rounded-lg p-4">
+          <div className="bg-slate-900 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400">總損益</p>
-                <p className={`text-2xl font-bold ${getGainLossColor(stats.totalGainLoss)}`}>
+                <p className="text-xs font-medium text-slate-400">總損益</p>
+                <p className={`text-xl font-bold ${getGainLossColor(stats.totalGainLoss)}`}>
                   {isPrivacyMode ? '****' : `${stats.totalGainLoss >= 0 ? '+' : ''}${stats.totalGainLoss.toFixed(0)}`}
                 </p>
-                <p className={`text-sm ${getGainLossColor(stats.totalGainLoss)}`}>
+                <p className={`text-xs ${getGainLossColor(stats.totalGainLoss)}`}>
                   {formatPercent(stats.totalGainLossPercent)}
                 </p>
               </div>
               <div className={`p-2 rounded-lg ${
                 stats.totalGainLoss >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'
               }`}>
-                <svg className={`w-6 h-6 ${getGainLossColor(stats.totalGainLoss)}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-5 h-5 ${getGainLossColor(stats.totalGainLoss)}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {stats.totalGainLoss >= 0 ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   ) : (
@@ -273,16 +273,16 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
           </div>
 
           {/* 股息收入 */}
-          <div className="bg-slate-900 rounded-lg p-4">
+          <div className="bg-slate-900 rounded-lg p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400">股息收入</p>
-                <p className="text-2xl font-bold text-green-400">
+                <p className="text-xs font-medium text-slate-400">股息收入</p>
+                <p className="text-xl font-bold text-green-400">
                   {formatCurrency(stats.totalDividend)}
                 </p>
               </div>
               <div className="p-2 bg-green-500/10 rounded-lg">
-                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                 </svg>
               </div>
@@ -293,8 +293,8 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
 
       {/* 詳細統計 */}
       {currentAccountStocks.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-slate-700">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div className="mt-4 pt-4 border-t border-slate-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             <div className="flex justify-between">
               <span className="text-slate-400">持股檔數:</span>
               <span className="text-white font-medium">{currentAccountStocks.length} 檔</span>

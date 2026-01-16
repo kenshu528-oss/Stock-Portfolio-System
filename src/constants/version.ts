@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 151, // 優化 Header 排版：減少 padding 和元素間距，縮小圖示和標題字體
+  PATCH: 152, // 深度優化 UI 空白：統計卡片、快速新增表單等區域
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
