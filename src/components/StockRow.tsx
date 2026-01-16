@@ -493,7 +493,7 @@ const StockRow: React.FC<StockRowProps> = ({
           />
         </td>
 
-        {/* 成本價（可編輯）- 手機版隱藏 */}
+        {/* 成本價（可編輯）- 桌面版顯示 */}
         <td className="hidden lg:table-cell px-4 py-3">
           <div>
             <EditableCell
@@ -512,34 +512,14 @@ const StockRow: React.FC<StockRowProps> = ({
           </div>
         </td>
 
-        {/* 現價 - 手機版縮小 */}
-        <td className="px-2 md:px-4 py-2 md:py-3">
-          <span className="text-slate-300 text-xs md:text-sm">
-            {formatPrice(stock.currentPrice)}
-          </span>
-          <div className="text-xs text-slate-500 mt-1 hidden md:block">
-            {stock.priceSource} • {new Date(stock.lastUpdated).toLocaleTimeString('zh-TW', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </div>
-        </td>
-
-        {/* 市值 - 手機版縮小 */}
-        <td className="px-2 md:px-4 py-2 md:py-3">
-          <span className="text-slate-300 font-medium text-xs md:text-sm">
-            {formatMarketValue(marketValue)}
-          </span>
-        </td>
-
-        {/* 損益率 - 手機版隱藏 */}
+        {/* 損益率 - 桌面版顯示 */}
         <td className="hidden lg:table-cell px-4 py-3">
           <div className={UIEnhancementService.getGainLossColor(gainLoss)}>
             {formatGainLoss(gainLoss, gainLossPercent)}
           </div>
         </td>
 
-        {/* 股息 - 手機版隱藏 */}
+        {/* 股息 - 桌面版顯示 */}
         <td className="hidden lg:table-cell px-4 py-3">
           {totalDividend > 0 ? (
             <div>
