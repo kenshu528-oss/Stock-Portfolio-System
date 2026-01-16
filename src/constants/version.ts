@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 161, // 修復 Header 置頂：調整容器結構讓 sticky 正常工作
+  PATCH: 162, // 修復手機版組件寬度：添加 max-w-full 防止溢出
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

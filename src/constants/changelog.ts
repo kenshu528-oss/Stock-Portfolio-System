@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0162',
+    date: '2026-01-16',
+    type: 'fix',
+    title: '修復手機版組件寬度溢出',
+    description: '為所有主要組件添加 max-w-full，防止手機版右側出現空白。',
+    changes: [
+      'PortfolioStats: 添加 max-w-full，縮小 padding (p-2 md:p-4)',
+      'PortfolioStats: 標題響應式 (text-sm md:text-base)',
+      'QuickAddStock: 添加 max-w-full',
+      'StockList: 添加 max-w-full'
+    ],
+    fixes: [
+      '修復手機版右側空白問題',
+      '修復投資組合統計太寬',
+      '修復組件超出螢幕寬度',
+      '確保所有組件不超過容器寬度'
+    ]
+  },
+  {
     version: '1.0.2.0161',
     date: '2026-01-16',
     type: 'fix',

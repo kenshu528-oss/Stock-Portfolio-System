@@ -142,7 +142,7 @@ const StockList: React.FC<StockListProps> = ({
   }
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-lg">
+    <div className="bg-slate-800 border border-slate-700 rounded-lg max-w-full">
       {/* 手機版提示 */}
       <div className="md:hidden px-3 py-2 bg-slate-900 border-b border-slate-700">
         <p className="text-xs text-slate-400 flex items-center">
