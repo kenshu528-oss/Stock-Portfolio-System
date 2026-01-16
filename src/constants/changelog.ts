@@ -12,6 +12,37 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0165',
+    date: '2026-01-16',
+    type: 'patch',
+    title: '手機版 RWD：帳戶管理頁面優化',
+    description: '優化手機版帳戶管理頁面的顯示，調整容器高度、間距和按鈕大小，確保內容完整呈現。',
+    changes: [
+      'AccountManager: 新增帳戶表單改為響應式佈局 (flex-col sm:flex-row)',
+      'AccountManager: 調整間距 (space-y-4 md:space-y-8)',
+      'AccountManager: 帳戶列表高度改為響應式 (max-h-[50vh] md:max-h-[400px])',
+      'AccountManager: 帳戶卡片 padding 響應式 (p-4 md:p-6)',
+      'AccountManager: 帳戶卡片最小高度響應式 (min-h-[140px] md:min-h-[160px])',
+      'AccountManager: 文字大小響應式 (text-lg md:text-xl)',
+      'AccountManager: 按鈕間距響應式 (space-x-1 md:space-x-2)',
+      'AccountManager: 按鈕 padding 響應式 (p-1.5 md:p-2)',
+      '確保手機版可以完整查看所有帳戶'
+    ]
+  },
+  {
+    version: '1.0.2.0164',
+    date: '2026-01-16',
+    type: 'patch',
+    title: 'UI 優化：移除重複功能',
+    description: '移除側邊選單中重複的「批次處理除權息」功能，該功能已整合至 Header 右上角的更新按鈕中。',
+    changes: [
+      '移除 Sidebar 中的「批次處理除權息」選單項目',
+      '移除相關的 onBatchProcessRights prop 傳遞',
+      '簡化 UI，避免功能重複',
+      '用戶只需使用 Header 右上角的更新按鈕即可更新股價和處理除權息'
+    ]
+  },
+  {
     version: '1.0.2.0163',
     date: '2026-01-16',
     type: 'patch',

@@ -13,7 +13,6 @@ interface HeaderProps {
   onPrivacyToggle?: () => void;
   isPrivacyMode?: boolean;
   onOpenCloudSync?: () => void;
-  onBatchProcessRights?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
@@ -21,8 +20,7 @@ const Header: React.FC<HeaderProps> = ({
   isMenuOpen, 
   onPrivacyToggle,
   isPrivacyMode = false,
-  onOpenCloudSync,
-  onBatchProcessRights
+  onOpenCloudSync
 }) => {
   const [showImportExport, setShowImportExport] = useState(false);
   const [showVersionInfo, setShowVersionInfo] = useState(false);

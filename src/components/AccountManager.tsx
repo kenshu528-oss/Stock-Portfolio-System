@@ -164,9 +164,9 @@ const AccountManager: React.FC<AccountManagerProps> = ({
       className="max-w-7xl w-full max-h-[90vh]"
       autoHeight={false}
     >
-      <div className="space-y-8">
-        {/* 新增帳戶表單 - 簡潔橫向佈局 */}
-        <div className="flex items-center gap-4 p-4 bg-slate-700 rounded-lg">
+      <div className="space-y-4 md:space-y-8">
+        {/* 新增帳戶表單 - 響應式佈局 */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 p-3 sm:p-4 bg-slate-700 rounded-lg">
           <div className="flex-1">
             <Input
               placeholder="帳戶名稱"
@@ -180,7 +180,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
               className="text-base h-10"
             />
           </div>
-          <div className="w-32">
+          <div className="w-full sm:w-32">
             <Input
               type="number"
               step="0.0001"
@@ -203,26 +203,26 @@ const AccountManager: React.FC<AccountManagerProps> = ({
               onChange={(e) => setNewTransactionTax(e.target.value)}
             />
           </div>
-          <div>
+          <div className="w-full sm:w-auto">
             <Button
               variant="primary"
               size="sm"
               onClick={handleCreateAccount}
               disabled={!newAccountName.trim()}
-              className="h-10 px-6 text-base bg-blue-600 hover:bg-blue-700"
+              className="h-10 px-6 text-base bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
             >
               新增帳戶
             </Button>
           </div>
         </div>
 
-        {/* 帳戶網格 */}
+        {/* 帳戶網格 - 響應式高度 */}
         <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-h-[400px] overflow-y-auto pr-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 max-h-[50vh] md:max-h-[400px] overflow-y-auto pr-2 md:pr-4">
             {accounts.map((account, index) => (
               <div
                 key={account.id}
-                className="bg-slate-700 border border-slate-600 rounded-xl p-6 relative group hover:bg-slate-600 transition-colors min-h-[160px]"
+                className="bg-slate-700 border border-slate-600 rounded-xl p-4 md:p-6 relative group hover:bg-slate-600 transition-colors min-h-[140px] md:min-h-[160px]"
               >
                 {editingAccountId === account.id ? (
                   <div className="space-y-4">
@@ -292,11 +292,11 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                 ) : (
                   <div className="h-full flex flex-col justify-between">
                     {/* 帳戶資訊和編輯按鈕 */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex-1">
-                        <h4 className="text-white font-medium text-xl truncate leading-tight">{account.name}</h4>
-                        <p className="text-slate-400 text-base mt-1">{account.stockCount} 筆股票</p>
-                        <p className="text-slate-500 text-sm mt-1">
+                    <div className="flex items-start justify-between mb-3 md:mb-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-white font-medium text-lg md:text-xl truncate leading-tight">{account.name}</h4>
+                        <p className="text-slate-400 text-sm md:text-base mt-1">{account.stockCount} 筆股票</p>
+                        <p className="text-slate-500 text-xs md:text-sm mt-1">
                           手續費: {account.brokerageFee ?? 0.1425}%
                         </p>
                         {/* 交易稅暫時不顯示，但資料結構已支援 */}
@@ -305,19 +305,19 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                       {/* 編輯按鈕 - 始終可見 */}
                       <button
                         onClick={() => handleStartEdit(account)}
-                        className="ml-3 p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors"
+                        className="ml-2 p-1.5 md:p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded transition-colors flex-shrink-0"
                         title="編輯帳戶名稱"
                       >
-                        <EditIcon size="md" />
+                        <EditIcon size="sm" />
                       </button>
                     </div>
                     
                     {/* 操作按鈕 */}
-                    <div className="flex justify-end space-x-2">
+                    <div className="flex justify-end space-x-1 md:space-x-2">
                       <button
                         onClick={() => handleMoveUp(index)}
                         disabled={index === 0}
-                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="p-1.5 md:p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="向上移動"
                       >
                         <ArrowUpIcon size="sm" />
@@ -326,7 +326,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                       <button
                         onClick={() => handleMoveDown(index)}
                         disabled={index === accounts.length - 1}
-                        className="p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="p-1.5 md:p-2 text-slate-400 hover:text-white hover:bg-slate-600 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="向下移動"
                       >
                         <ArrowDownIcon size="sm" />
@@ -334,7 +334,7 @@ const AccountManager: React.FC<AccountManagerProps> = ({
                       
                       <button
                         onClick={() => handleDeleteAccount(account)}
-                        className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded transition-colors"
+                        className="p-1.5 md:p-2 text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded transition-colors"
                         title="刪除帳戶"
                       >
                         <DeleteIcon size="sm" />

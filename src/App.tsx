@@ -896,7 +896,6 @@ function App() {
               onOpenCloudSync={() => setIsCloudSyncOpen(true)}
               onResetToDefault={handleResetToDefault}
               onRefreshDividends={handleRefreshDividends}
-              onBatchProcessRights={handleBatchProcessRights}
             />
           </ErrorBoundary>
           
