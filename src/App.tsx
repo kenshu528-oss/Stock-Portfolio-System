@@ -932,27 +932,23 @@ function App() {
               </div>
             </ErrorBoundary>
 
-            {/* Portfolio stats - 手機模式隱藏 */}
+            {/* Portfolio stats - 手機模式摺疊顯示 */}
             <ErrorBoundary>
-              <div className="hidden md:block">
-                <PortfolioStats
-                  stocks={stocks}
-                  currentAccountId={accounts.find(acc => acc.name === currentAccount)?.id || ''}
-                  isPrivacyMode={isPrivacyMode}
-                  className="mb-3"
-                />
-              </div>
+              <PortfolioStats
+                stocks={stocks}
+                currentAccountId={accounts.find(acc => acc.name === currentAccount)?.id || ''}
+                isPrivacyMode={isPrivacyMode}
+                className="mb-3"
+              />
             </ErrorBoundary>
             
-            {/* Quick Add Stock - 手機模式隱藏 */}
+            {/* Quick Add Stock - 手機模式摺疊顯示 */}
             <ErrorBoundary>
-              <div className="hidden md:block">
-                <QuickAddStock
-                  currentAccount={currentAccount}
-                  onSubmit={handleAddStock}
-                  className="mb-3"
-                />
-              </div>
+              <QuickAddStock
+                currentAccount={currentAccount}
+                onSubmit={handleAddStock}
+                className="mb-3"
+              />
             </ErrorBoundary>
             
             {/* Stock list */}
