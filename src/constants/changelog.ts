@@ -12,6 +12,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0152',
+    date: '2026-01-15',
+    type: 'patch',
+    title: '深度優化 UI 空白區域',
+    description: '針對用戶反饋的空白區域進行深度優化，包括統計卡片、快速新增表單等，大幅提升空間利用率。',
+    changes: [
+      'QuickAddStock padding 從 p-4 減少到 p-3',
+      'QuickAddStock 表單間距從 gap-3 減少到 gap-2',
+      'PortfolioStats 統計卡片 padding 從 p-4 減少到 p-3',
+      'PortfolioStats 卡片間距從 gap-4 減少到 gap-3',
+      '統計卡片標籤字體從 text-sm 減少到 text-xs',
+      '統計卡片數值字體從 text-2xl 減少到 text-xl',
+      '統計卡片圖示從 w-6 h-6 減少到 w-5 h-5',
+      '詳細統計區域間距從 mt-6 pt-6 減少到 mt-4 pt-4',
+      '詳細統計網格間距從 gap-4 減少到 gap-3'
+    ],
+    fixes: [
+      '修復統計卡片區域空白過多的問題',
+      '修復快速新增表單空白過多的問題',
+      '大幅提升整體空間利用率'
+    ]
+  },
+  {
     version: '1.0.2.0151',
     date: '2026-01-15',
     type: 'patch',
