@@ -206,10 +206,10 @@ const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="bg-slate-800 shadow-sm border-b border-slate-700 px-4 py-3 sticky top-0 z-50">
+    <header className="bg-slate-800 shadow-sm border-b border-slate-700 px-3 py-2 sticky top-0 z-50">
       <div className="flex items-center justify-between">
         {/* Left side - Menu button, title and version */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <Button
             variant="ghost"
             size="sm"
@@ -218,18 +218,18 @@ const Header: React.FC<HeaderProps> = ({
             aria-label={isMenuOpen ? '關閉選單' : '開啟選單'}
           >
             {/* Hamburger menu icon - always show hamburger, not X */}
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </Button>
           
-          <div className="flex items-baseline space-x-3">
-            <h1 className="text-xl font-bold text-white">
+          <div className="flex items-baseline space-x-2">
+            <h1 className="text-lg font-bold text-white">
               Stock Portfolio System
             </h1>
             <button
               onClick={() => setShowVersionInfo(true)}
-              className="text-sm text-slate-500 hover:text-blue-400 transition-colors cursor-pointer"
+              className="text-xs text-slate-500 hover:text-blue-400 transition-colors cursor-pointer"
               title="點擊查看版本資訊和更新記錄"
             >
               {VERSION.DISPLAY}
@@ -238,7 +238,7 @@ const Header: React.FC<HeaderProps> = ({
         </div>
 
           {/* 桌面版功能按鈕 - 手機版隱藏 */}
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden md:flex items-center space-x-1">
             {/* Operation Log Button */}
             <OperationLog />
 

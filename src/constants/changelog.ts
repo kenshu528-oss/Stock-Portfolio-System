@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0151',
+    date: '2026-01-15',
+    type: 'patch',
+    title: '優化 Header 排版',
+    description: '進一步優化 Header 區域的排版，減少右上角留白，提升整體緊湊度。',
+    changes: [
+      'Header padding 從 px-4 py-3 減少到 px-3 py-2',
+      '左側元素間距從 space-x-4 減少到 space-x-3',
+      '標題和版本號間距從 space-x-3 減少到 space-x-2',
+      '標題字體從 text-xl 減少到 text-lg',
+      '版本號字體從 text-sm 減少到 text-xs',
+      '選單圖示從 w-6 h-6 減少到 w-5 h-5',
+      '右側按鈕間距從 space-x-2 減少到 space-x-1'
+    ],
+    fixes: [
+      '修復 Header 右上角留白過多的問題',
+      '提升 Header 區域空間利用率'
+    ]
+  },
+  {
     version: '1.0.2.0150',
     date: '2026-01-15',
     type: 'patch',
