@@ -11,7 +11,6 @@ interface SidebarProps {
   onOpenCloudSync?: () => void;
   onResetToDefault?: () => void;
   onRefreshDividends?: () => void;
-  onBatchProcessRights?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -23,8 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onImport,
   onOpenCloudSync,
   onResetToDefault,
-  onRefreshDividends,
-  onBatchProcessRights
+  onRefreshDividends
 }) => {
   // Handle ESC key press and click outside
   useEffect(() => {
@@ -118,23 +116,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             刷新股息資料
           </Button>
 
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-left h-12 px-4 text-slate-300 hover:bg-slate-700 hover:text-white rounded-lg"
-            onClick={() => {
-              onBatchProcessRights?.();
-              onClose(); // 關閉側邊選單
-            }}
-          >
-            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <rect x="3" y="6" width="6" height="4" strokeWidth={1.5} />
-              <rect x="11" y="6" width="4" height="4" strokeWidth={1.5} />
-              <rect x="17" y="6" width="4" height="4" strokeWidth={1.5} />
-              <circle cx="12" cy="16" r="3" strokeWidth={1} />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 14v4m-1-2h2" />
-            </svg>
-            批次處理除權息
-          </Button>
+          {/* 批次處理除權息功能已移至 Header 右上角的更新按鈕，避免重複 */}
 
           <Button
             variant="ghost"
