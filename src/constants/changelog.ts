@@ -12,6 +12,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0150',
+    date: '2026-01-15',
+    type: 'patch',
+    title: '優化 UI 排版：減少過多空白',
+    description: '優化整體 UI 排版，減少組件間距和內部 padding，提升螢幕空間利用率，讓更多內容可見。',
+    changes: [
+      '主內容區域 padding 從 p-4 減少到 p-2',
+      '組件間距從 mb-6 減少到 mb-3',
+      '帳戶標籤 padding 從 py-3 減少到 py-2',
+      'PortfolioStats padding 從 p-6 減少到 p-4',
+      'PortfolioStats 標題從 text-lg 減少到 text-base',
+      '表格標題 padding 從 px-6 py-3 減少到 px-4 py-2',
+      '表格內容 padding 從 px-6 py-4 減少到 px-4 py-3',
+      '空狀態圖示和間距優化'
+    ],
+    fixes: [
+      '修復 UI 空白區域過多的問題',
+      '提升螢幕空間利用率',
+      '改善整體視覺密度'
+    ]
+  },
+  {
     version: '1.0.2.0149',
     date: '2026-01-15',
     type: 'hotfix',

@@ -412,7 +412,7 @@ const StockRow: React.FC<StockRowProps> = ({
           : 'hover:bg-slate-700'
       }`}>
         {/* 股票代碼 */}
-        <td className="px-6 py-4">
+        <td className="px-4 py-3">
           <div>
             <div className="flex items-center">
               {/* 展開/收合按鈕 */}
@@ -462,7 +462,7 @@ const StockRow: React.FC<StockRowProps> = ({
         </td>
 
         {/* 股票名稱 */}
-        <td className="px-6 py-4">
+        <td className="px-4 py-3">
           <div>
             <span className={`${isDetailRow ? 'text-slate-500' : 'text-slate-300'}`}>
               {UIEnhancementService.fixStockNameDisplay(stock)}
@@ -492,7 +492,7 @@ const StockRow: React.FC<StockRowProps> = ({
         </td>
 
         {/* 持股數（可編輯） */}
-        <td className="px-6 py-4">
+        <td className="px-4 py-3">
           <EditableCell
             value={stock.shares}
             onSave={handleSharesUpdate}
@@ -504,7 +504,7 @@ const StockRow: React.FC<StockRowProps> = ({
         </td>
 
         {/* 成本價（可編輯） */}
-        <td className="px-6 py-4">
+        <td className="px-4 py-3">
           <div>
             <EditableCell
               value={displayCostPrice}
@@ -523,7 +523,7 @@ const StockRow: React.FC<StockRowProps> = ({
         </td>
 
         {/* 現價 */}
-        <td className="px-6 py-4">
+        <td className="px-4 py-3">
           <span className="text-slate-300">
             {formatPrice(stock.currentPrice)}
           </span>
@@ -536,21 +536,21 @@ const StockRow: React.FC<StockRowProps> = ({
         </td>
 
         {/* 市值 */}
-        <td className="px-6 py-4">
+        <td className="px-4 py-3">
           <span className="text-slate-300 font-medium">
             {formatMarketValue(marketValue)}
           </span>
         </td>
 
         {/* 損益率 */}
-        <td className="px-6 py-4">
+        <td className="px-4 py-3">
           <div className={UIEnhancementService.getGainLossColor(gainLoss)}>
             {formatGainLoss(gainLoss, gainLossPercent)}
           </div>
         </td>
 
         {/* 股息 */}
-        <td className="px-6 py-4">
+        <td className="px-4 py-3">
           {totalDividend > 0 ? (
             <div>
               <span className="text-green-400 font-medium">
@@ -568,7 +568,7 @@ const StockRow: React.FC<StockRowProps> = ({
         </td>
 
         {/* 操作 */}
-        <td className="px-6 py-4 text-right">
+        <td className="px-4 py-3 text-right">
           {isDetailRow ? (
             // 詳細記錄的簡化操作
             <div className="flex justify-end space-x-2">

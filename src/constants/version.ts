@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 149, // 修復生產環境 CORS 錯誤：禁用 ServerStatusPanel 在生產環境中的運行
+  PATCH: 150, // 優化 UI 排版：減少過多的空白區域，提升空間利用率
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

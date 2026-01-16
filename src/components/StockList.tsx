@@ -148,31 +148,31 @@ const StockList: React.FC<StockListProps> = ({
           {/* 表頭 */}
           <thead className="bg-slate-900">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 股票代碼
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 股票名稱
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 持股數
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 成本價
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 現價
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 市值
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 損益率
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 股息
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <th className="px-4 py-2 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                 操作
               </th>
             </tr>
@@ -219,10 +219,10 @@ const StockList: React.FC<StockListProps> = ({
               })
             ) : (
               <tr>
-                <td colSpan={9} className="px-6 py-12 text-center">
+                <td colSpan={9} className="px-4 py-8 text-center">
                   <div className="text-slate-400">
                     <svg 
-                      className="mx-auto h-12 w-12 text-slate-500 mb-4" 
+                      className="mx-auto h-10 w-10 text-slate-500 mb-3" 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -248,7 +248,7 @@ const StockList: React.FC<StockListProps> = ({
 
       {/* 股票數量提示 */}
       {mergedStocks.length > 0 && (
-        <div className="bg-slate-900 px-6 py-3 border-t border-slate-700">
+        <div className="bg-slate-900 px-4 py-2 border-t border-slate-700">
           <div className="text-sm text-slate-400">
             共 {mergedStocks.length} 支股票
           </div>
