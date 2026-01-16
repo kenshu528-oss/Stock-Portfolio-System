@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0161',
+    date: '2026-01-16',
+    type: 'fix',
+    title: '修復 Header 置頂功能失效',
+    description: '調整容器結構，讓 Header 的 sticky 定位正常工作。',
+    changes: [
+      'Header 移到 overflow-x-hidden 容器外',
+      '新增 Body 容器包裹 flex 和 main',
+      'overflow-x-hidden 只應用在 Body 容器'
+    ],
+    fixes: [
+      '修復 Header sticky top-0 失效',
+      '修復滾動時 Header 不置頂的問題',
+      '保持水平溢出控制功能'
+    ]
+  },
+  {
     version: '1.0.2.0160',
     date: '2026-01-16',
     type: 'fix',
