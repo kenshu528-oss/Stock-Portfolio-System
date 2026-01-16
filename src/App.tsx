@@ -865,7 +865,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-900 overflow-x-hidden">
       {/* Header */}
       <ErrorBoundary>
         <Header 
@@ -878,7 +878,7 @@ function App() {
         />
       </ErrorBoundary>
       
-      <div className="flex">
+      <div className="flex overflow-x-hidden">
         {/* Sidebar */}
         <ErrorBoundary>
           <Sidebar 
@@ -899,9 +899,9 @@ function App() {
         </ErrorBoundary>
         
         {/* Main content area - optimized spacing */}
-        <main className="flex-1 p-2">
+        <main className="flex-1 p-2 overflow-x-hidden max-w-full">
           {/* Content area - full width */}
-          <div className="w-full">
+          <div className="w-full max-w-full">
             {/* Account tabs */}
             <ErrorBoundary>
               <div className="mb-3">

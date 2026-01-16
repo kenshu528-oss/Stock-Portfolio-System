@@ -558,7 +558,9 @@ const StockRow: React.FC<StockRowProps> = ({
         </td>
 
         {/* 操作 - 手機版固定在右側 */}
-        <td className="px-2 md:px-4 py-2 md:py-3 text-right whitespace-nowrap sticky right-0 bg-slate-800">
+        <td className={`px-2 md:px-4 py-2 md:py-3 text-right whitespace-nowrap sticky right-0 ${
+          isDetailRow ? 'bg-slate-850' : 'bg-slate-800'
+        }`}>
           {isDetailRow ? (
             // 詳細記錄的簡化操作
             <div className="flex justify-end">
