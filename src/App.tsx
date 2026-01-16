@@ -865,8 +865,8 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 overflow-x-hidden">
-      {/* Header */}
+    <div className="min-h-screen bg-slate-900">
+      {/* Header - 必須在 overflow 容器外才能 sticky */}
       <ErrorBoundary>
         <Header 
           onMenuToggle={handleMenuToggle} 
@@ -878,30 +878,32 @@ function App() {
         />
       </ErrorBoundary>
       
-      <div className="flex overflow-x-hidden">
-        {/* Sidebar */}
-        <ErrorBoundary>
-          <Sidebar 
-            isOpen={isSidebarOpen} 
-            onClose={handleSidebarClose}
-            onOpenAccountManager={() => setAccountManagerOpen(true)}
-            onOpenAddStock={() => setAddStockFormOpen(true)}
-            onExport={handleExport}
-            onImport={() => {
-              console.log('App.tsx: 匯入函數被調用');
-              handleImport();
-            }}
-            onOpenCloudSync={() => setIsCloudSyncOpen(true)}
-            onResetToDefault={handleResetToDefault}
-            onRefreshDividends={handleRefreshDividends}
-            onBatchProcessRights={handleBatchProcessRights}
-          />
-        </ErrorBoundary>
-        
-        {/* Main content area - optimized spacing */}
-        <main className="flex-1 p-2 overflow-x-hidden max-w-full">
-          {/* Content area - full width */}
-          <div className="w-full max-w-full">
+      {/* Body 容器 - 這裡才添加 overflow-x-hidden */}
+      <div className="overflow-x-hidden">
+        <div className="flex">
+          {/* Sidebar */}
+          <ErrorBoundary>
+            <Sidebar 
+              isOpen={isSidebarOpen} 
+              onClose={handleSidebarClose}
+              onOpenAccountManager={() => setAccountManagerOpen(true)}
+              onOpenAddStock={() => setAddStockFormOpen(true)}
+              onExport={handleExport}
+              onImport={() => {
+                console.log('App.tsx: 匯入函數被調用');
+                handleImport();
+              }}
+              onOpenCloudSync={() => setIsCloudSyncOpen(true)}
+              onResetToDefault={handleResetToDefault}
+              onRefreshDividends={handleRefreshDividends}
+              onBatchProcessRights={handleBatchProcessRights}
+            />
+          </ErrorBoundary>
+          
+          {/* Main content area - optimized spacing */}
+          <main className="flex-1 p-2 max-w-full">
+            {/* Content area - full width */}
+            <div className="w-full max-w-full">
             {/* Account tabs */}
             <ErrorBoundary>
               <div className="mb-3">
@@ -1012,6 +1014,7 @@ function App() {
       <ErrorBoundary>
         <ServerStatusPanel />
       </ErrorBoundary>
+      </div>
     </div>
   );
 }
