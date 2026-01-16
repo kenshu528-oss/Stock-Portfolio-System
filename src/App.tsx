@@ -898,19 +898,19 @@ function App() {
           />
         </ErrorBoundary>
         
-        {/* Main content area - always full width */}
-        <main className="flex-1 p-4">
-          {/* Content area - 80% of screen space for stock list and portfolio info */}
+        {/* Main content area - optimized spacing */}
+        <main className="flex-1 p-2">
+          {/* Content area - optimized max width */}
           <div className="max-w-7xl mx-auto">
             {/* Account tabs */}
             <ErrorBoundary>
-              <div className="mb-6">
+              <div className="mb-3">
                 <nav className="flex space-x-8 border-b border-slate-700">
                   {accounts.map((account) => (
                     <button
                       key={account.id}
                       onClick={() => handleAccountSwitch(account.name)}
-                      className={`border-b-2 py-3 px-1 text-sm font-medium whitespace-nowrap transition-colors ${
+                      className={`border-b-2 py-2 px-1 text-sm font-medium whitespace-nowrap transition-colors ${
                         currentAccount === account.name
                           ? 'border-blue-500 text-blue-400'
                           : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-600'
@@ -920,7 +920,7 @@ function App() {
                     </button>
                   ))}
                   <button 
-                    className="border-b-2 border-transparent py-3 px-1 text-sm font-medium text-slate-400 hover:text-slate-300 hover:border-slate-600"
+                    className="border-b-2 border-transparent py-2 px-1 text-sm font-medium text-slate-400 hover:text-slate-300 hover:border-slate-600"
                     onClick={() => setAccountManagerOpen(true)}
                     aria-label="新增帳戶"
                   >
@@ -938,7 +938,7 @@ function App() {
                 stocks={stocks}
                 currentAccountId={accounts.find(acc => acc.name === currentAccount)?.id || ''}
                 isPrivacyMode={isPrivacyMode}
-                className="mb-6"
+                className="mb-3"
               />
             </ErrorBoundary>
             
@@ -947,7 +947,7 @@ function App() {
               <QuickAddStock
                 currentAccount={currentAccount}
                 onSubmit={handleAddStock}
-                className="mb-6"
+                className="mb-3"
               />
             </ErrorBoundary>
             
