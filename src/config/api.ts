@@ -20,11 +20,11 @@ export const getApiBaseUrl = (): string => {
  */
 export const API_ENDPOINTS = {
   // 股票相關
-  getStock: (symbol: string) => `${getApiBaseUrl()}/stock?symbol=${encodeURIComponent(symbol)}`,
-  searchStock: (query: string) => `${getApiBaseUrl()}/stock-search?query=${encodeURIComponent(query)}`,
+  getStock: (symbol: string) => `${getApiBaseUrl()}/api/stock/${encodeURIComponent(symbol)}`,
+  searchStock: (query: string) => `${getApiBaseUrl()}/api/stock-search?query=${encodeURIComponent(query)}`,
   
   // 股息相關
-  getDividend: (symbol: string) => `${getApiBaseUrl()}/dividend?symbol=${encodeURIComponent(symbol)}`,
+  getDividend: (symbol: string) => `${getApiBaseUrl()}/api/dividend?symbol=${encodeURIComponent(symbol)}`,
   
   // 健康檢查
   health: () => {

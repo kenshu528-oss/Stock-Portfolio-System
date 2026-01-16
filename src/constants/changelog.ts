@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0155',
+    date: '2026-01-16',
+    type: 'fix',
+    title: '修復股價更新失敗問題',
+    description: '修復 API 路徑不匹配導致股價更新全部失敗（404 錯誤）的問題。',
+    changes: [
+      '修復 API_ENDPOINTS.getStock 路徑：/stock?symbol= → /api/stock/:symbol',
+      '修復 stockPriceService 中所有 API 調用路徑',
+      '統一使用後端路由 /api/stock/:symbol 格式'
+    ],
+    fixes: [
+      '修復股價更新全部失敗（404 錯誤）',
+      '修復前後端 API 路徑不匹配問題',
+      '恢復股價自動更新功能'
+    ]
+  },
+  {
     version: '1.0.2.0153',
     date: '2026-01-15',
     type: 'patch',
