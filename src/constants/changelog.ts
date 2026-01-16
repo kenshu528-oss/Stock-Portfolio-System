@@ -12,6 +12,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0153',
+    date: '2026-01-15',
+    type: 'patch',
+    title: '修復右側大片空白問題',
+    description: '找到真正的問題根源：max-w-7xl 限制導致內容區域不填滿螢幕寬度，右側出現大片空白。移除寬度限制，改用全寬布局。',
+    changes: [
+      '移除主內容區域的 max-w-7xl 限制',
+      '移除 mx-auto 置中設定',
+      '改用 w-full 全寬布局',
+      '內容區域現在會填滿整個可用寬度'
+    ],
+    fixes: [
+      '修復右側大片空白區域（紅框標示的問題）',
+      '修復 Test 2 和 + 號跑到空白區的問題',
+      '提升螢幕空間利用率至 100%'
+    ]
+  },
+  {
     version: '1.0.2.0152',
     date: '2026-01-15',
     type: 'patch',

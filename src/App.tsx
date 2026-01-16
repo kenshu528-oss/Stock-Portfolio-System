@@ -900,8 +900,8 @@ function App() {
         
         {/* Main content area - optimized spacing */}
         <main className="flex-1 p-2">
-          {/* Content area - optimized max width */}
-          <div className="max-w-7xl mx-auto">
+          {/* Content area - full width */}
+          <div className="w-full">
             {/* Account tabs */}
             <ErrorBoundary>
               <div className="mb-3">

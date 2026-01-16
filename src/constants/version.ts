@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 152, // 深度優化 UI 空白：統計卡片、快速新增表單等區域
+  PATCH: 153, // 修復右側大片空白：移除 max-w-7xl 限制，使用全寬布局
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
