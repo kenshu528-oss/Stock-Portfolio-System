@@ -222,7 +222,7 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   };
 
   return (
-    <div className={`bg-slate-800 border border-slate-700 rounded-lg p-2 md:p-3 ${className}`}>
+    <div className={`bg-slate-800 border border-slate-700 rounded-lg p-2 md:p-3 max-w-full ${className}`}>
       <div className="grid grid-cols-12 gap-1 md:gap-2 items-end">
         {/* 股票搜尋 - 手機版佔全寬，桌面版佔4欄 */}
         <div className="col-span-12 md:col-span-4 relative" ref={resultsRef}>
