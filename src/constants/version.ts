@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 193, // 修復：優化股價即時性，優先使用證交所 API 獲取即時股價
+  PATCH: 194, // 修復：證交所 API 欄位名稱，使用正確的 pz 欄位獲取即時股價
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

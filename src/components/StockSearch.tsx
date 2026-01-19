@@ -125,8 +125,9 @@ const StockSearch: React.FC<StockSearchProps> = ({
           const twseData = await twseResponse.json();
           if (twseData.msgArray && twseData.msgArray.length > 0) {
             const stockData = twseData.msgArray[0];
-            const currentPrice = parseFloat(stockData.z || stockData.y); // z=成交價, y=昨收價
-            const previousClose = parseFloat(stockData.y || 0); // y=昨收價
+            // 使用正確的欄位名稱：pz=即時價格, y=昨收價
+            const currentPrice = parseFloat(stockData.pz || stockData.y || stockData.z);
+            const previousClose = parseFloat(stockData.y || currentPrice);
             const change = currentPrice - previousClose;
             const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
             

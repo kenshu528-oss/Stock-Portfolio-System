@@ -148,7 +148,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
           const twseData = await twseResponse.json();
           if (twseData.msgArray && twseData.msgArray.length > 0) {
             const stockData = twseData.msgArray[0];
-            const price = parseFloat(stockData.z || stockData.y); // z=成交價, y=昨收價
+            // 使用正確的欄位名稱：pz=即時價格, y=昨收價
+            const price = parseFloat(stockData.pz || stockData.y || stockData.z);
             if (price > 0) {
               console.log(`${symbol} 證交所即時價格: ${price}`);
               return price;
