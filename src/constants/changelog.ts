@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0192',
+    date: '2026-01-19',
+    type: 'hotfix',
+    title: '修復 CORS 跨域問題：調整 API 調用策略，解決瀏覽器跨域限制',
+    description: '遵循 STEERING 規則（api-standards.md），修復瀏覽器環境下的 CORS 跨域問題。根本原因：Yahoo Finance API 不允許從瀏覽器直接調用，導致 CORS 錯誤。修復：優先使用 FinMind API，備援使用 CORS 代理服務，確保在所有環境下都能正常獲取股價。',
+    changes: [
+      '調整 API 優先順序：優先使用 FinMind API 避免 CORS 問題',
+      '新增 CORS 代理：使用 allorigins.win 代理服務作為備援',
+      '擴展時間範圍：查詢 7 天內的股價資料，提高成功率',
+      '完善錯誤處理：CORS 失敗時優雅降級到代理服務',
+      '保持功能完整：確保搜尋功能在所有瀏覽器環境下正常工作'
+    ],
+    fixes: [
+      'Yahoo Finance API CORS 跨域錯誤',
+      '瀏覽器環境下股價獲取失敗',
+      'GitHub Pages 上搜尋功能異常'
+    ]
+  },
+  {
     version: '1.0.2.0191',
     date: '2026-01-19',
     type: 'hotfix',

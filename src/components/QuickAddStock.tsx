@@ -139,29 +139,38 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // 直接獲取股價（不依賴後端）
   const getStockPriceDirectly = async (symbol: string): Promise<number | null> => {
     try {
-      // 使用 Yahoo Finance API 獲取即時股價
-      const yahooSymbol = symbol.includes('.TW') ? symbol : `${symbol}.TW`;
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+      // 使用 FinMind 股價 API（避免 CORS 問題）
+      const today = new Date();
+      const startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000); // 7天前
+      const finmindPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${today.toISOString().split('T')[0]}&token=`;
       
-      const response = await fetch(yahooUrl);
-      if (response.ok) {
-        const data = await response.json();
-        const result = data?.chart?.result?.[0];
-        if (result?.meta?.regularMarketPrice) {
-          return result.meta.regularMarketPrice;
-        }
-      }
-      
-      // 如果 Yahoo Finance 失敗，嘗試使用 FinMind 股價 API
-      const finmindPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${new Date().toISOString().split('T')[0]}&token=`;
       const finmindResponse = await fetch(finmindPriceUrl);
       
       if (finmindResponse.ok) {
         const finmindData = await finmindResponse.json();
         if (finmindData.data && finmindData.data.length > 0) {
+          // 取最新的收盤價
           const latestPrice = finmindData.data[finmindData.data.length - 1];
           return latestPrice.close || null;
         }
+      }
+      
+      // 如果 FinMind 也失敗，嘗試使用 CORS 代理調用 Yahoo Finance
+      try {
+        const yahooSymbol = symbol.includes('.TW') ? symbol : `${symbol}.TW`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`;
+        
+        const proxyResponse = await fetch(proxyUrl);
+        if (proxyResponse.ok) {
+          const proxyData = await proxyResponse.json();
+          const yahooData = JSON.parse(proxyData.contents);
+          const result = yahooData?.chart?.result?.[0];
+          if (result?.meta?.regularMarketPrice) {
+            return result.meta.regularMarketPrice;
+          }
+        }
+      } catch (proxyError) {
+        console.warn(`CORS 代理調用失敗: ${proxyError}`);
       }
       
       return null;
