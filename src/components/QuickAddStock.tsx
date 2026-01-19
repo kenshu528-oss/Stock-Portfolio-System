@@ -139,7 +139,46 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // 直接獲取股價（不依賴後端）
   const getStockPriceDirectly = async (symbol: string): Promise<number | null> => {
     try {
-      // 使用 FinMind 股價 API（避免 CORS 問題）
+      // 方法1: 嘗試使用台灣證交所 API（即時股價）
+      try {
+        const twseUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw&json=1&delay=0`;
+        const twseResponse = await fetch(twseUrl);
+        
+        if (twseResponse.ok) {
+          const twseData = await twseResponse.json();
+          if (twseData.msgArray && twseData.msgArray.length > 0) {
+            const stockData = twseData.msgArray[0];
+            const price = parseFloat(stockData.z || stockData.y); // z=成交價, y=昨收價
+            if (price > 0) {
+              console.log(`${symbol} 證交所即時價格: ${price}`);
+              return price;
+            }
+          }
+        }
+      } catch (twseError) {
+        console.warn(`證交所 API 失敗: ${twseError}`);
+      }
+
+      // 方法2: 使用 CORS 代理調用 Yahoo Finance（較即時）
+      try {
+        const yahooSymbol = symbol.includes('.TW') ? symbol : `${symbol}.TW`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`;
+        
+        const proxyResponse = await fetch(proxyUrl);
+        if (proxyResponse.ok) {
+          const proxyData = await proxyResponse.json();
+          const yahooData = JSON.parse(proxyData.contents);
+          const result = yahooData?.chart?.result?.[0];
+          if (result?.meta?.regularMarketPrice) {
+            console.log(`${symbol} Yahoo Finance 價格: ${result.meta.regularMarketPrice}`);
+            return result.meta.regularMarketPrice;
+          }
+        }
+      } catch (proxyError) {
+        console.warn(`CORS 代理調用失敗: ${proxyError}`);
+      }
+
+      // 方法3: 使用 FinMind API（歷史收盤價，作為最後備援）
       const today = new Date();
       const startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000); // 7天前
       const finmindPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${today.toISOString().split('T')[0]}&token=`;
@@ -151,26 +190,10 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
         if (finmindData.data && finmindData.data.length > 0) {
           // 取最新的收盤價
           const latestPrice = finmindData.data[finmindData.data.length - 1];
-          return latestPrice.close || null;
+          const price = latestPrice.close;
+          console.log(`${symbol} FinMind 收盤價: ${price}`);
+          return price || null;
         }
-      }
-      
-      // 如果 FinMind 也失敗，嘗試使用 CORS 代理調用 Yahoo Finance
-      try {
-        const yahooSymbol = symbol.includes('.TW') ? symbol : `${symbol}.TW`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`;
-        
-        const proxyResponse = await fetch(proxyUrl);
-        if (proxyResponse.ok) {
-          const proxyData = await proxyResponse.json();
-          const yahooData = JSON.parse(proxyData.contents);
-          const result = yahooData?.chart?.result?.[0];
-          if (result?.meta?.regularMarketPrice) {
-            return result.meta.regularMarketPrice;
-          }
-        }
-      } catch (proxyError) {
-        console.warn(`CORS 代理調用失敗: ${proxyError}`);
       }
       
       return null;

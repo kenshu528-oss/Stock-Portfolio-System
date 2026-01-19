@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0193',
+    date: '2026-01-19',
+    type: 'hotfix',
+    title: '優化股價即時性：優先使用證交所 API，提供更接近即時的股價資訊',
+    description: '遵循 STEERING 規則（api-standards.md），優化股價獲取策略以提供更即時的股價。根本原因：FinMind API 提供的是歷史收盤價，有延遲性。修復：調整 API 優先順序，優先使用台灣證交所即時股價 API，備援使用 Yahoo Finance 和 FinMind，確保在 GitHub Pages 上也能獲取較即時的股價。',
+    changes: [
+      '新增證交所 API：優先使用 mis.twse.com.tw 獲取即時股價',
+      '調整 API 優先順序：證交所 → Yahoo Finance → FinMind',
+      '即時價格優先：z=成交價優先於 y=昨收價',
+      '完整價格資訊：包含即時股價、漲跌幅、漲跌百分比',
+      '三重備援機制：確保在各種情況下都能獲取股價資訊',
+      '詳細日誌記錄：顯示使用的 API 來源和獲取的價格'
+    ],
+    fixes: [
+      'GitHub Pages 上顯示昨日收盤價而非即時價格',
+      '搜尋結果股價延遲問題',
+      '本機端與 GitHub Pages 股價不一致'
+    ]
+  },
+  {
     version: '1.0.2.0192',
     date: '2026-01-19',
     type: 'hotfix',

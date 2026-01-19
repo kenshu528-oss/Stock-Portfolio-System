@@ -116,31 +116,35 @@ const StockSearch: React.FC<StockSearchProps> = ({
   // 直接獲取股價（不依賴後端）
   const getStockPriceDirectly = async (symbol: string): Promise<{price: number, change: number, changePercent: number} | null> => {
     try {
-      // 使用 FinMind 股價 API（避免 CORS 問題）
-      const today = new Date();
-      const startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000); // 7天前
-      const finmindPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${today.toISOString().split('T')[0]}&token=`;
-      
-      const finmindResponse = await fetch(finmindPriceUrl);
-      
-      if (finmindResponse.ok) {
-        const finmindData = await finmindResponse.json();
-        if (finmindData.data && finmindData.data.length > 0) {
-          const latestPrice = finmindData.data[finmindData.data.length - 1];
-          const currentPrice = latestPrice.close || 0;
-          const previousPrice = finmindData.data.length > 1 ? finmindData.data[finmindData.data.length - 2].close : currentPrice;
-          const change = currentPrice - previousPrice;
-          const changePercent = previousPrice > 0 ? (change / previousPrice) * 100 : 0;
-          
-          return {
-            price: currentPrice,
-            change: change,
-            changePercent: changePercent
-          };
+      // 方法1: 嘗試使用台灣證交所 API（即時股價）
+      try {
+        const twseUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw&json=1&delay=0`;
+        const twseResponse = await fetch(twseUrl);
+        
+        if (twseResponse.ok) {
+          const twseData = await twseResponse.json();
+          if (twseData.msgArray && twseData.msgArray.length > 0) {
+            const stockData = twseData.msgArray[0];
+            const currentPrice = parseFloat(stockData.z || stockData.y); // z=成交價, y=昨收價
+            const previousClose = parseFloat(stockData.y || 0); // y=昨收價
+            const change = currentPrice - previousClose;
+            const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+            
+            if (currentPrice > 0) {
+              console.log(`${symbol} 證交所即時價格: ${currentPrice}`);
+              return {
+                price: currentPrice,
+                change: change,
+                changePercent: changePercent
+              };
+            }
+          }
         }
+      } catch (twseError) {
+        console.warn(`證交所 API 失敗: ${twseError}`);
       }
-      
-      // 如果 FinMind 失敗，嘗試使用 CORS 代理調用 Yahoo Finance
+
+      // 方法2: 使用 CORS 代理調用 Yahoo Finance（較即時）
       try {
         const yahooSymbol = symbol.includes('.TW') ? symbol : `${symbol}.TW`;
         const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`;
@@ -156,6 +160,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
             const change = currentPrice - previousClose;
             const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
             
+            console.log(`${symbol} Yahoo Finance 價格: ${currentPrice}`);
             return {
               price: currentPrice,
               change: change,
@@ -165,6 +170,31 @@ const StockSearch: React.FC<StockSearchProps> = ({
         }
       } catch (proxyError) {
         console.warn(`CORS 代理調用失敗: ${proxyError}`);
+      }
+
+      // 方法3: 使用 FinMind API（歷史收盤價，作為最後備援）
+      const today = new Date();
+      const startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000); // 7天前
+      const finmindPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${today.toISOString().split('T')[0]}&token=`;
+      
+      const finmindResponse = await fetch(finmindPriceUrl);
+      
+      if (finmindResponse.ok) {
+        const finmindData = await finmindResponse.json();
+        if (finmindData.data && finmindData.data.length > 0) {
+          const latestPrice = finmindData.data[finmindData.data.length - 1];
+          const currentPrice = latestPrice.close || 0;
+          const previousPrice = finmindData.data.length > 1 ? finmindData.data[finmindData.data.length - 2].close : currentPrice;
+          const change = currentPrice - previousPrice;
+          const changePercent = previousPrice > 0 ? (change / previousPrice) * 100 : 0;
+          
+          console.log(`${symbol} FinMind 收盤價: ${currentPrice}`);
+          return {
+            price: currentPrice,
+            change: change,
+            changePercent: changePercent
+          };
+        }
       }
       
       return null;
