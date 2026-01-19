@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0195',
+    date: '2026-01-19',
+    type: 'hotfix',
+    title: '修復 CORS 問題：移除證交所 API，優先使用 Yahoo Finance 代理獲取即時股價',
+    description: '遵循 STEERING 規則（api-standards.md），根據用戶反饋修復股價獲取策略。根本原因：證交所 API 也被 CORS 政策阻擋，導致最終只能使用 FinMind 歷史收盤價。修復：移除會被 CORS 阻擋的證交所 API，優先使用 Yahoo Finance 代理服務，提供更即時的股價資訊。',
+    changes: [
+      '移除證交所 API：避免 CORS 錯誤和 Console 警告',
+      '優先 Yahoo Finance：使用 CORS 代理獲取較即時的股價',
+      '簡化 API 策略：Yahoo Finance → FinMind 雙重備援',
+      '清理 Console 錯誤：移除會被瀏覽器阻擋的 API 調用',
+      '提升用戶體驗：減少錯誤訊息，專注有效的 API'
+    ],
+    fixes: [
+      'Console 中的 CORS 錯誤訊息',
+      '證交所 API 被瀏覽器阻擋問題',
+      '最終只能使用歷史收盤價的問題'
+    ]
+  },
+  {
     version: '1.0.2.0194',
     date: '2026-01-19',
     type: 'hotfix',
