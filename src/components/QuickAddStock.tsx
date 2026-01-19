@@ -110,13 +110,20 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             return symbol.includes(query) || name.includes(query);
           }).slice(0, 10); // 限制結果數量
           
-          // 轉換為標準格式
-          return filtered.map((stock: any) => ({
-            symbol: stock.stock_id,
-            name: stock.stock_name,
-            price: 0, // FinMind 股票資訊 API 不包含即時價格
-            market: '台灣'
-          }));
+          // 為每個股票獲取即時價格
+          const stocksWithPrice = await Promise.all(
+            filtered.map(async (stock: any) => {
+              const price = await getStockPriceDirectly(stock.stock_id);
+              return {
+                symbol: stock.stock_id,
+                name: stock.stock_name,
+                price: price || 0,
+                market: '台灣'
+              };
+            })
+          );
+          
+          return stocksWithPrice;
         }
       }
       
@@ -126,6 +133,41 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     } catch (error) {
       console.error('直接搜尋失敗:', error);
       return [];
+    }
+  };
+
+  // 直接獲取股價（不依賴後端）
+  const getStockPriceDirectly = async (symbol: string): Promise<number | null> => {
+    try {
+      // 使用 Yahoo Finance API 獲取即時股價
+      const yahooSymbol = symbol.includes('.TW') ? symbol : `${symbol}.TW`;
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+      
+      const response = await fetch(yahooUrl);
+      if (response.ok) {
+        const data = await response.json();
+        const result = data?.chart?.result?.[0];
+        if (result?.meta?.regularMarketPrice) {
+          return result.meta.regularMarketPrice;
+        }
+      }
+      
+      // 如果 Yahoo Finance 失敗，嘗試使用 FinMind 股價 API
+      const finmindPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${new Date().toISOString().split('T')[0]}&token=`;
+      const finmindResponse = await fetch(finmindPriceUrl);
+      
+      if (finmindResponse.ok) {
+        const finmindData = await finmindResponse.json();
+        if (finmindData.data && finmindData.data.length > 0) {
+          const latestPrice = finmindData.data[finmindData.data.length - 1];
+          return latestPrice.close || null;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error(`獲取 ${symbol} 股價失敗:`, error);
+      return null;
     }
   };
 

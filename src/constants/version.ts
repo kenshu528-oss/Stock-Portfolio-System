@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 190, // 修復：GitHub Pages 搜尋功能，支援直接 API 調用
+  PATCH: 191, // 修復：搜尋結果顯示即時股價，整合 Yahoo Finance 和 FinMind API
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

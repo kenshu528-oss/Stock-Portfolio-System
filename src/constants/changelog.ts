@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0191',
+    date: '2026-01-19',
+    type: 'hotfix',
+    title: '修復搜尋結果股價顯示：整合即時股價 API，顯示真實股價資訊',
+    description: '遵循 STEERING 規則（api-standards.md），修復搜尋結果股價顯示問題。根本原因：FinMind TaiwanStockInfo API 只提供股票基本資訊，不包含即時價格。修復：整合 Yahoo Finance 和 FinMind 股價 API，為搜尋結果提供即時股價資訊。',
+    changes: [
+      '新增即時股價獲取：整合 Yahoo Finance API 獲取即時股價',
+      '雙重 API 備援：Yahoo Finance 失敗時自動切換到 FinMind 股價 API',
+      '完整價格資訊：包含股價、漲跌幅、漲跌百分比',
+      '並行處理優化：使用 Promise.all 同時獲取多個股票價格',
+      '錯誤處理完善：API 失敗時優雅降級，不影響搜尋功能'
+    ],
+    fixes: [
+      '搜尋結果股價顯示為 $0 的問題',
+      '缺少即時股價資訊',
+      '搜尋結果資訊不完整'
+    ]
+  },
+  {
     version: '1.0.2.0190',
     date: '2026-01-19',
     type: 'hotfix',
