@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 195, // 修復：移除 CORS 阻擋的證交所 API，優先使用 Yahoo Finance 代理
+  PATCH: 197, // 修復：智能股票代碼後綴判斷，6188 等上櫃股票使用 .TWO 後綴
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

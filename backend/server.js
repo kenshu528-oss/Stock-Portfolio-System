@@ -132,13 +132,32 @@ async function getFinMindStockPrice(symbol) {
 // 從Yahoo Finance獲取股價
 async function getYahooStockPrice(symbol) {
   try {
-    // 🔬 改進：參考 Python 範例，根據代碼末尾判斷後綴
-    // 債券 ETF（末尾為 B）：優先使用 .TWO（櫃買中心），備用 .TW
-    // 一般股票：優先使用 .TW（證交所），備用 .TWO
+    // 🔬 改進：根據股票代碼智能判斷後綴順序
     const isBondETF = /^00\d{2,3}B$/i.test(symbol);
-    const suffixes = isBondETF ? ['.TWO', '.TW'] : ['.TW', '.TWO'];
+    const code = parseInt(symbol.substring(0, 4));
     
-    console.log(`🔍 Yahoo Finance: ${symbol} ${isBondETF ? '(債券 ETF)' : '(一般股票)'} 嘗試後綴順序: ${suffixes.join(', ')}`);
+    let suffixes;
+    let description;
+    
+    if (isBondETF) {
+      // 債券 ETF：優先 .TWO（櫃買中心）
+      suffixes = ['.TWO', '.TW'];
+      description = '債券 ETF';
+    } else if (code >= 6000 && code <= 8999) {
+      // 上櫃股票（6000-8999）：優先 .TWO
+      suffixes = ['.TWO', '.TW'];
+      description = '上櫃股票';
+    } else if (code >= 3000 && code <= 5999) {
+      // 上櫃股票（3000-5999）：優先 .TWO
+      suffixes = ['.TWO', '.TW'];
+      description = '上櫃股票';
+    } else {
+      // 上市股票（1000-2999）：優先 .TW
+      suffixes = ['.TW', '.TWO'];
+      description = '上市股票';
+    }
+    
+    console.log(`🔍 Yahoo Finance: ${symbol} (${description}) 嘗試後綴順序: ${suffixes.join(', ')}`);
     
     // 嘗試不同的後綴
     for (const suffix of suffixes) {

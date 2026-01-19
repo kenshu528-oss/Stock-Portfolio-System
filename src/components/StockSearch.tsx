@@ -116,37 +116,74 @@ const StockSearch: React.FC<StockSearchProps> = ({
   // 直接獲取股價（不依賴後端）
   const getStockPriceDirectly = async (symbol: string): Promise<{price: number, change: number, changePercent: number} | null> => {
     try {
-      // 方法1: 優先使用 CORS 代理調用 Yahoo Finance（較即時）
-      try {
-        const yahooSymbol = symbol.includes('.TW') ? symbol : `${symbol}.TW`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`;
+      // 智能判斷股票代碼後綴
+      const getCorrectSymbol = (stockSymbol: string) => {
+        if (stockSymbol.includes('.')) return stockSymbol; // 已有後綴
         
-        const proxyResponse = await fetch(proxyUrl);
-        if (proxyResponse.ok) {
-          const proxyData = await proxyResponse.json();
-          const yahooData = JSON.parse(proxyData.contents);
-          const result = yahooData?.chart?.result?.[0];
-          if (result?.meta) {
-            const currentPrice = result.meta.regularMarketPrice || 0;
-            const previousClose = result.meta.previousClose || 0;
-            const change = currentPrice - previousClose;
-            const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
-            
-            console.log(`${symbol} Yahoo Finance 價格: ${currentPrice}`);
-            return {
-              price: currentPrice,
-              change: change,
-              changePercent: changePercent
-            };
-          }
+        const code = parseInt(stockSymbol.substring(0, 4));
+        const isBondETF = /^00\d{2,3}B$/i.test(stockSymbol);
+        
+        if (isBondETF) {
+          // 債券 ETF：優先 .TWO
+          return `${stockSymbol}.TWO`;
+        } else if (code >= 3000 && code <= 8999) {
+          // 上櫃股票（3000-8999）：使用 .TWO
+          return `${stockSymbol}.TWO`;
+        } else {
+          // 上市股票（1000-2999）：使用 .TW
+          return `${stockSymbol}.TW`;
         }
-      } catch (proxyError) {
-        console.warn(`Yahoo Finance 代理調用失敗: ${proxyError}`);
+      };
+
+      // 方法1: 嘗試多個 CORS 代理服務
+      const proxyServices = [
+        'https://api.allorigins.win/get?url=',
+        'https://cors-anywhere.herokuapp.com/',
+        'https://api.codetabs.com/v1/proxy?quest='
+      ];
+      
+      for (const proxyService of proxyServices) {
+        try {
+          const yahooSymbol = getCorrectSymbol(symbol);
+          const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+          const proxyUrl = proxyService.includes('allorigins') 
+            ? `${proxyService}${encodeURIComponent(yahooUrl)}`
+            : `${proxyService}${yahooUrl}`;
+          
+          const proxyResponse = await fetch(proxyUrl);
+          if (proxyResponse.ok) {
+            let yahooData;
+            if (proxyService.includes('allorigins')) {
+              const proxyData = await proxyResponse.json();
+              yahooData = JSON.parse(proxyData.contents);
+            } else {
+              yahooData = await proxyResponse.json();
+            }
+            
+            const result = yahooData?.chart?.result?.[0];
+            if (result?.meta) {
+              const currentPrice = result.meta.regularMarketPrice || 0;
+              const previousClose = result.meta.previousClose || 0;
+              const change = currentPrice - previousClose;
+              const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+              
+              console.log(`✅ ${symbol} (${yahooSymbol}) Yahoo Finance 價格: ${currentPrice}`);
+              return {
+                price: currentPrice,
+                change: change,
+                changePercent: changePercent
+              };
+            }
+          }
+        } catch (proxyError) {
+          console.warn(`代理服務 ${proxyService} 失敗: ${proxyError}`);
+          continue; // 嘗試下一個代理服務
+        }
       }
 
-      // 方法2: 使用 FinMind API（歷史收盤價，作為備援）
+      // 方法2: 使用 FinMind API 獲取最新可用的股價
       const today = new Date();
-      const startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000); // 7天前
+      const startDate = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000); // 擴展到14天前
       const finmindPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${today.toISOString().split('T')[0]}&token=`;
       
       const finmindResponse = await fetch(finmindPriceUrl);
@@ -160,7 +197,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
           const change = currentPrice - previousPrice;
           const changePercent = previousPrice > 0 ? (change / previousPrice) * 100 : 0;
           
-          console.log(`${symbol} FinMind 收盤價: ${currentPrice}`);
+          console.log(`✅ ${symbol} FinMind 最新價格: ${currentPrice} (${latestPrice.date})`);
           return {
             price: currentPrice,
             change: change,

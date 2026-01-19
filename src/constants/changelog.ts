@@ -12,6 +12,47 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0197',
+    date: '2026-01-19',
+    type: 'hotfix',
+    title: '修復股票代碼後綴判斷：智能識別上櫃股票，6188 等使用正確的 .TWO 後綴',
+    description: '遵循 STEERING 規則（api-standards.md），根據用戶 Python 成功經驗修復股票代碼後綴問題。根本原因：6188 等上櫃股票（3000-8999）錯誤使用 .TW 後綴，應該使用 .TWO 後綴。修復：1) 後端智能判斷股票類型：債券 ETF、上櫃股票優先 .TWO，上市股票優先 .TW。2) 前端同步修復：QuickAddStock 和 StockSearch 使用相同邏輯。3) 移除硬編碼股票列表，改用代碼範圍判斷。',
+    changes: [
+      '修復後端 getYahooStockPrice：根據股票代碼智能判斷後綴順序',
+      '上櫃股票（3000-8999）：優先 .TWO 後綴，備用 .TW',
+      '上市股票（1000-2999）：優先 .TW 後綴，備用 .TWO', 
+      '債券 ETF（00XXXB）：優先 .TWO 後綴（櫃買中心）',
+      '修復前端 QuickAddStock：移除硬編碼列表，使用智能判斷',
+      '修復前端 StockSearch：統一股票代碼後綴判斷邏輯',
+      '添加詳細日誌：顯示股票類型和嘗試的後綴順序'
+    ],
+    fixes: [
+      '修復 6188 等上櫃股票無法從 Yahoo Finance 獲取股價',
+      '修復股票代碼後綴判斷邏輯不一致問題',
+      '改善 Yahoo Finance API 的成功率和準確性',
+      '統一前後端股票類型識別邏輯'
+    ]
+  },
+  {
+    version: '1.0.2.0196',
+    date: '2026-01-19',
+    type: 'hotfix',
+    title: '修復代理服務穩定性：新增多重 CORS 代理，提升 Yahoo Finance API 成功率',
+    description: '遵循 STEERING 規則（api-standards.md），根據用戶測試結果優化代理服務策略。根本原因：單一 CORS 代理服務不穩定，allorigins.win 開始被阻擋。修復：新增多個 CORS 代理服務，循序嘗試直到成功，提升 Yahoo Finance API 的成功率和股價即時性。',
+    changes: [
+      '新增多重代理服務：allorigins.win, cors-anywhere.herokuapp.com, codetabs.com',
+      '循序嘗試機制：一個代理失敗自動嘗試下一個',
+      '擴展 FinMind 時間範圍：從 7 天擴展到 14 天，提高資料可用性',
+      '詳細日誌記錄：顯示成功的代理服務和獲取的價格',
+      '提升成功率：多重備援確保更高的股價獲取成功率'
+    ],
+    fixes: [
+      'allorigins.win 代理服務被阻擋問題',
+      'Yahoo Finance API 成功率不穩定',
+      '部分股票搜尋失敗問題'
+    ]
+  },
+  {
     version: '1.0.2.0195',
     date: '2026-01-19',
     type: 'hotfix',
