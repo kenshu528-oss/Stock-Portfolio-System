@@ -45,41 +45,87 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // 從後端API搜尋股票
   const searchStocks = async (query: string): Promise<StockSearchResult[]> => {
     try {
-      // 使用統一的 API 配置
-      const response = await fetch(API_ENDPOINTS.searchStock(query));
+      // 檢查是否為 GitHub Pages 環境
+      const isGitHubPages = window.location.hostname.includes('github.io') || 
+                           window.location.hostname.includes('github.com');
       
-      if (response.ok) {
-        const data = await response.json();
-        
-        // 後端返回陣列格式，直接使用
-        if (Array.isArray(data)) {
-          return data.map(stock => ({
-            symbol: stock.symbol,
-            name: stock.name,
-            price: stock.price || 0,
-            market: stock.market || '台灣'
-          }));
-        } else {
-          // 如果是單一物件，轉換為陣列
-          return [{
-            symbol: data.symbol,
-            name: data.name,
-            price: data.price || 0,
-            market: data.market || '台灣'
-          }];
-        }
-      } else if (response.status === 404) {
-        // 股票不存在
-        return [];
+      if (isGitHubPages) {
+        // GitHub Pages 環境：使用直接 API 調用
+        return await searchStocksDirectly(query);
       } else {
-        throw new Error(`API錯誤: ${response.status}`);
+        // 其他環境：使用後端代理
+        const response = await fetch(API_ENDPOINTS.searchStock(query));
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // 後端返回陣列格式，直接使用
+          if (Array.isArray(data)) {
+            return data.map(stock => ({
+              symbol: stock.symbol,
+              name: stock.name,
+              price: stock.price || 0,
+              market: stock.market || '台灣'
+            }));
+          } else {
+            // 如果是單一物件，轉換為陣列
+            return [{
+              symbol: data.symbol,
+              name: data.name,
+              price: data.price || 0,
+              market: data.market || '台灣'
+            }];
+          }
+        } else if (response.status === 404) {
+          // 股票不存在
+          return [];
+        } else {
+          throw new Error(`API錯誤: ${response.status}`);
+        }
       }
       
     } catch (error) {
       console.error('搜尋API錯誤:', error);
+      // 如果後端搜尋失敗，嘗試直接搜尋
+      return await searchStocksDirectly(query);
+    }
+  };
+
+  // 直接搜尋股票（不依賴後端）
+  const searchStocksDirectly = async (query: string): Promise<StockSearchResult[]> => {
+    try {
+      // 使用 FinMind API 搜尋台股
+      const finmindUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInfo&token=`;
+      const response = await fetch(finmindUrl);
       
-      // API失敗時顯示錯誤
-      throw new Error('搜尋服務暫時無法使用，請稍後再試');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data && Array.isArray(data.data)) {
+          // 過濾符合查詢條件的股票
+          const filtered = data.data.filter((stock: any) => {
+            const symbol = stock.stock_id || '';
+            const name = stock.stock_name || '';
+            
+            // 支援股票代碼或中文名稱搜尋
+            return symbol.includes(query) || name.includes(query);
+          }).slice(0, 10); // 限制結果數量
+          
+          // 轉換為標準格式
+          return filtered.map((stock: any) => ({
+            symbol: stock.stock_id,
+            name: stock.stock_name,
+            price: 0, // FinMind 股票資訊 API 不包含即時價格
+            market: '台灣'
+          }));
+        }
+      }
+      
+      // 如果 FinMind 失敗，返回空陣列
+      return [];
+      
+    } catch (error) {
+      console.error('直接搜尋失敗:', error);
+      return [];
     }
   };
 

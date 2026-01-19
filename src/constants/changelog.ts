@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0190',
+    date: '2026-01-19',
+    type: 'hotfix',
+    title: '修復 GitHub Pages 搜尋功能：支援直接 API 調用，解決 Netlify Functions 依賴問題',
+    description: '遵循 STEERING 規則（api-standards.md, development-standards.md），修復 GitHub Pages 上的搜尋功能。根本原因：搜尋功能依賴 Netlify Functions，但 GitHub Pages 不支援。修復：檢測環境並在 GitHub Pages 上直接調用 FinMind API，保持功能完整性。',
+    changes: [
+      '修復 API 配置：檢測 GitHub Pages 環境，避免調用不存在的 Netlify Functions',
+      '新增直接搜尋功能：在 GitHub Pages 上直接使用 FinMind API 搜尋股票',
+      '雙重備援機制：後端代理失敗時自動切換到直接 API 調用',
+      '環境自適應：開發環境使用後端代理，GitHub Pages 使用直接 API',
+      '保持功能一致：確保所有環境下搜尋功能都能正常工作'
+    ],
+    fixes: [
+      'GitHub Pages 上搜尋功能 404 錯誤',
+      'Netlify Functions 依賴問題',
+      '生產環境 API 調用失敗'
+    ]
+  },
+  {
     version: '1.0.2.0189',
     date: '2026-01-19',
     type: 'hotfix',
