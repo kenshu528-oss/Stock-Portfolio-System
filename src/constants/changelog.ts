@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0194',
+    date: '2026-01-19',
+    type: 'hotfix',
+    title: '修復證交所 API 欄位名稱：使用正確的 pz 欄位獲取即時股價',
+    description: '遵循 STEERING 規則（api-standards.md），修復證交所 API 的欄位名稱錯誤。根本原因：使用了錯誤的欄位名稱 z，實際應該使用 pz 欄位。修復：通過實際測試證交所 API，確認正確的欄位名稱為 pz（即時價格），並添加多重欄位備援。',
+    changes: [
+      '修正欄位名稱：使用 pz 欄位獲取證交所即時股價',
+      '多重欄位備援：pz → y → z 順序嘗試',
+      'API 驗證：實際測試證交所 API 確認可用性',
+      '錯誤處理：無效股價時自動切換到備援 API',
+      '日誌優化：顯示實際獲取的股價數值'
+    ],
+    fixes: [
+      '證交所 API 欄位名稱錯誤（z → pz）',
+      '無法正確獲取即時股價',
+      'API 回應解析失敗'
+    ]
+  },
+  {
     version: '1.0.2.0193',
     date: '2026-01-19',
     type: 'hotfix',
