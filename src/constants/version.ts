@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 189, // 修復：React Hooks 條件調用錯誤，case block lexical declaration 錯誤
+  PATCH: 190, // 修復：GitHub Pages 搜尋功能，支援直接 API 調用
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

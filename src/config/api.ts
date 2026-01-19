@@ -3,9 +3,19 @@
 /**
  * 獲取 API 基礎 URL
  * 開發環境：使用 localhost:3001
- * 生產環境：使用 Netlify Functions
+ * GitHub Pages：直接使用外部 API
+ * Netlify：使用 Netlify Functions
  */
 export const getApiBaseUrl = (): string => {
+  // 檢查是否為 GitHub Pages 環境
+  const isGitHubPages = window.location.hostname.includes('github.io') || 
+                       window.location.hostname.includes('github.com');
+  
+  // 如果是 GitHub Pages，返回空字串（將直接調用外部 API）
+  if (isGitHubPages) {
+    return '';
+  }
+  
   // 如果是生產環境（Netlify），使用 Netlify Functions
   if (import.meta.env.PROD) {
     return '/.netlify/functions';
