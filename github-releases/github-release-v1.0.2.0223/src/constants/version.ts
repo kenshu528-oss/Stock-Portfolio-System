@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 224, // 修復環境變數名稱：將DEV_TOKEN改為VITE_DEV_TOKEN以支援Vite前端讀取
+  PATCH: 223, // 修復後門功能環境變數讀取錯誤：修復import.meta.env在瀏覽器環境中的讀取問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

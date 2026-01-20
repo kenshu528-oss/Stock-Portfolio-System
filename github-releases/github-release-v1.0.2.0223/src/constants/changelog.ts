@@ -12,22 +12,6 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.0.2.0224',
-    date: '2026-01-20',
-    type: 'hotfix',
-    title: '修復環境變數名稱：將DEV_TOKEN改為VITE_DEV_TOKEN以支援Vite前端讀取',
-    description: '修復後門功能中環境變數無法正確讀取的問題。根本原因：Vite只能讀取以VITE_前綴開頭的環境變數，而.env檔案中使用的是DEV_TOKEN。修復：將環境變數名稱從DEV_TOKEN改為VITE_DEV_TOKEN，確保前端能正確讀取環境變數。',
-    changes: [
-      '修復.env檔案中的環境變數名稱：DEV_TOKEN → VITE_DEV_TOKEN',
-      '確保Vite能正確讀取前端環境變數',
-      '修復後門功能的401 Unauthorized錯誤'
-    ],
-    fixes: [
-      '修復環境變數無法在前端讀取的問題',
-      '修復後門功能Token讀取失敗'
-    ]
-  },
-  {
     version: '1.0.2.0223',
     date: '2026-01-20',
     type: 'hotfix',
