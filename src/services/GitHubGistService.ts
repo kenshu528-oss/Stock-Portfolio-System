@@ -61,9 +61,10 @@ class GitHubGistService {
       const response = await fetch(url, {
         method,
         headers: {
-          'Authorization': `token ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-GitHub-Api-Version': '2022-11-28'
         },
         body: JSON.stringify(gistData)
       });
@@ -100,8 +101,9 @@ class GitHubGistService {
     try {
       const response = await fetch(`${this.baseUrl}/gists/${gistId}`, {
         headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'X-GitHub-Api-Version': '2022-11-28'
         }
       });
 
@@ -146,8 +148,9 @@ class GitHubGistService {
     try {
       const response = await fetch(`${this.baseUrl}/gists`, {
         headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'X-GitHub-Api-Version': '2022-11-28'
         }
       });
 
@@ -210,8 +213,9 @@ class GitHubGistService {
     try {
       const response = await fetch(`${this.baseUrl}/user`, {
         headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'X-GitHub-Api-Version': '2022-11-28'
         }
       });
 

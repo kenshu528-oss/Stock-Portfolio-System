@@ -12,6 +12,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0225',
+    date: '2026-01-20',
+    type: 'hotfix',
+    title: '修復GitHub API Authorization header：將token改為Bearer以符合新API規範',
+    description: '修復雲端同步功能的401 Unauthorized錯誤。根本原因：GitHub API已更新Authorization header格式要求，新的Personal Access Token需要使用Bearer而不是token前綴。修復：將所有GitHubGistService中的Authorization header從"token ${token}"改為"Bearer ${token}"，並添加X-GitHub-Api-Version header以符合最新API規範。',
+    changes: [
+      '修復GitHubGistService中所有Authorization header格式',
+      '將"token ${token}"改為"Bearer ${token}"',
+      '添加X-GitHub-Api-Version: 2022-11-28 header',
+      '修復testToken、uploadToGist、downloadFromGist等方法'
+    ],
+    fixes: [
+      '修復雲端同步功能的401 Unauthorized錯誤',
+      '修復GitHub API調用失敗問題',
+      '恢復後門功能正常運作'
+    ]
+  },
+  {
     version: '1.0.2.0224',
     date: '2026-01-20',
     type: 'hotfix',
