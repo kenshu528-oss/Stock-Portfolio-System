@@ -78,7 +78,7 @@ interface AutoFillState {
 const AUTO_FILL_CONFIG = {
   REQUIRED_CLICKS: 5,
   CLICK_TIMEOUT: 2000, // Reset counter after 2 seconds
-  DEV_TOKEN: 'github_pat_[REDACTED_FOR_SECURITY]',
+  DEV_TOKEN: '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',
   PRODUCTION_DISABLED: true
 };
 ```

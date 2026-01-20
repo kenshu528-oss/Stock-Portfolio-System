@@ -95,7 +95,7 @@ describe('CloudSyncSettings Auto-fill Property-Based Tests', () => {
             if (clickCount >= 5) {
               // Wait for token input to be populated with the development token
               await waitFor(() => {
-                expect(tokenInput).toHaveValue('github_pat_[REDACTED_FOR_SECURITY]');
+                expect(tokenInput).toHaveValue('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');
               }, { timeout: 1000 });
 
               // Wait for status message to indicate auto-fill activation
@@ -162,7 +162,7 @@ describe('CloudSyncSettings Auto-fill Property-Based Tests', () => {
 
             // Wait for token to be populated because we did 5 consecutive clicks after timeout
             await waitFor(() => {
-              expect(tokenInput).toHaveValue('github_pat_[REDACTED_FOR_SECURITY]');
+              expect(tokenInput).toHaveValue('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');
             }, { timeout: 1000 });
 
             return true; // Test passed
