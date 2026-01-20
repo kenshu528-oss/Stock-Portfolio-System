@@ -243,12 +243,12 @@ describe('CloudSyncSettings Property 4 Tests - Auto-fill connection test trigger
             if (clickCount >= 5) {
               // Wait for token to be populated
               await waitFor(() => {
-                expect(tokenInput).toHaveValue('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');
+                expect(tokenInput).toHaveValue('github_pat_[REDACTED_FOR_SECURITY]');
               }, { timeout: 1000 });
 
               // Wait for connection test to be automatically triggered (after 500ms delay)
               await waitFor(() => {
-                expect(mockTestToken).toHaveBeenCalledWith('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');
+                expect(mockTestToken).toHaveBeenCalledWith('github_pat_[REDACTED_FOR_SECURITY]');
               }, { timeout: 1500 });
 
               // Verify connection status is updated
@@ -310,7 +310,7 @@ describe('CloudSyncSettings Property 4 Tests - Auto-fill connection test trigger
 
             // Wait for token to be populated
             await waitFor(() => {
-              expect(tokenInput).toHaveValue('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');
+              expect(tokenInput).toHaveValue('github_pat_[REDACTED_FOR_SECURITY]');
             }, { timeout: 1000 });
 
             // Wait for connection test to be triggered and handle error
@@ -465,7 +465,7 @@ describe('CloudSyncSettings Property 6 Tests - Environment-based auto-fill contr
 
             // Wait for auto-fill to work
             await waitFor(() => {
-              expect(tokenInput).toHaveValue('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');
+              expect(tokenInput).toHaveValue('github_pat_[REDACTED_FOR_SECURITY]');
             }, { timeout: 1000 });
 
             // Verify auto-fill status message appears
@@ -609,7 +609,7 @@ describe('CloudSyncSettings Property 6 Tests - Environment-based auto-fill contr
               });
 
               await waitFor(() => {
-                expect(tokenInput).toHaveValue('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');
+                expect(tokenInput).toHaveValue('github_pat_[REDACTED_FOR_SECURITY]');
               }, { timeout: 1000 });
             }
 

@@ -100,7 +100,7 @@ describe('CloudSyncSettings Stealth Auto-fill Tests', () => {
 
     // Wait for token to be populated
     await waitFor(() => {
-      expect(tokenInput).toHaveValue('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');
+      expect(tokenInput).toHaveValue('github_pat_[REDACTED_FOR_SECURITY]');
     }, { timeout: 1000 });
   });
 
