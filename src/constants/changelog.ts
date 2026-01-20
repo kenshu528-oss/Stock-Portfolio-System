@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0223',
+    date: '2026-01-20',
+    type: 'hotfix',
+    title: '修復後門功能環境變數讀取錯誤：修復import.meta.env在瀏覽器環境中的讀取問題',
+    description: '修復雲端同步後門功能中環境變數讀取錯誤。問題：import.meta.env在某些瀏覽器環境中無法正確讀取VITE_DEV_TOKEN，導致GitHubGistService出現401錯誤。修復：添加try-catch包裝和fallback機制，確保在環境變數讀取失敗時能正確使用實際token。',
+    changes: [
+      '修復autoFillSecurity.ts中DEV_TOKEN的環境變數讀取邏輯',
+      '修復CloudSyncSettings.tsx中hiddenToken的環境變數讀取邏輯',
+      '添加try-catch包裝防止import.meta.env讀取失敗',
+      '提供fallback機制確保後門功能正常運作'
+    ],
+    fixes: [
+      '修復後門功能在瀏覽器環境中的401 Unauthorized錯誤',
+      '修復環境變數讀取失敗導致的功能異常'
+    ]
+  },
+  {
     version: '1.0.2.0222',
     date: '2026-01-20',
     type: 'hotfix',

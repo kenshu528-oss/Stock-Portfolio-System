@@ -1,33 +1,48 @@
 {
-  "hash": "17060bcd",
-  "browserHash": "1641f07d",
+  "hash": "515e4f74",
+  "browserHash": "f168264e",
   "optimized": {
     "react": {
       "src": "../../node_modules/react/index.js",
       "file": "react.js",
-      "fileHash": "16629426",
+      "fileHash": "ab6b768d",
+      "needsInterop": true
+    },
+    "react-dom": {
+      "src": "../../node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "d884e405",
       "needsInterop": true
     },
     "react-dom/client": {
       "src": "../../node_modules/react-dom/client.js",
       "file": "react-dom_client.js",
-      "fileHash": "49ae67f2",
+      "fileHash": "ac41ca41",
       "needsInterop": true
     },
     "zustand": {
       "src": "../../node_modules/zustand/esm/index.mjs",
       "file": "zustand.js",
-      "fileHash": "5de4ecaa",
+      "fileHash": "5f8d869b",
       "needsInterop": false
     },
     "zustand/middleware": {
       "src": "../../node_modules/zustand/esm/middleware.mjs",
       "file": "zustand_middleware.js",
-      "fileHash": "00fbee08",
+      "fileHash": "a7342de8",
       "needsInterop": false
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "e1c670c5",
+      "needsInterop": true
     }
   },
   "chunks": {
+    "chunk-2JRVN4QV": {
+      "file": "chunk-2JRVN4QV.js"
+    },
     "chunk-L2H5Y3CP": {
       "file": "chunk-L2H5Y3CP.js"
     },
