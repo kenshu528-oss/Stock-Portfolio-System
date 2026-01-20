@@ -56,6 +56,7 @@ export const ServerStatusPanel: React.FC = () => {
   ]);
 
   const [isVisible, setIsVisible] = useState(false);
+  const [restartingServers, setRestartingServers] = useState<Set<string>>(new Set());
 
   // 檢查服務器狀態
   const checkServerStatus = async (server: ServerStatus): Promise<ServerStatus> => {
@@ -101,23 +102,83 @@ export const ServerStatusPanel: React.FC = () => {
   // 重啟服務器（通過API調用）
   const restartServer = async (serverName: string) => {
     try {
+      // 添加到重啟中的服務器列表
+      setRestartingServers(prev => new Set([...prev, serverName]));
+
       if (serverName === '後端API服務器') {
+        console.log('🔄 正在重啟後端服務器...');
+        
         // 調用後端重啟API
-        await fetch('http://localhost:3001/api/restart', {
-          method: 'POST'
+        const response = await fetch('http://localhost:3001/api/restart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
         });
+        
+        if (response.ok) {
+          console.log('✅ 後端重啟請求已發送');
+          
+          // 等待5秒後開始檢查狀態（給服務器重啟時間）
+          setTimeout(() => {
+            console.log('🔍 開始檢查後端服務器狀態...');
+            
+            // 移除重啟狀態並開始檢查
+            setRestartingServers(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(serverName);
+              return newSet;
+            });
+            
+            checkAllServers();
+            
+            // 每2秒檢查一次，最多檢查10次
+            let checkCount = 0;
+            const checkInterval = setInterval(() => {
+              checkCount++;
+              console.log(`🔍 第 ${checkCount} 次檢查後端狀態...`);
+              checkAllServers();
+              
+              if (checkCount >= 10) {
+                clearInterval(checkInterval);
+                console.log('⏰ 停止檢查後端狀態');
+              }
+            }, 2000);
+          }, 5000);
+        } else {
+          throw new Error(`重啟請求失敗: ${response.status}`);
+        }
+        
       } else if (serverName === '前端服務器') {
-        // 前端重啟需要刷新頁面
-        window.location.reload();
+        console.log('🔄 正在重啟前端服務器...');
+        
+        // 顯示重啟提示
+        if (confirm('重啟前端服務器將刷新頁面，確定要繼續嗎？')) {
+          // 前端重啟需要刷新頁面
+          window.location.reload();
+        } else {
+          // 用戶取消，移除重啟狀態
+          setRestartingServers(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(serverName);
+            return newSet;
+          });
+        }
       }
       
-      // 等待2秒後重新檢查狀態
+    } catch (error) {
+      console.error(`❌ 重啟 ${serverName} 失敗:`, error);
+      
+      // 重啟失敗，移除重啟狀態並恢復檢查
+      setRestartingServers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(serverName);
+        return newSet;
+      });
+      
       setTimeout(() => {
         checkAllServers();
-      }, 2000);
-      
-    } catch (error) {
-      console.error(`重啟 ${serverName} 失敗:`, error);
+      }, 1000);
     }
   };
 
@@ -162,6 +223,18 @@ export const ServerStatusPanel: React.FC = () => {
     }
   };
 
+  const getServerDisplayStatus = (server: ServerStatus) => {
+    if (restartingServers.has(server.name)) {
+      return {
+        icon: <ArrowPathIcon className="w-4 h-4 animate-spin" />,
+        color: 'text-blue-400',
+        bgColor: 'bg-blue-600/20',
+        text: '重啟中'
+      };
+    }
+    return getStatusDisplay(server.status);
+  };
+
   if (!isVisible) {
     return (
       <button
@@ -201,7 +274,8 @@ export const ServerStatusPanel: React.FC = () => {
 
       <div className="space-y-3">
         {servers.map((server, index) => {
-          const display = getStatusDisplay(server.status);
+          const display = getServerDisplayStatus(server);
+          const isRestarting = restartingServers.has(server.name);
           
           return (
             <div
@@ -218,11 +292,11 @@ export const ServerStatusPanel: React.FC = () => {
                   </div>
                   <div className="text-slate-400 text-xs">
                     {display.text}
-                    {server.responseTime && (
+                    {server.responseTime && !isRestarting && (
                       <span className="ml-2">({server.responseTime}ms)</span>
                     )}
                   </div>
-                  {server.lastCheck && (
+                  {server.lastCheck && !isRestarting && (
                     <div className="text-slate-500 text-xs">
                       最後檢查: {server.lastCheck.toLocaleTimeString()}
                     </div>
@@ -237,32 +311,80 @@ export const ServerStatusPanel: React.FC = () => {
                   })}
                   className="text-slate-400 hover:text-white p-1 rounded"
                   title="重新檢查"
+                  disabled={server.status === 'checking' || isRestarting}
                 >
-                  <ArrowPathIcon className="w-4 h-4" />
+                  <ArrowPathIcon className={`w-4 h-4 ${(server.status === 'checking' || isRestarting) ? 'animate-spin' : ''}`} />
                 </button>
                 
-                {server.status === 'offline' && (
-                  <button
-                    onClick={() => restartServer(server.name)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
-                    title="重啟服務器"
-                  >
-                    重啟
-                  </button>
-                )}
+                <button
+                  onClick={() => restartServer(server.name)}
+                  className={`px-2 py-1 rounded text-xs transition-colors ${
+                    isRestarting
+                      ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-not-allowed'
+                      : server.status === 'checking' 
+                      ? 'bg-yellow-600 hover:bg-yellow-700 text-white cursor-not-allowed'
+                      : server.status === 'offline'
+                      ? 'bg-red-600 hover:bg-red-700 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                  title={isRestarting ? '重啟中...' : server.status === 'checking' ? '檢查中...' : '重啟服務器'}
+                  disabled={server.status === 'checking' || isRestarting}
+                >
+                  {isRestarting ? '重啟中' : server.status === 'checking' ? '檢查中' : '重啟'}
+                </button>
               </div>
             </div>
           );
         })}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-slate-600">
+      <div className="mt-3 pt-3 border-t border-slate-600 space-y-2">
         <button
           onClick={checkAllServers}
           className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 px-3 rounded text-sm transition-colors"
         >
           刷新所有狀態
         </button>
+        
+        <div className="flex space-x-2">
+          <button
+            onClick={() => {
+              if (confirm('確定要重啟所有服務器嗎？這將會刷新頁面。')) {
+                // 先重啟後端
+                restartServer('後端API服務器');
+                // 延遲3秒後重啟前端
+                setTimeout(() => {
+                  restartServer('前端服務器');
+                }, 3000);
+              }
+            }}
+            className="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-3 rounded text-sm transition-colors"
+            title="重啟所有服務器"
+          >
+            🔄 重啟全部
+          </button>
+          
+          <button
+            onClick={() => {
+              // 清除所有快取
+              if ('caches' in window) {
+                caches.keys().then(names => {
+                  names.forEach(name => caches.delete(name));
+                });
+              }
+              
+              // 清除 localStorage
+              localStorage.clear();
+              
+              // 刷新頁面
+              window.location.reload();
+            }}
+            className="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-3 rounded text-sm transition-colors"
+            title="清除快取並重啟"
+          >
+            🧹 清除快取
+          </button>
+        </div>
       </div>
     </div>
   );

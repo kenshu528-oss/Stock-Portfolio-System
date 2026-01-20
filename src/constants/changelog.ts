@@ -12,6 +12,323 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0222',
+    date: '2026-01-20',
+    type: 'hotfix',
+    title: '修復React Hooks條件調用錯誤：移除ServerStatusPanel中重複的useState宣告',
+    description: '遵循STEERING規則（development-standards.md），修復ServerStatusPanel組件中React Hooks條件調用錯誤。根本原因：restartingServers狀態在組件中被重複宣告，第二次宣告在條件語句後面，違反了React Hooks規則。修復：移除重複的useState宣告，將restartingServers狀態移到組件頂層與其他狀態一起宣告，確保所有Hooks在每次渲染時都以相同順序調用。',
+    changes: [
+      '修復ServerStatusPanel.tsx中重複的useState宣告',
+      '將restartingServers狀態移到組件頂層',
+      '移除條件語句後的重複狀態宣告',
+      '確保React Hooks調用順序一致性',
+      '遵循React Hooks規則：Hooks必須在組件頂層調用',
+      '修復ESLint錯誤：react-hooks/rules-of-hooks'
+    ],
+    fixes: [
+      '修復React Hook "useState" is called conditionally錯誤',
+      '修復Hooks調用順序不一致導致的潛在問題',
+      '確保組件在所有渲染路徑中Hooks調用順序相同',
+      '提升代碼品質和React最佳實踐遵循'
+    ]
+  },
+  {
+    version: '1.0.2.0221',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '優化Console錯誤處理：404錯誤不輸出警告',
+    description: '根據STEERING規則（development-standards.md），404錯誤是正常情況（資料不存在），不應該輸出警告。修復dividendApiService.ts中的fetchFromAlternativeAPI函數，當遇到404錯誤時直接返回空陣列，不輸出錯誤日誌，減少Console噪音。',
+    changes: [
+      '修復fetchFromAlternativeAPI函數的404錯誤處理',
+      '404錯誤時直接返回空陣列，不輸出錯誤日誌',
+      '只有非404錯誤才輸出logger.error',
+      '符合STEERING規則：404是正常情況，不需要警告',
+      '減少Console錯誤噪音，改善開發體驗',
+      '保持其他HTTP錯誤的正常日誌記錄'
+    ]
+  },
+  {
+    version: '1.0.2.0220',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '修復恢復預設值功能：完全清除雲端同步頁面資料',
+    description: '修復恢復預設值後，雲端同步頁面的資料（Token、連線狀態等）還在的問題。根據規格定義，恢復預設值應該要全部刪除。現在會完全清除所有雲端同步相關的localStorage資料，並確保CloudSyncSettings組件正確重置狀態。',
+    changes: [
+      '清除雲端同步相關localStorage：githubToken、autoSyncEnabled、syncInterval、lastSyncTime、gistId、cloudSyncConfig',
+      '修復CloudSyncSettings組件狀態重置邏輯',
+      '確保沒有Token時重置所有相關狀態：connectionStatus、userInfo、statusMessage',
+      '重置隱蔽後門計數器',
+      '完全符合規格定義：恢復預設值後雲端同步頁面應該是全新狀態',
+      '確保用戶在RESET後看到的是完全乾淨的雲端同步設定頁面'
+    ]
+  },
+  {
+    version: '1.0.2.0216',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '優化狀態文字顯示',
+    description: '根據用戶建議優化雲端同步狀態文字顯示：將標題區域的「尚未設定雲端同步」改為更簡潔明瞭的「尚未連線」，讓用戶更容易理解當前的連線狀態。',
+    changes: [
+      '未連線狀態文字：「尚未設定雲端同步」→「尚未連線」',
+      '保持其他狀態文字不變：「已連線至 用戶名」、「連線失敗」',
+      '提升用戶體驗：更簡潔明瞭的狀態提示',
+      '統一狀態文字風格：簡短且直接'
+    ]
+  },
+  {
+    version: '1.0.2.0215',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '限制隱蔽後門觸發條件',
+    description: '根據用戶需求調整隱蔽後門的觸發條件：僅在未連線狀態下可以觸發隱蔽後門進行快速連線，已連線狀態下隱蔽後門將被禁用。這確保了後門功能只在需要建立連線時才能使用，避免在已連線狀態下的誤觸發。',
+    changes: [
+      '隱蔽後門僅在未連線狀態下可觸發',
+      '已連線狀態下點擊使用說明圖示不會觸發後門',
+      '增加連線狀態檢查：connectionStatus === "connected" 時直接返回',
+      '調試日誌：已連線狀態時記錄「隱蔽後門不可用」',
+      '保持後門的隱蔽性和安全性',
+      '確保後門功能只在需要時才能使用'
+    ]
+  },
+  {
+    version: '1.0.2.0214',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '修正隱蔽後門功能：改為快速連線',
+    description: '根據用戶反饋修正隱蔽後門功能的邏輯：1) 移除不必要的斷開連線對話框，2) 改為快速連線功能，觸發後自動填入Token並測試連線，3) 在任何狀態下都能觸發（包括已連線狀態），4) 提供即時的連線狀態反饋。',
+    changes: [
+      '隱蔽後門改為快速連線功能（而非斷開連線）',
+      '觸發後自動填入預設Token並立即測試連線',
+      '移除斷開連線對話框，不再彈出額外視窗',
+      '在任何狀態下都能觸發（未連線/已連線皆可）',
+      '提供即時連線狀態反饋和操作日誌',
+      '0.5秒後自動開始連線測試，提升用戶體驗'
+    ]
+  },
+  {
+    version: '1.0.2.0213',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '優化雲端同步UI佈局：整合連線狀態顯示',
+    description: '根據用戶建議優化雲端同步對話框的空間使用：1) 將連線狀態整合到標題區域顯示，避免重複，2) 移除下方獨立的連線狀態區域，3) 未連線時在標題顯示「尚未設定雲端同步」，已連線時顯示「已連線至用戶名」，大幅節省垂直空間。',
+    changes: [
+      '整合連線狀態到對話框標題區域',
+      '移除下方重複的連線狀態顯示區域',
+      '未連線時標題顯示：「尚未設定雲端同步」',
+      '已連線時標題顯示：「已連線至 用戶名」',
+      '只在有狀態訊息時才顯示狀態區域',
+      '大幅節省對話框垂直空間'
+    ]
+  },
+  {
+    version: '1.0.2.0212',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '改善安全斷開功能用戶體驗',
+    description: '根據用戶反饋改善安全斷開功能：1) 修復清除Token後狀態顯示問題，確保顯示「未連線」，2) 在安全斷開對話框中增加本地資料處理選項，讓用戶可以選擇是否清除本地雲端同步資料，提供更靈活的斷開連線方式。',
+    changes: [
+      '修復清除Token後狀態顯示：確保顯示「未連線」而非「已連線」',
+      '安全斷開對話框增加本地資料處理選項',
+      '選項1：清除所有本地雲端資料（Token、Gist ID、同步設定）',
+      '選項2：僅移除Token連線（保留其他設定，可快速重新連線）',
+      '預設選擇清除所有資料，保持安全性',
+      '根據用戶選擇提供不同的操作日誌和狀態提示'
+    ]
+  },
+  {
+    version: '1.0.2.0211',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '增強隱蔽後門功能：自動Token填入',
+    description: '根據用戶需求，增強隱蔽後門功能。當知道後門的人觸發後門時（連續點擊使用說明圖示5次），系統會自動填入預設的GitHub Token，然後顯示安全斷開連線對話框。這讓後門功能更加便利，無需手動輸入Token。',
+    changes: [
+      '隱蔽後門觸發時自動填入預設GitHub Token',
+      '沒有Token時：自動設定Token → 2秒後顯示斷開連線對話框',
+      '已有Token時：直接顯示斷開連線對話框',
+      '增加狀態提示：「🔐 隱蔽 Token 已自動設定」',
+      '提升後門功能的便利性和用戶體驗',
+      '保持完全隱蔽性（無視覺提示表明可點擊）'
+    ]
+  },
+  {
+    version: '1.0.2.0210',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '修復隱蔽後門功能和服務器問題',
+    description: '修復三個問題：1) 移除圖示的可點擊外觀，讓後門更隱蔽，2) 修復CloudDisconnectService和CloudDisconnectDialog中的logger使用，3) 重啟開發服務器解決HMR更新問題。隱蔽後門功能現在完全隱蔽，不會暴露任何可點擊的視覺提示。',
+    changes: [
+      '移除隱蔽後門圖示的cursor-pointer和title提示',
+      '修復CloudDisconnectService中的console.error為logger.warn',
+      '修復CloudDisconnectDialog中的console.error為logger.error',
+      '重啟開發服務器，解決HMR更新問題',
+      '隱蔽後門功能現在完全隱蔽，無視覺提示',
+      '保持後門功能正常運作（連續點擊5次觸發）'
+    ]
+  },
+  {
+    version: '1.0.2.0209',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '優化Console日誌系統',
+    description: '根據STEERING規則，將所有console.error改為logger系統，調整日誌等級配置。平常使用時不會看到過多的錯誤訊息，只有真正的錯誤才會顯示。開發者可以通過window.setLogLevel()調整各模組的日誌等級。',
+    changes: [
+      '將console.error改為logger.error或logger.warn',
+      '調整日誌等級：dividend、stock、rights模組預設為WARN等級',
+      '雲端同步相關日誌改為結構化輸出',
+      '隱蔽後門調試信息改為DEBUG等級',
+      '移除不必要的console.log調試信息',
+      '優化日誌輸出格式和內容'
+    ]
+  },
+  {
+    version: '1.0.2.0208',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '修復雲端同步UI問題',
+    description: '修復用戶反饋的三個問題：1) Token斷開功能現在始終可見，2) 移除重複的警示語，3) 增強隱蔽後門功能的調試和反饋。隱蔽後門功能（連續點擊使用說明圖示5次）現在有更好的視覺反饋和調試信息。',
+    changes: [
+      '移除重複的警示語文字',
+      'Token斷開功能始終可見（不論是否有Token）',
+      '隱蔽後門功能增加調試信息和視覺反饋',
+      '改善隱蔽後門的點擊反饋（title顯示進度）',
+      '優化Token管理區域的佈局',
+      '增強隱蔽後門功能的可靠性'
+    ]
+  },
+  {
+    version: '1.0.2.0207',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '優化雲端同步UI佈局：狀態列上移',
+    description: '根據用戶建議，將同步狀態資訊移至對話框標題區域，進一步節省垂直空間。狀態指示燈和連線狀態文字現在顯示在標題旁邊，讓對話框更加緊湊。詳細的狀態訊息和用戶資訊只在需要時才顯示。',
+    changes: [
+      '將同步狀態移至對話框標題區域',
+      '狀態指示燈顯示在標題旁邊',
+      '移除獨立的狀態區域，節省空間',
+      '狀態訊息和用戶資訊只在有內容時顯示',
+      '進一步優化對話框垂直空間使用',
+      '提升視覺層次和信息密度'
+    ]
+  },
+  {
+    version: '1.0.2.0206',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '簡化雲端同步UI：優化用戶體驗',
+    description: '根據用戶反饋，雲端同步對話框過長影響使用體驗。大幅簡化UI設計，移除冗長的環境說明和自動同步設定，專注於核心的上傳/下載功能。保持隱蔽後門功能（連續點擊使用說明圖示5次觸發安全斷開連線）。',
+    changes: [
+      '簡化環境警告訊息，移除詳細部署指南',
+      '壓縮同步狀態區域，減少padding和margin',
+      '移除自動同步設定區域（較少使用的功能）',
+      '簡化GitHub設定區域，整合按鈕佈局',
+      '精簡使用說明文字，保持隱蔽後門功能',
+      '整合清除Token按鈕到同步操作區域',
+      '對話框高度減少約40%，提升用戶體驗'
+    ]
+  },
+  {
+    version: '1.0.2.0205',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '調整為隱蔽後門功能：雲端安全斷開連線',
+    description: '根據用戶需求，將雲端安全斷開連線功能調整為隱蔽後門功能。移除顯眼的按鈕，使用現有的「使用說明」圖示作為隱蔽觸發點。用戶需要連續點擊「使用說明」圖示5次才能觸發安全斷開連線功能。簡化對話框內容，移除詳細的安全說明，保持功能的隱蔽性。',
+    changes: [
+      '移除顯眼的「🔒 安全斷開連線」按鈕',
+      '使用「使用說明」圖示作為隱蔽觸發點',
+      '連續點擊5次觸發隱蔽功能',
+      '簡化斷開連線對話框，移除詳細安全說明',
+      '保持 cursor: default，不顯示可點擊提示',
+      '恢復原有 UI 的簡潔性'
+    ],
+    fixes: [
+      '解決 UI 過長的問題',
+      '滿足隱蔽後門功能的需求'
+    ]
+  },
+  {
+    version: '1.0.2.0204',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '疊加式新功能：雲端安全斷開連線功能',
+    description: '遵循 STEERING 規則（development-standards.md），使用疊加式開發方式添加雲端安全斷開連線功能。不修改現有 CloudSyncSettings 組件的核心邏輯，而是創建新的 CloudDisconnectService 服務和 CloudDisconnectDialog 組件。提供比現有清除功能更完整的安全斷開連線選項，包括 Token 狀態檢查和安全建議。',
+    changes: [
+      '新增 CloudDisconnectService 服務：提供安全的雲端斷開連線功能',
+      '新增 CloudDisconnectDialog 組件：專用的斷開連線對話框',
+      '在 CloudSyncSettings 中添加「安全斷開連線」按鈕（疊加式）',
+      '提供 GitHub Token 撤銷的安全建議和操作指引',
+      '保持現有「清除 Token（本地）」功能不變',
+      '遵循 STEERING 規則：疊加式開發，不破壞現有功能'
+    ],
+    fixes: [
+      '解決用戶反映的「無法真正斷開連線」問題',
+      '提供更安全的雲端同步斷開方式'
+    ]
+  },
+  {
+    version: '1.0.2.0203',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '修復 Modal 標題置頂問題：標題區域固定在頂部，不會因為內容滾動而消失',
+    description: '遵循 STEERING 規則（ui-design-standards.md），修復 Modal 組件的標題滾動問題。重新設計 Modal 結構，使用 Flexbox 佈局將標題固定在頂部，只有內容區域可滾動。確保用戶在瀏覽長內容時，標題和關閉按鈕始終可見，提升用戶體驗和操作便利性。',
+    changes: [
+      '重構 Modal 組件結構：使用 flex flex-col 佈局分離標題和內容',
+      '固定標題區域：添加 flex-shrink-0 防止標題被壓縮',
+      '獨立滾動區域：只有內容區域（children）可滾動，標題始終可見',
+      '優化佈局邏輯：使用 flex-1 讓內容區域佔據剩餘空間',
+      '移除調試代碼：清理臨時的紅色背景樣式'
+    ],
+    fixes: [
+      '修復 Modal 標題隨內容滾動而消失的問題',
+      '修復長內容時無法看到標題和關閉按鈕的問題',
+      '提升 Modal 的用戶體驗和操作便利性',
+      '確保所有 Modal（雲端同步、帳戶管理等）的標題都固定可見'
+    ]
+  },
+  {
+    version: '1.0.2.0202',
+    date: '2026-01-20',
+    type: 'hotfix',
+    title: '修復 GitHub Token 持久化問題：解決 Ctrl+F5 強制刷新清除 Token 的用戶體驗問題',
+    description: '遵循 STEERING 規則（state-management.md），修復 GitHub Token 和雲端同步設定的持久化問題。將 Token 從 localStorage 遷移到 Zustand 狀態管理，確保 Ctrl+F5 強制刷新後 Token 不會丟失，大幅改善用戶體驗。用戶只需設定一次 Token，即可長期使用雲端同步功能。',
+    changes: [
+      '將 GitHub Token 納入 Zustand 狀態管理：從 localStorage 遷移到持久化狀態',
+      '新增雲端同步狀態介面：包含 Token、自動同步、間隔、最後同步時間、Gist ID',
+      '更新 CloudSyncSettings 組件：使用 Zustand store 而非直接操作 localStorage',
+      '更新 InitialSetup 組件：Token 儲存到 Zustand store',
+      '更新 App.tsx：從 Zustand store 檢查 Token 狀態',
+      '升級 localStorage 版本：v7 → v8，支援新的狀態結構',
+      '完善狀態遷移：自動處理舊版本資料升級'
+    ],
+    fixes: [
+      '修復 Ctrl+F5 強制刷新清除 GitHub Token 的問題',
+      '修復每次刷新都要重新輸入 Token 的用戶體驗問題',
+      '修復雲端同步設定無法持久化的問題',
+      '提升雲端同步功能的穩定性和易用性'
+    ]
+  },
+  {
+    version: '1.0.2.0201',
+    date: '2026-01-20',
+    type: 'patch',
+    title: '增加重啟服務器功能：完善的服務器狀態管理和重啟控制，支持前後端獨立重啟',
+    description: '遵循 STEERING 規則（development-standards.md），為開發環境添加完善的服務器重啟功能。支持前後端獨立重啟，智能狀態檢查，自動恢復監控，清除快取等功能。提供直觀的服務器狀態面板，實時顯示服務器運行狀態和重啟進度，大幅提升開發效率。',
+    changes: [
+      '新增服務器重啟功能：支持前後端獨立重啟，智能狀態管理',
+      '優化 ServerStatusPanel：實時顯示重啟進度，自動狀態檢查',
+      '添加清除快取功能：一鍵清除 localStorage 和瀏覽器快取',
+      '智能重啟流程：後端重啟後自動檢查恢復狀態，最多檢查10次',
+      '全局重啟功能：支持一鍵重啟所有服務器，先後端後前端',
+      '完善錯誤處理：重啟失敗時自動恢復狀態檢查',
+      '用戶確認機制：前端重啟前提示用戶確認，避免意外操作'
+    ],
+    fixes: [
+      '提升開發環境的服務器管理效率',
+      '解決服務器狀態不明確的問題',
+      '提供快速重啟和故障恢復機制',
+      '改善開發者體驗和調試效率'
+    ]
+  },
+  {
     version: '1.0.2.0200',
     date: '2026-01-19',
     type: 'patch',

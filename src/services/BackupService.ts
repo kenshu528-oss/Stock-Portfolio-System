@@ -1,4 +1,5 @@
 import type { Account, StockRecord } from '../types';
+import { logger } from '../utils/logger';
 
 export interface BackupData {
   version: string;
@@ -54,7 +55,7 @@ class BackupService {
       console.log(`備份已創建: ${backupId}`);
       return backupId;
     } catch (error) {
-      console.error('創建備份失敗:', error);
+      logger.error('global', '創建備份失敗', error);
       throw new Error('備份創建失敗');
     }
   }
@@ -75,7 +76,7 @@ class BackupService {
             backups.push(backup);
           }
         } catch (error) {
-          console.error(`解析備份失敗: ${key}`, error);
+          logger.warn('global', `解析備份失敗: ${key}`, error);
         }
       }
     }
@@ -105,7 +106,7 @@ class BackupService {
 
       return backup;
     } catch (error) {
-      console.error('恢復備份失敗:', error);
+      logger.error('global', '恢復備份失敗', error);
       return null;
     }
   }
@@ -118,7 +119,7 @@ class BackupService {
       localStorage.removeItem(`${this.BACKUP_KEY_PREFIX}${backupId}`);
       return true;
     } catch (error) {
-      console.error('刪除備份失敗:', error);
+      logger.warn('global', '刪除備份失敗', error);
       return false;
     }
   }

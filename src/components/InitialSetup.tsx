@@ -3,6 +3,7 @@ import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { getCloudSyncAvailability } from '../utils/environment';
 import { addOperationLog } from './OperationLog';
+import { useAppStore } from '../stores/appStore';
 
 interface InitialSetupProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export const InitialSetup: React.FC<InitialSetupProps> = ({
   onTokenSaved,
   onDataSync
 }) => {
+  const { updateCloudSyncSettings } = useAppStore();
   const [githubToken, setGithubToken] = useState('');
   const [showToken, setShowToken] = useState(false);
   const [currentStep, setCurrentStep] = useState<SetupStep>('input');
@@ -148,7 +150,8 @@ export const InitialSetup: React.FC<InitialSetupProps> = ({
   const handleTokenSubmit = async () => {
     const isValid = await validateToken(githubToken);
     if (isValid) {
-      localStorage.setItem('githubToken', githubToken);
+      // 儲存到 Zustand store 而不是 localStorage
+      updateCloudSyncSettings({ githubToken: githubToken });
       setCurrentStep('connect');
     }
   };

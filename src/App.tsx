@@ -16,6 +16,7 @@ import { useEnhancedStock } from './hooks/useEnhancedStock';
 import { getCloudSyncAvailability } from './utils/environment';
 import { autoUpdateDividends, shouldUpdateDividends } from './services/dividendAutoService';
 import { RightsEventService } from './services/rightsEventService';
+import { logger } from './utils/logger';
 import type { StockRecord, StockFormData } from './types';
 
 function App() {
@@ -47,7 +48,10 @@ function App() {
     
     // 隱私模式
     isPrivacyMode,
-    togglePrivacyMode
+    togglePrivacyMode,
+    
+    // 雲端同步設定
+    cloudSync
   } = useAppStore();
 
   // 增強版股票操作（疊加功能）
@@ -101,7 +105,7 @@ function App() {
       }
     } catch (error) {
       addOperationLog('error', '雲端資料同步失敗');
-      console.error('雲端資料同步錯誤:', error);
+      logger.error('cloud', '雲端資料同步錯誤', error);
     }
   }, []);
 
@@ -214,7 +218,7 @@ function App() {
           addOperationLog('error', '檔案格式錯誤：缺少必要的帳戶或股票資料');
         }
       } catch (error) {
-        console.error('匯入過程中發生錯誤:', error);
+        logger.error('import', '匯入過程中發生錯誤', error);
         addOperationLog('error', '匯入失敗：' + (error instanceof Error ? error.message : '未知錯誤'));
       }
     };
@@ -312,17 +316,18 @@ function App() {
       localStorage.removeItem('portfolioData');
       localStorage.removeItem('appStore');
       
-      // 清除 GitHub 相關設定
+      // 清除雲端同步相關設定（CloudSyncSettings 組件使用的 localStorage）
       localStorage.removeItem('githubToken');
-      localStorage.removeItem('gistId');
-      localStorage.removeItem('lastSyncTime');
       localStorage.removeItem('autoSyncEnabled');
       localStorage.removeItem('syncInterval');
-      localStorage.removeItem('hasSkippedInitialSetup');
+      localStorage.removeItem('lastSyncTime');
+      localStorage.removeItem('gistId');
+      localStorage.removeItem('cloudSyncConfig');
       
       // 清除其他可能的設定
       localStorage.removeItem('operationLogs');
       localStorage.removeItem('userPreferences');
+      localStorage.removeItem('hasSkippedInitialSetup');
       
       // 重置初始設定檢查狀態，讓 RESET 後能重新顯示初始設定
       setHasCheckedToken(false);
@@ -337,7 +342,7 @@ function App() {
       }, 100);
       
     } catch (error) {
-      console.error('恢復預設值失敗:', error);
+      logger.error('global', '恢復預設值失敗', error);
       addOperationLog('error', '恢復預設值失敗：' + (error instanceof Error ? error.message : '未知錯誤'));
     }
   };
@@ -362,7 +367,7 @@ function App() {
     console.log('檢查初始設定...', { hasCheckedToken });
     
     const cloudSyncAvailability = getCloudSyncAvailability();
-    const savedToken = localStorage.getItem('githubToken');
+    const savedToken = cloudSync.githubToken; // 從 Zustand store 獲取
     const hasSkippedSetup = localStorage.getItem('hasSkippedInitialSetup') === 'true';
     
     console.log('初始設定檢查狀態:', {
@@ -432,7 +437,7 @@ function App() {
       }
     } catch (error) {
       addOperationLog('error', '雲端資料同步失敗');
-      console.error('資料同步錯誤:', error);
+      logger.error('cloud', '資料同步錯誤', error);
     }
   };
 
@@ -497,7 +502,7 @@ function App() {
       }
       
     } catch (error) {
-      console.error('手動刷新股息資料失敗:', error);
+      logger.error('dividend', '手動刷新股息資料失敗', error);
       addOperationLog('error', '股息資料刷新失敗：' + (error instanceof Error ? error.message : '未知錯誤'));
     }
   };
@@ -583,7 +588,7 @@ function App() {
                 console.log(`ℹ️ ${stock.symbol} 無需更新持股數量`);
               }
             } catch (error) {
-              console.error(`❌ ${stock.symbol} 處理失敗:`, error);
+              logger.warn('stock', `${stock.symbol} 處理失敗`, error);
               addOperationLog('error', `${stock.symbol} 處理失敗: ${error.message}`);
             }
           }

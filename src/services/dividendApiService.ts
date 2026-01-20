@@ -94,6 +94,10 @@ export class DividendApiService {
       const response = await fetch(API_ENDPOINTS.getDividend(symbol));
       
       if (!response.ok) {
+        if (response.status === 404) {
+          // 404 是正常情況（資料不存在），不輸出錯誤日誌
+          return [];
+        }
         throw new Error(`HTTP ${response.status}`);
       }
 
@@ -117,6 +121,7 @@ export class DividendApiService {
       
       return [];
     } catch (error) {
+      // 只有非 404 錯誤才輸出日誌
       logger.error('api', '備用API請求失敗', error);
       throw error;
     }

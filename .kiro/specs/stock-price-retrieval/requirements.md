@@ -156,15 +156,15 @@ function getStockSuffixes(symbol: string): { suffixes: string[], type: string, m
 }
 ```
 
-### API 優先順序策略 (基於 api-standards.md steering 規則)
+### API 優先順序策略 (基於實際使用經驗優化)
 
 #### 一般股票（如 2330、2886、0050）
 ```
-1. FinMind API（首選）- 台股專用，中文名稱
+1. Yahoo Finance API（首選）- 即時股價，穩定性佳
    ↓ 失敗
-2. 證交所 OpenAPI（備用）- 官方資料
+2. FinMind API（備用）- 台股專用，中文名稱
    ↓ 失敗
-3. Yahoo Finance（最後備用）- 國際通用
+3. 證交所 OpenAPI（最後備用）- 官方資料
 ```
 
 #### 債券 ETF（如 00679B、00687B）

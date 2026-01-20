@@ -24,13 +24,13 @@ export type LogModule =
 // 各模組的 Log 等級設定
 const LOG_CONFIG: Record<LogModule, number> = {
   global: LogLevel.INFO,      // 全域預設：一般訊息
-  dividend: LogLevel.INFO,    // 股息：一般訊息
-  stock: LogLevel.INFO,       // 股票：一般訊息
+  dividend: LogLevel.WARN,    // 股息：只顯示警告（減少噪音）
+  stock: LogLevel.WARN,       // 股票：只顯示警告（減少噪音）
   api: LogLevel.WARN,         // API：只顯示警告
   cloud: LogLevel.INFO,       // 雲端同步：一般訊息
   import: LogLevel.INFO,      // 匯入：一般訊息
   export: LogLevel.INFO,      // 匯出：一般訊息
-  rights: LogLevel.INFO       // 配股：一般訊息
+  rights: LogLevel.WARN       // 配股：只顯示警告（減少噪音）
 };
 
 /**

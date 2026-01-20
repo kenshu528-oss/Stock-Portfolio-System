@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 200, // GitHub Pages 股票搜尋效能優化：調整 API 優先順序，遵循 STEERING 規則，提升搜尋速度
+  PATCH: 222, // 修復React Hooks條件調用錯誤：移除ServerStatusPanel中重複的useState宣告，遵循STEERING規則
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

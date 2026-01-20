@@ -63,6 +63,15 @@ export interface AppState {
   // 除權息計算模式（簡化為2種）
   rightsAdjustmentMode: 'excluding_rights' | 'including_rights';
   
+  // 雲端同步設定
+  cloudSync: {
+    githubToken: string;
+    autoSyncEnabled: boolean;
+    syncInterval: number;
+    lastSyncTime: string | null;
+    gistId: string | null;
+  };
+  
   // 股價更新狀態
   isUpdatingPrices: boolean;
   lastPriceUpdate: Date | null;
@@ -105,6 +114,10 @@ export interface AppActions {
   setRightsAdjustmentMode: (mode: 'excluding_rights' | 'including_rights') => void;
   toggleRightsAdjustmentMode: () => void;
   
+  // 雲端同步操作
+  updateCloudSyncSettings: (settings: Partial<AppState['cloudSync']>) => void;
+  clearCloudSyncData: () => void;
+  
   // 股價更新操作
   setUpdatingPrices: (isUpdating: boolean) => void;
   setPriceUpdateProgress: (current: number, total: number) => void;
@@ -139,6 +152,15 @@ const initialState: AppState = {
   
   // 除權息計算模式 - 預設使用原始損益（更直觀）
   rightsAdjustmentMode: 'excluding_rights' as const,
+  
+  // 雲端同步設定
+  cloudSync: {
+    githubToken: '',
+    autoSyncEnabled: false,
+    syncInterval: 30,
+    lastSyncTime: null,
+    gistId: null,
+  },
   
   // 股價更新狀態
   isUpdatingPrices: false,
@@ -383,6 +405,24 @@ export const useAppStore = create<AppState & AppActions>()(
           };
         }),
         
+        // 雲端同步操作
+        updateCloudSyncSettings: (settings) => set((state) => ({
+          cloudSync: {
+            ...state.cloudSync,
+            ...settings
+          }
+        })),
+        
+        clearCloudSyncData: () => set((state) => ({
+          cloudSync: {
+            githubToken: '',
+            autoSyncEnabled: false,
+            syncInterval: 30,
+            lastSyncTime: null,
+            gistId: null,
+          }
+        })),
+        
         // 股價更新操作
         setUpdatingPrices: (isUpdating) => set({ isUpdatingPrices: isUpdating }),
         setPriceUpdateProgress: (current, total) => set({ 
@@ -480,7 +520,7 @@ export const useAppStore = create<AppState & AppActions>()(
         resetState: () => set(initialState),
       }),
       {
-        name: 'stock-portfolio-storage-v7', // ⚠️ 版本號更新：修復 rightsAdjustmentMode 持久化問題
+        name: 'stock-portfolio-storage-v8', // ⚠️ 版本號更新：添加雲端同步設定持久化
         partialize: (state) => ({
           // 只持久化需要的狀態，不包含 UI 狀態和更新狀態
           currentAccount: state.currentAccount,
@@ -497,6 +537,7 @@ export const useAppStore = create<AppState & AppActions>()(
           })),
           isPrivacyMode: state.isPrivacyMode,
           rightsAdjustmentMode: state.rightsAdjustmentMode, // ⚠️ 關鍵：必須持久化除權息模式
+          cloudSync: state.cloudSync, // ⚠️ 關鍵：持久化雲端同步設定，包含 GitHub Token
           lastPriceUpdate: state.lastPriceUpdate instanceof Date ? state.lastPriceUpdate.toISOString() : state.lastPriceUpdate,
         }),
         // 添加錯誤處理和數據恢復
@@ -599,8 +640,7 @@ if (typeof window !== 'undefined') {
           return true;
         } else {
           logger.error('global', '❌ 狀態驗證失敗', { issues });
-          console.error('❌ 發現問題:');
-          issues.forEach(issue => console.error('  ' + issue));
+          logger.error('global', '❌ 發現問題', issues);
           return false;
         }
       },

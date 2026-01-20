@@ -148,3 +148,71 @@ export const SearchIcon: React.FC<IconProps> = ({ className = '', size = 'md' })
     />
   </svg>
 );
+
+// 連線狀態圖示 - 已連線 (WiFi 圖示)
+export const ConnectedIcon: React.FC<IconProps> = ({ className = '', size = 'md' }) => (
+  <svg 
+    className={`${sizeClasses[size]} ${className}`} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" 
+    />
+  </svg>
+);
+
+// 連線狀態圖示 - 未連線 (WiFi 關閉圖示)
+export const DisconnectedIcon: React.FC<IconProps> = ({ className = '', size = 'md' }) => (
+  <svg 
+    className={`${sizeClasses[size]} ${className}`} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M3 3l18 18M10.584 10.587a4.5 4.5 0 00-1.897 1.73M16.5 16.5c-.75-.75-2.5-2.5-4.5-2.5s-3.75 1.75-4.5 2.5M12 20h.01M8.111 16.404a5.5 5.5 0 011.897-1.73m2.992-.001a5.5 5.5 0 011.897 1.73" 
+    />
+  </svg>
+);
+
+// 連線狀態圖示 - 錯誤 (警告圖示)
+export const ErrorIcon: React.FC<IconProps> = ({ className = '', size = 'md' }) => (
+  <svg 
+    className={`${sizeClasses[size]} ${className}`} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+    />
+  </svg>
+);
+
+// 資訊圖示 (幫助/提示圖示)
+export const InfoIcon: React.FC<IconProps> = ({ className = '', size = 'md' }) => (
+  <svg 
+    className={`${sizeClasses[size]} ${className}`} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      strokeWidth={2} 
+      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+    />
+  </svg>
+);

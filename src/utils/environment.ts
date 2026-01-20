@@ -12,11 +12,19 @@ export const isProductionBuild = (): boolean => {
   return process.env.NODE_ENV === 'production';
 };
 
+export const isProduction = (): boolean => {
+  // Multiple checks for production environment
+  return isProductionBuild() || 
+         isGitHubPages() || 
+         (window.location.protocol === 'https:' && !isLocalDevelopment());
+};
+
 export const getEnvironmentInfo = () => {
   return {
     isGitHubPages: isGitHubPages(),
     isLocalDevelopment: isLocalDevelopment(),
     isProductionBuild: isProductionBuild(),
+    isProduction: isProduction(),
     hostname: window.location.hostname,
     protocol: window.location.protocol,
     port: window.location.port
