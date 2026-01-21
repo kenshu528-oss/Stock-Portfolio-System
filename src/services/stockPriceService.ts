@@ -129,6 +129,18 @@ export class StockPriceService {
       logger.warn('stock', `證交所 API 代理失敗 ${symbol}`, error);
     }
 
+    try {
+      // 方法 3: 直接嘗試證交所 API（無代理）
+      logger.debug('stock', `嘗試直接調用證交所 API: ${symbol}`);
+      const directResult = await this.fetchTWSEDirect(symbol);
+      if (directResult) {
+        this.setCachedPrice(symbol, directResult);
+        return directResult;
+      }
+    } catch (error) {
+      logger.debug('stock', `直接調用證交所 API 失敗 ${symbol}`, error);
+    }
+
     logger.error('stock', `所有 API 代理都失敗 ${symbol}`);
     return null;
   }
@@ -136,11 +148,14 @@ export class StockPriceService {
   // 多重 CORS 代理服務列表
   private getCORSProxyServices(): string[] {
     return [
+      // 使用更可靠的代理服務
+      'https://api.allorigins.win/get?url=',
+      'https://corsproxy.io/?',
+      'https://proxy.cors.sh/',
+      'https://cors-proxy.htmldriven.com/?url=',
+      // 備用服務（可能不穩定）
       'https://cors-anywhere.herokuapp.com/',
-      'https://api.codetabs.com/v1/proxy?quest=',
-      'https://thingproxy.freeboard.io/fetch/',
-      'https://cors.bridged.cc/',
-      'https://api.allorigins.win/get?url='
+      'https://api.codetabs.com/v1/proxy?quest='
     ];
   }
 
@@ -155,11 +170,17 @@ export class StockPriceService {
         // 根據不同的代理服務構建 URL
         if (proxyService.includes('allorigins.win')) {
           proxyUrl = `${proxyService}${encodeURIComponent(targetUrl)}`;
+        } else if (proxyService.includes('corsproxy.io')) {
+          proxyUrl = `${proxyService}${encodeURIComponent(targetUrl)}`;
+        } else if (proxyService.includes('cors.sh')) {
+          proxyUrl = `${proxyService}${targetUrl}`;
+        } else if (proxyService.includes('htmldriven.com')) {
+          proxyUrl = `${proxyService}${encodeURIComponent(targetUrl)}`;
         } else {
           proxyUrl = `${proxyService}${targetUrl}`;
         }
         
-        logger.debug('stock', `嘗試代理服務: ${proxyService}`);
+        logger.debug('stock', `嘗試代理服務: ${proxyService.split('?')[0]}`);
         
         const response = await fetch(proxyUrl, {
           method: 'GET',
@@ -167,27 +188,31 @@ export class StockPriceService {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
           },
-          signal: AbortSignal.timeout(8000)
+          signal: AbortSignal.timeout(6000) // 減少超時時間
         });
 
         if (!response.ok) {
-          logger.debug('stock', `代理服務失敗 ${proxyService}: ${response.status}`);
+          logger.debug('stock', `代理服務失敗 ${proxyService.split('?')[0]}: ${response.status}`);
           continue;
         }
 
         let data;
         if (proxyService.includes('allorigins.win')) {
           const proxyData = await response.json();
+          if (!proxyData.contents) {
+            logger.debug('stock', `allorigins.win 無內容`);
+            continue;
+          }
           data = JSON.parse(proxyData.contents);
         } else {
           data = await response.json();
         }
 
-        logger.success('stock', `代理服務成功: ${proxyService}`);
+        logger.success('stock', `代理服務成功: ${proxyService.split('?')[0]}`);
         return data;
         
       } catch (error) {
-        logger.debug('stock', `代理服務錯誤 ${proxyService}:`, error);
+        logger.debug('stock', `代理服務錯誤 ${proxyService.split('?')[0]}:`, error);
         continue;
       }
     }
@@ -280,7 +305,55 @@ export class StockPriceService {
     return null;
   }
 
-  // 獲取股票後綴（根據代碼判斷市場）
+  // 直接調用證交所 API（無代理，最後備援）
+  private async fetchTWSEDirect(symbol: string): Promise<StockPrice | null> {
+    try {
+      const apiUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw|otc_${symbol}.tw`;
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Origin': 'https://mis.twse.com.tw',
+          'Referer': 'https://mis.twse.com.tw/'
+        },
+        signal: AbortSignal.timeout(5000)
+      });
+
+      if (!response.ok) return null;
+
+      const data = await response.json();
+
+      if (data?.msgArray?.[0]) {
+        const stockData = data.msgArray[0];
+        const price = parseFloat(stockData.z) || 0;
+        const previousClose = parseFloat(stockData.y) || price;
+        const change = price - previousClose;
+        const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+        const result: StockPrice = {
+          symbol: symbol,
+          price: price,
+          change: change,
+          changePercent: changePercent,
+          timestamp: new Date(),
+          source: 'TWSE Direct' as any
+        };
+
+        logger.success('stock', `直接調用證交所 API 成功 ${symbol}`, {
+          price: result.price,
+          change: result.change
+        });
+
+        return result;
+      }
+    } catch (error) {
+      // 不記錄錯誤，因為這是預期的（CORS 限制）
+      return null;
+    }
+
+    return null;
+  }
   private getStockSuffixes(symbol: string): string[] {
     const code = parseInt(symbol.substring(0, 4));
     const isBondETF = /^00\d{2,3}B$/i.test(symbol);

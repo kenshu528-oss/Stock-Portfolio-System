@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 249, // 修復股票搜尋大小寫敏感問題：QuickAddStock和StockSearch組件支援大小寫不敏感搜尋，00981l和00981L都能正確搜尋
+  PATCH: 250, // 優化CORS代理服務：更換更可靠的代理服務，添加直接API調用備援，減少超時時間，解決股價更新卡住問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

@@ -12,6 +12,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0250',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '優化CORS代理服務：解決股價更新卡住問題',
+    description: '修復GitHub Pages環境下所有CORS代理服務失敗導致股價更新卡住的問題。更換為更可靠的代理服務，添加多層備援機制，優化超時設定。',
+    changes: [
+      '更換CORS代理服務：使用corsproxy.io、cors.sh、htmldriven.com等更可靠服務',
+      '優化代理服務順序：將allorigins.win調整為首選',
+      '添加直接API調用備援：當所有代理失敗時嘗試直接調用證交所API',
+      '減少超時時間：從8秒減少到6秒，提升響應速度',
+      '改善錯誤處理：只顯示代理服務名稱，減少日誌噪音',
+      '移除不穩定服務：thingproxy.freeboard.io、cors.bridged.cc'
+    ],
+    fixes: [
+      '修復cors-anywhere.herokuapp.com 403 Forbidden問題',
+      '修復api.codetabs.com CORS預檢請求失敗問題',
+      '修復thingproxy.freeboard.io DNS解析失敗問題',
+      '修復cors.bridged.cc 429 Too Many Requests問題',
+      '修復股價更新卡住無響應的問題'
+    ]
+  },
+  {
     version: '1.0.2.0249',
     date: '2026-01-21',
     type: 'patch',
