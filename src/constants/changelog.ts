@@ -12,6 +12,48 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0235',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '修復雲端下載功能語法錯誤：修復Kiro IDE自動修復導致的邏輯結構破壞',
+    description: '遵循STEERING規則development-standards.md，緊急修復Kiro IDE自動修復導致的語法錯誤。修復CloudSyncSettings.tsx中的邏輯結構破壞，確保雲端下載功能正常運作。添加return語句防止邏輯衝突，恢復系統穩定性。',
+    changes: [
+      '修復CloudSyncSettings.tsx中的語法錯誤',
+      '修復被破壞的if-else邏輯結構',
+      '添加return語句防止邏輯繼續執行',
+      '恢復雲端下載功能的正常運作',
+      '確保建置過程成功完成'
+    ],
+    fixes: [
+      '修復系統崩潰問題',
+      '修復語法錯誤導致的建置失敗',
+      '恢復雲端下載警告對話框功能',
+      '確保系統穩定性和可用性'
+    ]
+  },
+  {
+    version: '1.0.2.0234',
+    date: '2026-01-21',
+    type: 'minor',
+    title: '新增雲端下載警告對話框：統一上傳下載UI風格，替換原生confirm',
+    description: '遵循STEERING規則ui-design-standards.md，創建CloudDownloadWarningDialog組件，替換原生的confirm對話框。與上傳警告對話框保持一致的設計風格，提供更好的用戶體驗。添加DownloadIcon圖示，完善雲端同步功能的視覺統一性。',
+    changes: [
+      '新增CloudDownloadWarningDialog組件，與上傳對話框風格一致',
+      '在Icons.tsx中添加DownloadIcon圖示',
+      '替換原生confirm對話框為自定義對話框',
+      '修改CloudSyncSettings.tsx整合下載警告功能',
+      '添加handleConfirmDownload確認下載函數',
+      '統一上傳和下載的UI設計風格',
+      '改善雲端同步功能的視覺一致性'
+    ],
+    fixes: [
+      '修復上傳和下載對話框風格不一致的問題',
+      '替換不美觀的原生confirm對話框',
+      '改善雲端下載的用戶體驗',
+      '提升整體UI的專業性和一致性'
+    ]
+  },
+  {
     version: '1.0.2.0233',
     date: '2026-01-21',
     type: 'minor',

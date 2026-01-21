@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 233, // 簡化雲端上傳警告對話框：與下載風格保持一致，越簡單越好
+  PATCH: 235, // 修復雲端下載功能語法錯誤：修復Kiro IDE自動修復導致的邏輯結構破壞
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

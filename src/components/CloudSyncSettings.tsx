@@ -6,6 +6,7 @@ import { addOperationLog } from './OperationLog';
 import { getCloudSyncAvailability, getEnvironmentInfo } from '../utils/environment';
 import { CloudDisconnectDialog } from './CloudDisconnectDialog'; // 疊加式新功能
 import { CloudUploadWarningDialog } from './CloudUploadWarningDialog'; // 遵循 STEERING 規則新增
+import { CloudDownloadWarningDialog } from './CloudDownloadWarningDialog'; // 遵循 STEERING 規則新增
 import { logger } from '../utils/logger';
 
 interface CloudSyncSettingsProps {
@@ -32,6 +33,8 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
   const [userInfo, setUserInfo] = useState<any>(null);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false); // 疊加式新功能
   const [showUploadWarning, setShowUploadWarning] = useState(false); // 遵循 STEERING 規則新增
+  const [showDownloadWarning, setShowDownloadWarning] = useState(false); // 遵循 STEERING 規則新增
+  const [downloadData, setDownloadData] = useState<any>(null); // 儲存下載資料
   const [clickCount, setClickCount] = useState(0); // 隱蔽後門計數器
 
   const { accounts, stocks } = useAppStore();
@@ -204,38 +207,13 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
       logger.debug('cloud', 'onDataSync 檢查', { exists: !!onDataSync });
       
       if (onDataSync) {
-        const confirmed = confirm(
-          `發現雲端資料：\n\n` +
-          `帳戶: ${cloudData.accounts?.length || 0} 個\n` +
-          `股票: ${cloudData.stocks?.length || 0} 筆\n` +
-          `更新時間: ${new Date(cloudData.gistInfo.updated_at).toLocaleString()}\n\n` +
-          '是否要用雲端資料覆蓋本地資料？'
-        );
-        
-        if (confirmed) {
-          logger.debug('cloud', '用戶確認同步，調用 onDataSync');
-          
-          if (typeof onDataSync === 'function') {
-            logger.debug('cloud', '正在調用 onDataSync...');
-            try {
-              onDataSync(cloudData);
-              logger.success('cloud', 'onDataSync 調用完成');
-              setStatusMessage('✅ 雲端資料已成功同步到本地');
-              addOperationLog('success', '✅ 雲端資料已成功同步到本地');
-            } catch (syncError) {
-              logger.error('cloud', 'onDataSync 執行失敗', syncError);
-              setStatusMessage('❌ 資料同步失敗');
-              addOperationLog('error', `資料同步失敗: ${syncError instanceof Error ? syncError.message : '未知錯誤'}`);
-            }
-          } else {
-            logger.error('cloud', 'onDataSync 不是函數', { type: typeof onDataSync });
-            setStatusMessage('❌ 同步功能不可用');
-            addOperationLog('error', 'onDataSync 回調函數不可用');
-          }
-        } else {
-          logger.debug('cloud', '用戶取消同步');
-          setStatusMessage('📥 雲端資料下載完成，但未同步到本地');
-        }
+        // 遵循 STEERING 規則：顯示下載警告對話框
+        setDownloadData({
+          cloudData,
+          gistInfo: cloudData.gistInfo
+        });
+        setShowDownloadWarning(true);
+        return; // 等待用戶確認，不繼續執行後續邏輯
       } else {
         logger.warn('cloud', 'onDataSync 回調不存在，無法同步資料');
         addOperationLog('error', 'onDataSync 回調不存在，無法同步資料');
@@ -251,6 +229,40 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
     } finally {
       setIsDownloading(false);
     }
+  };
+
+  // 確認下載到本地（實際執行下載同步）
+  const handleConfirmDownload = () => {
+    setShowDownloadWarning(false);
+    
+    if (downloadData && onDataSync) {
+      logger.debug('cloud', '用戶確認同步，調用 onDataSync');
+      
+      if (typeof onDataSync === 'function') {
+        logger.debug('cloud', '正在調用 onDataSync...');
+        try {
+          onDataSync(downloadData.cloudData);
+          logger.success('cloud', 'onDataSync 調用完成');
+          setStatusMessage('✅ 雲端資料已成功同步到本地');
+          addOperationLog('success', '✅ 雲端資料已成功同步到本地');
+        } catch (syncError) {
+          logger.error('cloud', 'onDataSync 執行失敗', syncError);
+          setStatusMessage('❌ 資料同步失敗');
+          addOperationLog('error', `資料同步失敗: ${syncError instanceof Error ? syncError.message : '未知錯誤'}`);
+        }
+      } else {
+        logger.error('cloud', 'onDataSync 不是函數', { type: typeof onDataSync });
+        setStatusMessage('❌ 同步功能不可用');
+        addOperationLog('error', 'onDataSync 回調函數不可用');
+      }
+    } else {
+      logger.debug('cloud', '用戶取消同步');
+      setStatusMessage('📥 雲端資料下載完成，但未同步到本地');
+    }
+    
+    // 清除下載資料
+    setDownloadData(null);
+    setIsDownloading(false);
   };
 
   // 儲存設定
@@ -668,6 +680,21 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
       accountCount={accounts.length}
       stockCount={stocks.length}
       isUploading={isUploading}
+    />
+    
+    {/* 遵循 STEERING 規則：雲端下載警告對話框 */}
+    <CloudDownloadWarningDialog
+      isOpen={showDownloadWarning}
+      onClose={() => {
+        setShowDownloadWarning(false);
+        setDownloadData(null);
+        setIsDownloading(false);
+      }}
+      onConfirm={handleConfirmDownload}
+      accountCount={downloadData?.cloudData?.accounts?.length || 0}
+      stockCount={downloadData?.cloudData?.stocks?.length || 0}
+      updateTime={downloadData?.gistInfo ? new Date(downloadData.gistInfo.updated_at).toLocaleString() : ''}
+      isDownloading={isDownloading}
     />
     </>
   );
