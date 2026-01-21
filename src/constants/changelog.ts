@@ -12,6 +12,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0245',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '修復股價API端點格式問題',
+    description: '修復GitHub Pages環境下股價API端點格式錯誤，統一使用查詢參數格式，確保Netlify Functions正常運作。',
+    changes: [
+      '修復股價 API 端點格式：/api/stock/{symbol} → /stock?symbol={symbol}',
+      '統一所有 Netlify Functions 使用查詢參數格式',
+      '確保股價更新功能在 GitHub Pages 環境正常運作',
+      '修復 404 錯誤，完善 API 路由配置'
+    ]
+  },
+  {
     version: '1.0.2.0244',
     date: '2026-01-21',
     type: 'hotfix',

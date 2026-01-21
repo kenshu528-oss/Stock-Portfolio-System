@@ -40,11 +40,12 @@ export const API_ENDPOINTS = {
   // 股票相關
   getStock: (symbol: string) => {
     const baseUrl = getApiBaseUrl();
-    return baseUrl ? `${baseUrl}/api/stock/${encodeURIComponent(symbol)}` : null;
+    // 🔧 修復：Netlify Functions 使用查詢參數而非路徑參數
+    return baseUrl ? `${baseUrl}/stock?symbol=${encodeURIComponent(symbol)}` : null;
   },
   searchStock: (query: string) => {
     const baseUrl = getApiBaseUrl();
-    return baseUrl ? `${baseUrl}/api/stock-search?query=${encodeURIComponent(query)}` : null;
+    return baseUrl ? `${baseUrl}/stock-search?query=${encodeURIComponent(query)}` : null;
   },
   
   // 股息相關
