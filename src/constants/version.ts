@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 227, // 修復ESLint錯誤：轉義字符和React Hooks條件調用問題
+  PATCH: 228, // 修復Token持久化問題：防止清除快取按鈕意外清除GitHub Token
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

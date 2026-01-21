@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0228',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '修復Token持久化問題：防止清除快取按鈕意外清除GitHub Token',
+    description: '修復ServerStatusPanel中「清除快取」按鈕會無條件清除所有localStorage的問題，導致用戶的GitHub Token意外消失。現在清除快取時會保留重要的用戶設定，並添加確認對話框防止誤觸。遵循STEERING規則的安全開發原則，採用疊加式修復不破壞現有功能。',
+    changes: [
+      '修復「清除快取」按鈕會清除GitHub Token的問題',
+      '添加確認對話框，防止用戶誤觸清除快取功能',
+      '實作選擇性清除：保留GitHub Token、雲端同步設定等重要資料',
+      '保留githubToken、autoSyncEnabled、syncInterval、lastSyncTime、gistId、hasSkippedInitialSetup',
+      '更新按鈕提示文字，明確說明會保留重要設定'
+    ],
+    fixes: [
+      '修復Ctrl+F5後Token消失的根本原因',
+      '修復清除快取功能過於激進的問題',
+      '防止用戶意外失去雲端同步設定',
+      '改善用戶體驗，避免重複設定Token'
+    ]
+  },
+  {
     version: '1.0.2.0227',
     date: '2026-01-21',
     type: 'hotfix',
