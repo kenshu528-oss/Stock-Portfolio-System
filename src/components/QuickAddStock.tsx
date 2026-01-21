@@ -106,8 +106,9 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             const symbol = stock.stock_id || '';
             const name = stock.stock_name || '';
             
-            // 支援股票代碼或中文名稱搜尋
-            return symbol.includes(query) || name.includes(query);
+            // 支援股票代碼或中文名稱搜尋（大小寫不敏感）
+            return symbol.toLowerCase().includes(query.toLowerCase()) || 
+                   name.toLowerCase().includes(query.toLowerCase());
           }).slice(0, 10); // 限制結果數量
           
           // 為每個股票獲取即時價格

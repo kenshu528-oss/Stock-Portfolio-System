@@ -12,6 +12,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0249',
+    date: '2026-01-21',
+    type: 'patch',
+    title: '修復股票搜尋大小寫敏感問題',
+    description: '修復QuickAddStock和StockSearch組件中股票代碼搜尋大小寫敏感的問題，現在輸入00981l（小寫）和00981L（大寫）都能正確搜尋到相同結果。',
+    changes: [
+      '修復QuickAddStock組件：股票代碼搜尋改為大小寫不敏感',
+      '修復StockSearch組件：股票代碼搜尋改為大小寫不敏感',
+      '統一搜尋邏輯：使用toLowerCase()進行比較',
+      '改善用戶體驗：支援任意大小寫輸入'
+    ],
+    fixes: [
+      '修復00981l無法搜尋到00981L的問題',
+      '修復股票代碼大小寫敏感導致的搜尋失敗',
+      '統一前端搜尋組件的大小寫處理邏輯'
+    ]
+  },
+  {
     version: '1.0.2.0248',
     date: '2026-01-21',
     type: 'patch',
