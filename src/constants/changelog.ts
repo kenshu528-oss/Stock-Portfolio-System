@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0236',
+    date: '2026-01-21',
+    type: 'minor',
+    title: '統一確定按鈕配色：修正上傳對話框確定按鈕為藍色，與下載對話框保持一致',
+    description: '遵循STEERING規則ui-design-standards.md，統一整個軟體的「確定」、「取消」按鈕配色標準。修正CloudUploadWarningDialog的確定按鈕從紅色改為藍色，與CloudDownloadWarningDialog保持一致。建立統一的按鈕配色規範：確定按鈕使用藍色，取消按鈕使用灰色，危險操作使用紅色。',
+    changes: [
+      '修正上傳警告對話框確定按鈕配色：紅色 → 藍色',
+      '統一上傳和下載對話框的按鈕風格',
+      '建立統一的按鈕配色標準',
+      '確定按鈕：bg-blue-600 hover:bg-blue-700',
+      '取消按鈕：bg-slate-600 hover:bg-slate-500',
+      '危險操作：bg-red-600 hover:bg-red-700（僅用於刪除等）'
+    ],
+    fixes: [
+      '修復上傳和下載對話框按鈕配色不一致的問題',
+      '改善整體UI的視覺一致性',
+      '提升用戶體驗的統一性',
+      '符合UI設計標準規範'
+    ]
+  },
+  {
     version: '1.0.2.0235',
     date: '2026-01-21',
     type: 'hotfix',

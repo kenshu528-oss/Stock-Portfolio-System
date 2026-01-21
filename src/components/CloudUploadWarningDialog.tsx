@@ -65,7 +65,7 @@ export const CloudUploadWarningDialog: React.FC<CloudUploadWarningDialogProps> =
           <button
             onClick={onConfirm}
             disabled={isUploading}
-            className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
           >
             {isUploading ? (
               <>

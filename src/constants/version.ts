@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 235, // 修復雲端下載功能語法錯誤：修復Kiro IDE自動修復導致的邏輯結構破壞
+  PATCH: 236, // 統一確定按鈕配色：修正上傳對話框確定按鈕為藍色，與下載對話框保持一致
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
