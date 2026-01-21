@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 247, // 實作完整CORS代理解決方案：使用api.allorigins.win代理Yahoo Finance和FinMind API，完美解決GitHub Pages環境問題
+  PATCH: 248, // 實作多重CORS代理服務備援機制：添加cors-anywhere、codetabs、thingproxy等多個代理服務，解決api.allorigins.win失效問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

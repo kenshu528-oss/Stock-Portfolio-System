@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0248',
+    date: '2026-01-21',
+    type: 'patch',
+    title: '實作多重CORS代理服務備援機制',
+    description: '解決單一代理服務失效問題，實作多個CORS代理服務的自動備援機制，確保GitHub Pages環境下的API調用穩定性。',
+    changes: [
+      '添加多重CORS代理服務支援：cors-anywhere.herokuapp.com、api.codetabs.com、thingproxy.freeboard.io等',
+      '實作自動備援機制：當一個代理服務失敗時自動嘗試下一個',
+      '優化錯誤處理：詳細記錄每個代理服務的嘗試結果',
+      '改善日誌輸出：清楚標示成功使用的代理服務',
+      '增強穩定性：解決api.allorigins.win單點失效問題'
+    ],
+    fixes: [
+      '修復GitHub Pages環境下股價API調用失敗問題',
+      '修復CORS代理服務500錯誤導致的股價更新失敗',
+      '修復單一代理服務依賴造成的系統不穩定'
+    ]
+  },
+  {
     version: '1.0.2.0247',
     date: '2026-01-21',
     type: 'major',

@@ -1,7 +1,6 @@
 // 股息API服務 - 從證交所動態獲取完整除權息資料
 import { logger } from '../utils/logger';
-import { API_ENDPOINTS, shouldUseBackendProxy } from '../config/api';
-import { FinMindAPIProvider } from './finMindAPI';
+import { API_ENDPOINTS } from '../config/api';
 
 export interface DividendApiRecord {
   symbol: string;
@@ -91,19 +90,13 @@ export class DividendApiService {
   private static async fetchFromAlternativeAPI(symbol: string): Promise<DividendApiRecord[]> {
     try {
       // 檢查是否應該使用後端代理
-      if (!shouldUseBackendProxy()) {
+      const endpoint = API_ENDPOINTS.getDividend(symbol);
+      
+      if (!endpoint) {
         logger.info('dividend', `GitHub Pages 環境，使用 CORS 代理獲取 ${symbol} 股息`);
         
         // 🔧 GitHub Pages 環境：使用 CORS 代理服務
         return await this.fetchDividendWithCORSProxy(symbol);
-      }
-      
-      // 使用後端代理
-      const endpoint = API_ENDPOINTS.getDividend(symbol);
-      
-      if (!endpoint) {
-        logger.error('dividend', `無法獲取 ${symbol} 股息 API 端點`);
-        return [];
       }
       
       logger.debug('dividend', `使用後端代理獲取 ${symbol} 股息: ${endpoint}`);

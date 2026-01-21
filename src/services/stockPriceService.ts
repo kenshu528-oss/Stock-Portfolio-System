@@ -133,6 +133,68 @@ export class StockPriceService {
     return null;
   }
 
+  // 多重 CORS 代理服務列表
+  private getCORSProxyServices(): string[] {
+    return [
+      'https://cors-anywhere.herokuapp.com/',
+      'https://api.codetabs.com/v1/proxy?quest=',
+      'https://thingproxy.freeboard.io/fetch/',
+      'https://cors.bridged.cc/',
+      'https://api.allorigins.win/get?url='
+    ];
+  }
+
+  // 使用多重代理服務嘗試請求
+  private async fetchWithMultipleProxies(targetUrl: string): Promise<any> {
+    const proxyServices = this.getCORSProxyServices();
+    
+    for (const proxyService of proxyServices) {
+      try {
+        let proxyUrl: string;
+        
+        // 根據不同的代理服務構建 URL
+        if (proxyService.includes('allorigins.win')) {
+          proxyUrl = `${proxyService}${encodeURIComponent(targetUrl)}`;
+        } else {
+          proxyUrl = `${proxyService}${targetUrl}`;
+        }
+        
+        logger.debug('stock', `嘗試代理服務: ${proxyService}`);
+        
+        const response = await fetch(proxyUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          signal: AbortSignal.timeout(8000)
+        });
+
+        if (!response.ok) {
+          logger.debug('stock', `代理服務失敗 ${proxyService}: ${response.status}`);
+          continue;
+        }
+
+        let data;
+        if (proxyService.includes('allorigins.win')) {
+          const proxyData = await response.json();
+          data = JSON.parse(proxyData.contents);
+        } else {
+          data = await response.json();
+        }
+
+        logger.success('stock', `代理服務成功: ${proxyService}`);
+        return data;
+        
+      } catch (error) {
+        logger.debug('stock', `代理服務錯誤 ${proxyService}:`, error);
+        continue;
+      }
+    }
+    
+    throw new Error('所有代理服務都失敗');
+  }
+
   // 使用 CORS 代理調用 Yahoo Finance API
   private async fetchYahooFinanceWithProxy(symbol: string): Promise<StockPrice | null> {
     const suffixes = this.getStockSuffixes(symbol);
@@ -141,22 +203,10 @@ export class StockPriceService {
       try {
         const yahooSymbol = `${symbol}${suffix}`;
         const apiUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
         
         logger.debug('stock', `Yahoo Finance 代理請求: ${yahooSymbol}`);
         
-        const response = await fetch(proxyUrl, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-          signal: AbortSignal.timeout(10000)
-        });
-
-        if (!response.ok) continue;
-
-        const proxyData = await response.json();
-        const data = JSON.parse(proxyData.contents);
+        const data = await this.fetchWithMultipleProxies(apiUrl);
 
         if (data?.chart?.result?.[0]?.meta) {
           const meta = data.chart.result[0].meta;
@@ -195,22 +245,10 @@ export class StockPriceService {
   private async fetchTWSEWithProxy(symbol: string): Promise<StockPrice | null> {
     try {
       const apiUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw|otc_${symbol}.tw`;
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
       
       logger.debug('stock', `證交所 API 代理請求: ${symbol}`);
       
-      const response = await fetch(proxyUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        signal: AbortSignal.timeout(10000)
-      });
-
-      if (!response.ok) return null;
-
-      const proxyData = await response.json();
-      const data = JSON.parse(proxyData.contents);
+      const data = await this.fetchWithMultipleProxies(apiUrl);
 
       if (data?.msgArray?.[0]) {
         const stockData = data.msgArray[0];
