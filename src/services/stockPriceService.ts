@@ -1,8 +1,9 @@
 // 股價API服務
 
 import { StockPrice, StockSearchResult } from '../types';
-import { getApiBaseUrl } from '../config/api';
+import { getApiBaseUrl, shouldUseBackendProxy } from '../config/api';
 import { StockSymbolAnalyzer } from './stockSymbolAnalyzer';
+import { UnifiedStockPriceService } from './unifiedStockPriceService';
 import { logger } from '../utils/logger';
 
 // API配置
@@ -38,6 +39,14 @@ export class StockPriceService {
   // 獲取單一股票價格（主要方法）
   async getStockPrice(symbol: string): Promise<StockPrice | null> {
     try {
+      // 檢查是否應該使用後端代理
+      if (!shouldUseBackendProxy()) {
+        logger.debug('stock', `GitHub Pages 環境，使用外部 API 獲取 ${symbol} 股價...`);
+        // 在 GitHub Pages 環境下，直接使用 UnifiedStockPriceService
+        const unifiedService = new UnifiedStockPriceService();
+        return await unifiedService.getStockPrice(symbol);
+      }
+      
       logger.debug('stock', `從後端代理獲取 ${symbol} 股價...`);
       
       const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/api/stock/${symbol}`, {
@@ -102,6 +111,15 @@ export class StockPriceService {
   // 獲取股票名稱
   async getStockName(symbol: string): Promise<string | null> {
     try {
+      // 檢查是否應該使用後端代理
+      if (!shouldUseBackendProxy()) {
+        logger.debug('stock', `GitHub Pages 環境，使用外部 API 獲取 ${symbol} 股票名稱...`);
+        // 在 GitHub Pages 環境下，直接使用 UnifiedStockPriceService
+        const unifiedService = new UnifiedStockPriceService();
+        const stockData = await unifiedService.getStockPrice(symbol);
+        return stockData?.name || null;
+      }
+      
       logger.debug('stock', `從後端代理獲取 ${symbol} 股票名稱...`);
       
       // 使用 /api/stock 端點獲取股票資訊（包含名稱）
@@ -137,6 +155,24 @@ export class StockPriceService {
       
       // 支援多種股票代碼格式
       if (StockSymbolAnalyzer.isValidStockSymbol(trimmedQuery)) {
+        // 檢查是否應該使用後端代理
+        if (!shouldUseBackendProxy()) {
+          logger.debug('stock', `GitHub Pages 環境，使用外部 API 搜尋 ${trimmedQuery}...`);
+          // 在 GitHub Pages 環境下，直接使用 UnifiedStockPriceService
+          const unifiedService = new UnifiedStockPriceService();
+          const stockData = await unifiedService.getStockPrice(trimmedQuery);
+          if (stockData) {
+            return {
+              symbol: stockData.symbol,
+              name: stockData.name,
+              market: StockSymbolAnalyzer.getMarketType(stockData.symbol),
+              price: stockData.price,
+              source: stockData.source
+            };
+          }
+          return null;
+        }
+        
         logger.debug('stock', `從後端代理搜尋 ${trimmedQuery}...`);
         
         // 使用 /api/stock 端點獲取股票資訊

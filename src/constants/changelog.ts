@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0237',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '修復GitHub Pages環境API調用問題：在無後端環境下直接使用外部API',
+    description: '遵循STEERING規則api-standards.md，修復GitHub Pages環境下所有股價API調用失敗（404錯誤）的問題。根本原因：GitHub Pages沒有後端服務，但系統仍嘗試調用/api/stock端點。修復：在GitHub Pages環境下直接使用UnifiedStockPriceService調用外部API（Yahoo Finance、FinMind等），避免後端代理調用。',
+    changes: [
+      '修復api.ts配置：GitHub Pages環境下shouldUseBackendProxy()返回false',
+      '修復stockPriceService.ts：在GitHub Pages環境下使用UnifiedStockPriceService',
+      '修復getStockPrice方法：檢查環境後選擇API調用方式',
+      '修復getStockName方法：GitHub Pages下直接調用外部API',
+      '修復searchStock方法：GitHub Pages下使用外部股價服務',
+      '確保所有股價更新功能在GitHub Pages環境下正常運作'
+    ],
+    fixes: [
+      '修復GitHub Pages環境下所有股價API返回404錯誤',
+      '修復股價更新功能在雲端版本中完全失效的問題',
+      '恢復GitHub Pages版本的股價查詢和更新功能',
+      '確保雲端版本與本地版本功能一致性'
+    ]
+  },
+  {
     version: '1.0.2.0236',
     date: '2026-01-21',
     type: 'minor',

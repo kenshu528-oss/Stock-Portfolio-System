@@ -3,7 +3,7 @@
 /**
  * 獲取 API 基礎 URL
  * 開發環境：使用 localhost:3001
- * GitHub Pages：直接使用外部 API
+ * GitHub Pages：不使用後端代理，直接調用外部 API
  * Netlify：使用 Netlify Functions
  */
 export const getApiBaseUrl = (): string => {
@@ -11,9 +11,9 @@ export const getApiBaseUrl = (): string => {
   const isGitHubPages = window.location.hostname.includes('github.io') || 
                        window.location.hostname.includes('github.com');
   
-  // 如果是 GitHub Pages，返回空字串（將直接調用外部 API）
+  // 如果是 GitHub Pages，返回 null（不使用後端代理）
   if (isGitHubPages) {
-    return '';
+    return null as any; // 標記為不使用後端代理
   }
   
   // 如果是生產環境（Netlify），使用 Netlify Functions
@@ -23,6 +23,14 @@ export const getApiBaseUrl = (): string => {
   
   // 開發環境使用環境變數或預設值
   return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+};
+
+/**
+ * 檢查是否應該使用後端代理
+ */
+export const shouldUseBackendProxy = (): boolean => {
+  const baseUrl = getApiBaseUrl();
+  return baseUrl !== null && baseUrl !== undefined;
 };
 
 /**

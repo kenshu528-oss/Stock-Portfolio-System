@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 236, // 統一確定按鈕配色：修正上傳對話框確定按鈕為藍色，與下載對話框保持一致
+  PATCH: 237, // 修復GitHub Pages環境API調用問題：在無後端環境下直接使用外部API
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
