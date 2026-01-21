@@ -12,26 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.0.2.0241',
+    version: '1.0.2.0242',
     date: '2026-01-21',
     type: 'hotfix',
-    title: '修復GitHub Pages環境股價更新功能：修正updateAllStockPrices中的API調用邏輯',
-    description: '遵循STEERING規則api-standards.md，修復GitHub Pages環境下股價更新功能失敗的問題。根本原因：updateAllStockPrices函數直接使用fetch(API_ENDPOINTS.getStock())，但在GitHub Pages環境下API_ENDPOINTS.getStock()返回null，導致fetch URL變成"null"。修復：添加shouldUseBackendProxy()檢查，在GitHub Pages環境下使用StockPriceService直接調用外部API。',
+    title: '修復GitHub Pages環境CORS問題：調整API優先順序，優先使用FinMind API避免跨域限制',
+    description: '遵循STEERING規則api-standards.md，修復GitHub Pages環境下Yahoo Finance API被CORS政策阻擋的問題。根本原因：瀏覽器直接調用Yahoo Finance API被跨域政策阻擋，導致所有股價更新失敗。修復：調整API優先順序，在GitHub Pages環境下優先使用FinMind API（無CORS限制），確保股價更新功能正常運作。',
     changes: [
-      '修復appStore.ts中updateAllStockPrices函數的API調用邏輯',
-      '添加shouldUseBackendProxy()環境檢查',
-      'GitHub Pages環境下使用StockPriceService直接調用外部API',
-      '開發環境和Netlify環境繼續使用後端代理',
-      '添加API URL有效性檢查，防止null URL調用',
-      '統一股價更新邏輯，確保所有環境下都能正常運作',
-      '添加必要的import：shouldUseBackendProxy, API_ENDPOINTS'
+      '修復unifiedStockPriceService.ts：調整預設策略為FINMIND_ONLY',
+      '修復stockDataMerger.ts：調整預設選項為FINMIND_ONLY',
+      '優先使用FinMind API避免GitHub Pages環境的CORS限制',
+      '保持開發環境的混合策略（Yahoo+FinMind）',
+      '確保GitHub Pages環境下股價更新功能正常運作',
+      '遵循STEERING規則：API失敗返回null，不提供虛假資料'
     ],
     fixes: [
-      '修復GitHub Pages環境下股價更新失敗的問題',
-      '修復Console中"GET .../null 404"錯誤',
-      '修復雲端版本股價更新功能完全失效',
-      '確保股價更新功能在所有環境下正常運作',
-      '改善錯誤處理和日誌記錄'
+      '修復GitHub Pages環境下所有Yahoo Finance API被CORS阻擋',
+      '修復股價更新功能在雲端版本中完全失效的問題',
+      '修復Console中大量CORS錯誤訊息',
+      '恢復GitHub Pages版本的股價更新功能',
+      '確保雲端版本與本地版本功能一致性'
     ]
   },
   {

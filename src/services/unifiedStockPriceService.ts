@@ -45,7 +45,7 @@ export interface UnifiedServiceConfig {
 // 預設配置
 const DEFAULT_CONFIG: UnifiedServiceConfig = {
   enableCache: true,
-  defaultStrategy: DataSourcePriority.YAHOO_FINMIND,
+  defaultStrategy: DataSourcePriority.FINMIND_ONLY, // GitHub Pages 環境優先使用 FinMind
   includeChineseName: true,
   batchSize: 5,
   requestInterval: 300,

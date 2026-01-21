@@ -43,7 +43,7 @@ export interface DataMergeOptions {
 
 // 預設選項
 const DEFAULT_OPTIONS: Required<DataMergeOptions> = {
-  preferredSource: DataSourcePriority.YAHOO_FINMIND,
+  preferredSource: DataSourcePriority.FINMIND_ONLY, // GitHub Pages 環境優先使用 FinMind
   includeChineseName: true,
   includeMarketInfo: true,
   timeout: 15000,
