@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0231',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '修復雲端上傳警告對話框z-index問題：確保對話框正確顯示',
+    description: '修復CloudUploadWarningDialog組件的z-index層級問題，確保警告對話框能正確顯示在最頂層。遵循STEERING規則development-standards.md的調試和修復流程，通過Console調試發現z-index衝突問題並修復。',
+    changes: [
+      '修復CloudUploadWarningDialog的z-index從z-50提升到z-[9999]',
+      '確保警告對話框顯示在所有其他組件之上',
+      '移除調試用的console.log代碼',
+      '改善雲端上傳功能的用戶體驗'
+    ],
+    fixes: [
+      '修復警告對話框不顯示的問題',
+      '解決z-index層級衝突',
+      '確保用戶能看到上傳警告信息',
+      '改善雲端同步的安全性提示'
+    ]
+  },
+  {
     version: '1.0.2.0230',
     date: '2026-01-21',
     type: 'minor',
