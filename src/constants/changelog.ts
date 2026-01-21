@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0238',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '修復GitHub Pages環境股息功能：在無後端環境下直接使用FinMind API',
+    description: '遵循STEERING規則api-standards.md，完成GitHub Pages環境API修復的最後一塊拼圖。發現股息功能也使用後端代理API端點，在GitHub Pages環境下會失敗。修復：在dividendApiService.ts中添加環境檢測，GitHub Pages環境下直接使用FinMind API獲取股息資料，確保股息功能完全正常。',
+    changes: [
+      '修復dividendApiService.ts：添加shouldUseBackendProxy()環境檢測',
+      '修復fetchFromAlternativeAPI方法：GitHub Pages下使用FinMind API',
+      '確保股息查詢功能在GitHub Pages環境下正常運作',
+      '完善API調用策略：股價和股息功能都支援環境自動切換',
+      '統一外部API調用邏輯：使用FinMind作為GitHub Pages的股息數據源'
+    ],
+    fixes: [
+      '修復GitHub Pages環境下股息功能API調用失敗',
+      '完成雲端版本所有API功能的修復',
+      '確保股價和股息功能在所有環境下都正常運作',
+      '提供完整的GitHub Pages環境API解決方案'
+    ]
+  },
+  {
     version: '1.0.2.0237',
     date: '2026-01-21',
     type: 'hotfix',

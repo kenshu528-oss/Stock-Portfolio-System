@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 237, // 修復GitHub Pages環境API調用問題：在無後端環境下直接使用外部API
+  PATCH: 238, // 修復GitHub Pages環境股息功能：在無後端環境下直接使用FinMind API
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

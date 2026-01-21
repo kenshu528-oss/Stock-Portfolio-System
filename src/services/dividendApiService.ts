@@ -1,8 +1,7 @@
 // 股息API服務 - 從證交所動態獲取完整除權息資料
 import { logger } from '../utils/logger';
-
-import { API_ENDPOINTS } from '../config/api';
-import { logger } from '../utils/logger';
+import { API_ENDPOINTS, shouldUseBackendProxy } from '../config/api';
+import { FinMindAPIProvider } from './finMindAPI';
 
 export interface DividendApiRecord {
   symbol: string;
@@ -87,10 +86,37 @@ export class DividendApiService {
   }
 
   /**
-   * 備用API - 使用後端代理
+   * 備用API - 使用後端代理或外部API
    */
   private static async fetchFromAlternativeAPI(symbol: string): Promise<DividendApiRecord[]> {
     try {
+      // 檢查是否應該使用後端代理
+      if (!shouldUseBackendProxy()) {
+        logger.debug('dividend', `GitHub Pages 環境，使用外部 API 獲取 ${symbol} 股息...`);
+        // 在 GitHub Pages 環境下，直接使用 FinMind API
+        const finMindProvider = new FinMindAPIProvider();
+        try {
+          const dividendData = await finMindProvider.getDividendData(symbol);
+          
+          if (dividendData && dividendData.length > 0) {
+            logger.info('dividend', `FinMind API 成功獲取 ${symbol} 股息`, { count: dividendData.length });
+            return dividendData.map(item => ({
+              symbol: symbol,
+              exDividendDate: item.exDividendDate,
+              cashDividendPerShare: item.cashDividendPerShare,
+              stockDividendRatio: item.stockDividendRatio,
+              source: 'FinMind'
+            }));
+          }
+        } catch (error) {
+          logger.warn('dividend', `FinMind API 獲取 ${symbol} 股息失敗`, error);
+        }
+        
+        logger.debug('dividend', `${symbol} 無股息資料`);
+        return [];
+      }
+      
+      // 使用後端代理
       const response = await fetch(API_ENDPOINTS.getDividend(symbol));
       
       if (!response.ok) {
