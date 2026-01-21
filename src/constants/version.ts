@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 229, // 修復Git指令卡住問題：配置pager避免指令等待用戶輸入
+  PATCH: 230, // 新增雲端上傳警告對話框：防止用戶意外覆蓋雲端資料
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

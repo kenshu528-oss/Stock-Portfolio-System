@@ -5,6 +5,7 @@ import { useAppStore } from '../stores/appStore';
 import { addOperationLog } from './OperationLog';
 import { getCloudSyncAvailability, getEnvironmentInfo } from '../utils/environment';
 import { CloudDisconnectDialog } from './CloudDisconnectDialog'; // 疊加式新功能
+import { CloudUploadWarningDialog } from './CloudUploadWarningDialog'; // 遵循 STEERING 規則新增
 import { logger } from '../utils/logger';
 
 interface CloudSyncSettingsProps {
@@ -30,6 +31,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [userInfo, setUserInfo] = useState<any>(null);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false); // 疊加式新功能
+  const [showUploadWarning, setShowUploadWarning] = useState(false); // 遵循 STEERING 規則新增
   const [clickCount, setClickCount] = useState(0); // 隱蔽後門計數器
 
   const { accounts, stocks } = useAppStore();
@@ -108,13 +110,20 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
     window.open('https://github.com/settings/tokens/new?scopes=gist&description=Stock%20Portfolio%20System', '_blank');
   };
 
-  // 上傳到雲端
-  const handleUploadToCloud = async () => {
+  // 顯示上傳警告對話框
+  const handleUploadToCloud = () => {
     if (!githubToken) {
       setStatusMessage('請先設定 GitHub Token');
       return;
     }
+    
+    // 遵循 STEERING 規則：上傳前彈出警告視窗
+    setShowUploadWarning(true);
+  };
 
+  // 確認上傳到雲端（實際執行上傳）
+  const handleConfirmUpload = async () => {
+    setShowUploadWarning(false);
     setIsUploading(true);
     setStatusMessage('正在上傳資料到雲端...');
     addOperationLog('info', '開始上傳資料到雲端...');
@@ -649,6 +658,16 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
       isOpen={showDisconnectDialog}
       onClose={() => setShowDisconnectDialog(false)}
       githubToken={githubToken}
+    />
+    
+    {/* 遵循 STEERING 規則：雲端上傳警告對話框 */}
+    <CloudUploadWarningDialog
+      isOpen={showUploadWarning}
+      onClose={() => setShowUploadWarning(false)}
+      onConfirm={handleConfirmUpload}
+      accountCount={accounts.length}
+      stockCount={stocks.length}
+      isUploading={isUploading}
     />
     </>
   );

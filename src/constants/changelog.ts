@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0230',
+    date: '2026-01-21',
+    type: 'minor',
+    title: '新增雲端上傳警告對話框：防止用戶意外覆蓋雲端資料',
+    description: '遵循STEERING規則cloud-sync-development.md和ui-design-standards.md，為雲端上傳功能添加警告對話框。用戶在上傳資料到雲端前會看到詳細的警告信息，包括將要覆蓋的資料摘要，防止意外覆蓋重要的雲端資料。採用疊加式開發，不破壞現有功能。',
+    changes: [
+      '新增CloudUploadWarningDialog組件，提供詳細的上傳警告',
+      '在Icons.tsx中添加AlertTriangleIcon和UploadIcon圖示',
+      '修改CloudSyncSettings.tsx整合警告對話框',
+      '將直接上傳改為先顯示警告，用戶確認後才執行',
+      '顯示準備上傳的資料摘要（帳戶數、股票數、時間）',
+      '提供建議：先下載檢查雲端現有資料'
+    ],
+    fixes: [
+      '防止用戶意外覆蓋雲端重要資料',
+      '改善雲端同步的用戶體驗',
+      '提供清楚的操作確認機制',
+      '遵循UI設計標準的圖示使用規範'
+    ]
+  },
+  {
     version: '1.0.2.0229',
     date: '2026-01-21',
     type: 'hotfix',
