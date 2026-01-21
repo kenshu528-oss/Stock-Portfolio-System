@@ -320,8 +320,23 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
       // 隱蔽後門：自動填入預設 Token 並測試連線
       const hiddenToken = (() => {
         try {
-          return import.meta.env?.VITE_DEV_TOKEN || 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
+          // 首先嘗試從環境變數讀取
+          const envToken = import.meta.env?.VITE_DEV_TOKEN;
+          if (envToken && envToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+            return envToken;
+          }
+          
+          // 如果環境變數不可用，嘗試從 localStorage 讀取之前保存的 Token
+          const savedToken = localStorage.getItem('dev_github_token');
+          if (savedToken && savedToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+            return savedToken;
+          }
+          
+          // 最後使用佔位符，但提示用戶需要設定
+          console.warn('🔧 開發 Token 未正確載入，請檢查 .env 檔案或重新啟動開發服務器');
+          return 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
         } catch (e) {
+          console.error('🔧 讀取開發 Token 時發生錯誤:', e);
           return 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
         }
       })();
@@ -329,8 +344,32 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
       // 自動填入隱蔽 Token
       setGithubToken(hiddenToken);
       localStorage.setItem('githubToken', hiddenToken);
-      logger.debug('cloud', '隱蔽後門：自動填入 Token 並開始連線');
-      setStatusMessage('🔐 隱蔽 Token 已設定，正在連線...');
+      
+      // 如果是佔位符，提示用戶並嘗試手動設定
+      if (hiddenToken === 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+        logger.warn('cloud', '隱蔽後門：環境變數未載入，請檢查 .env 檔案');
+        setStatusMessage('⚠️ 開發 Token 未載入，請重新啟動開發服務器或手動設定');
+        
+        // 提供手動設定選項
+        const manualToken = prompt(
+          '🔧 開發模式：環境變數未正確載入\n\n' +
+          '請手動輸入開發用的 GitHub Token：\n' +
+          '(這個 Token 會暫時保存在 localStorage 中)'
+        );
+        
+        if (manualToken && manualToken.startsWith('ghp_')) {
+          setGithubToken(manualToken);
+          localStorage.setItem('githubToken', manualToken);
+          localStorage.setItem('dev_github_token', manualToken); // 保存供下次使用
+          setStatusMessage('🔐 手動設定的 Token 已設定，正在連線...');
+        } else {
+          setStatusMessage('❌ 無效的 Token 或用戶取消');
+          return;
+        }
+      } else {
+        logger.debug('cloud', '隱蔽後門：自動填入 Token 並開始連線');
+        setStatusMessage('🔐 隱蔽 Token 已設定，正在連線...');
+      }
       
       // 自動觸發連線測試
       setTimeout(async () => {
