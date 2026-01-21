@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 225, // 修復GitHub API Authorization header：將token改為Bearer以符合新API規範
+  PATCH: 226, // 修復Console錯誤：移除Modal調試日誌，改善API 404錯誤處理
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

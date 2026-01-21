@@ -43,8 +43,6 @@ const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  console.log('Modal 正在渲染，isOpen:', isOpen);
-
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop with semi-transparent overlay */}

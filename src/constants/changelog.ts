@@ -12,6 +12,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0226',
+    date: '2026-01-20',
+    type: 'hotfix',
+    title: '修復Console錯誤：移除Modal調試日誌，改善API 404錯誤處理',
+    description: '清理Console中的冗餘錯誤訊息，提升開發體驗。修復：1) 移除Modal.tsx中的調試console.log，解決Modal過度渲染日誌問題；2) 改善dividendApiService中404錯誤的日誌處理，將404錯誤改為debug等級，因為404是正常情況（資料不存在）。',
+    changes: [
+      '移除Modal.tsx中的調試console.log',
+      '改善dividendApiService的404錯誤日誌處理',
+      '將404錯誤改為debug等級日誌',
+      '減少Console中的冗餘錯誤訊息'
+    ],
+    fixes: [
+      '修復Modal組件過度渲染日誌問題',
+      '改善API 404錯誤的日誌輸出',
+      '提升開發環境的Console清潔度'
+    ]
+  },
+  {
     version: '1.0.2.0225',
     date: '2026-01-20',
     type: 'hotfix',

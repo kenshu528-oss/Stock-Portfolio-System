@@ -96,6 +96,7 @@ export class DividendApiService {
       if (!response.ok) {
         if (response.status === 404) {
           // 404 是正常情況（資料不存在），不輸出錯誤日誌
+          logger.debug('dividend', `${symbol} 除權息資料不存在 (404)`);
           return [];
         }
         throw new Error(`HTTP ${response.status}`);
