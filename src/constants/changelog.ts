@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0229',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '修復Git指令卡住問題：配置pager避免指令等待用戶輸入',
+    description: '修復Git指令（如git log --oneline -5）會卡住等待用戶輸入的問題。通過配置Git pager和使用--no-pager參數，確保所有Git操作能正常執行。遵循STEERING規則的development-standards.md，提供穩定的開發環境。',
+    changes: [
+      '修復Git指令卡住的根本問題',
+      '配置Git pager設定，避免指令等待輸入',
+      '所有Git操作使用--no-pager參數確保穩定執行',
+      '改善開發環境的Git操作體驗',
+      '提供Git問題診斷和解決方案'
+    ],
+    fixes: [
+      '修復git log --oneline -5等指令卡住的問題',
+      '修復Git輸出異常字符和重複輸出的問題',
+      '確保Git push、fetch等操作正常執行',
+      '改善終端Git指令的穩定性'
+    ]
+  },
+  {
     version: '1.0.2.0228',
     date: '2026-01-21',
     type: 'hotfix',
