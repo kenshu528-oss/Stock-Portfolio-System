@@ -86,11 +86,19 @@ export class DividendApiService {
   }
 
   /**
-   * 備用API - 使用後端代理或外部API
+   * 備用API - 使用後端代理或CORS代理
    */
   private static async fetchFromAlternativeAPI(symbol: string): Promise<DividendApiRecord[]> {
     try {
-      // 🔧 修復：GitHub Pages 環境下使用 Netlify Functions 代理
+      // 檢查是否應該使用後端代理
+      if (!shouldUseBackendProxy()) {
+        logger.info('dividend', `GitHub Pages 環境，使用 CORS 代理獲取 ${symbol} 股息`);
+        
+        // 🔧 GitHub Pages 環境：使用 CORS 代理服務
+        return await this.fetchDividendWithCORSProxy(symbol);
+      }
+      
+      // 使用後端代理
       const endpoint = API_ENDPOINTS.getDividend(symbol);
       
       if (!endpoint) {
@@ -100,12 +108,10 @@ export class DividendApiService {
       
       logger.debug('dividend', `使用後端代理獲取 ${symbol} 股息: ${endpoint}`);
       
-      // 使用後端代理
       const response = await fetch(endpoint);
       
       if (!response.ok) {
         if (response.status === 404) {
-          // 404 是正常情況（資料不存在），不輸出錯誤日誌
           logger.debug('dividend', `${symbol} 除權息資料不存在 (404)`);
           return [];
         }
@@ -118,11 +124,11 @@ export class DividendApiService {
       if (data.dividends && Array.isArray(data.dividends)) {
         const dividends = data.dividends.map((dividend: any) => ({
           symbol: symbol,
-          exDividendDate: dividend.exDate, // 後端使用 exDate
-          dividendPerShare: dividend.cashDividend || 0, // 後端使用 cashDividend
-          stockDividendRatio: dividend.stockDividend ? (dividend.stockDividend / 10) * 1000 : 0, // 轉換為每1000股配X股
+          exDividendDate: dividend.exDate,
+          dividendPerShare: dividend.cashDividend || 0,
+          stockDividendRatio: dividend.stockDividend ? (dividend.stockDividend / 10) * 1000 : 0,
           year: dividend.year,
-          type: dividend.cashDividend > 0 ? 'cash' : 'stock' // 除權息類型
+          type: dividend.cashDividend > 0 ? 'cash' : 'stock'
         }));
         
         if (dividends.length > 0) {
@@ -134,7 +140,76 @@ export class DividendApiService {
       
       return [];
     } catch (error) {
-      logger.error('api', `後端代理獲取 ${symbol} 股息失敗`, error);
+      logger.error('api', `獲取 ${symbol} 股息失敗`, error);
+      return [];
+    }
+  }
+
+  /**
+   * 使用 CORS 代理獲取股息資料（GitHub Pages 環境）
+   */
+  private static async fetchDividendWithCORSProxy(symbol: string): Promise<DividendApiRecord[]> {
+    try {
+      // 使用 FinMind API 通過 CORS 代理
+      const apiUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockDividend&data_id=${symbol}`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+      
+      logger.debug('dividend', `FinMind CORS 代理請求: ${symbol}`);
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`CORS 代理請求失敗: ${response.status}`);
+      }
+
+      const proxyData = await response.json();
+      const data = JSON.parse(proxyData.contents);
+
+      if (data.status !== 200 || !data.data || data.data.length === 0) {
+        logger.debug('dividend', `${symbol} 無股息資料`);
+        return [];
+      }
+
+      // 轉換 FinMind 格式到標準格式
+      const dividends = data.data.map((item: any) => {
+        // 計算現金股利
+        const cashDividend = (item.CashEarningsDistribution || 0) + (item.CashStatutorySurplus || 0);
+        
+        // 計算股票股利
+        const stockDividend = (item.StockEarningsDistribution || 0) + (item.StockStatutorySurplus || 0);
+        
+        // 配股比例（每1000股配X股）
+        const stockDividendRatio = stockDividend > 0 ? (stockDividend / 10) * 1000 : 0;
+        
+        // 除息日期
+        const exDate = item.CashExDividendTradingDate || item.StockExDividendTradingDate;
+        
+        return {
+          symbol: symbol,
+          exDividendDate: exDate,
+          dividendPerShare: cashDividend,
+          stockDividendRatio: stockDividendRatio,
+          year: item.year,
+          type: cashDividend > 0 ? 'cash' : 'stock'
+        };
+      }).filter((item: any) => item.exDividendDate); // 過濾掉沒有除息日期的記錄
+
+      if (dividends.length > 0) {
+        logger.success('dividend', `FinMind CORS 代理成功獲取 ${symbol} 股息`, { count: dividends.length });
+      } else {
+        logger.debug('dividend', `${symbol} 無有效股息資料`);
+      }
+
+      return dividends;
+      
+    } catch (error) {
+      logger.warn('dividend', `FinMind CORS 代理獲取 ${symbol} 股息失敗`, error);
       return [];
     }
   }

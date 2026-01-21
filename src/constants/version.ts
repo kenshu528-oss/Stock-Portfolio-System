@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 245, // 修復股價API端點格式：統一使用查詢參數格式，修復GitHub Pages環境下的API調用
+  PATCH: 247, // 實作完整CORS代理解決方案：使用api.allorigins.win代理Yahoo Finance和FinMind API，完美解決GitHub Pages環境問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

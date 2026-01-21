@@ -3,7 +3,7 @@
 /**
  * 獲取 API 基礎 URL
  * 開發環境：使用 localhost:3001
- * GitHub Pages：使用 Netlify Functions 作為代理
+ * GitHub Pages：不使用後端代理（靜態託管不支援）
  * Netlify：使用 Netlify Functions
  */
 export const getApiBaseUrl = (): string | null => {
@@ -11,9 +11,9 @@ export const getApiBaseUrl = (): string | null => {
   const isGitHubPages = window.location.hostname.includes('github.io') || 
                        window.location.hostname.includes('github.com');
   
-  // 🔧 修復：GitHub Pages 環境下使用 Netlify Functions 作為代理
+  // 🔧 修復：GitHub Pages 是靜態託管，不支援後端 API
   if (isGitHubPages) {
-    return 'https://kenshu528-oss.github.io/Stock-Portfolio-System/.netlify/functions';
+    return null; // 不使用後端代理
   }
   
   // 如果是生產環境（Netlify），使用 Netlify Functions

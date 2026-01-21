@@ -41,15 +41,15 @@ export class StockPriceService {
     try {
       // 檢查是否應該使用後端代理
       if (!shouldUseBackendProxy()) {
-        logger.debug('stock', `GitHub Pages 環境，使用外部 API 獲取 ${symbol} 股價...`);
-        // 在 GitHub Pages 環境下，直接使用 UnifiedStockPriceService
-        const unifiedService = new UnifiedStockPriceService();
-        return await unifiedService.getStockPrice(symbol);
+        logger.info('stock', `GitHub Pages 環境，使用 CORS 代理獲取 ${symbol} 股價`);
+        
+        // 🔧 GitHub Pages 環境：使用 CORS 代理服務
+        return await this.getStockPriceWithCORSProxy(symbol);
       }
       
       logger.debug('stock', `從後端代理獲取 ${symbol} 股價...`);
       
-      const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/api/stock/${symbol}`, {
+      const response = await fetch(`${API_CONFIG.BACKEND_PROXY.baseUrl}/stock?symbol=${symbol}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -58,27 +58,249 @@ export class StockPriceService {
       });
 
       if (!response.ok) {
+        if (response.status === 404) {
+          logger.debug('stock', `${symbol} 股價資料不存在 (404)`);
+          return null;
+        }
         throw new Error(`後端API錯誤: ${response.status}`);
       }
 
       const data = await response.json();
       
       if (data && data.symbol) {
-        return {
+        const stockPrice: StockPrice = {
           symbol: data.symbol,
           price: data.price || 0,
           change: data.change || 0,
           changePercent: data.changePercent || 0,
-          timestamp: new Date(data.timestamp),
-          source: 'Backend Proxy' as 'TWSE' | 'Yahoo' | 'Investing'
+          timestamp: new Date(data.timestamp || Date.now()),
+          source: 'Backend Proxy' as any
         };
+        
+        // 快取股價資料
+        this.setCachedPrice(symbol, stockPrice);
+        
+        return stockPrice;
       }
       
       return null;
     } catch (error) {
-      logger.error('stock', `後端代理請求失敗 ${symbol}`, error);
+      logger.error('stock', `股價獲取失敗 ${symbol}`, error);
+      
+      // 嘗試使用快取資料
+      const cachedPrice = this.getCachedPrice(symbol);
+      if (cachedPrice) {
+        logger.info('stock', `使用快取的 ${symbol} 股價（API 失敗）`);
+        return cachedPrice;
+      }
+      
       return null;
     }
+  }
+
+  // 使用 CORS 代理獲取股價（GitHub Pages 環境）
+  private async getStockPriceWithCORSProxy(symbol: string): Promise<StockPrice | null> {
+    // 先檢查快取
+    const cachedPrice = this.getCachedPrice(symbol);
+    if (cachedPrice) {
+      logger.debug('stock', `使用快取的 ${symbol} 股價`);
+      return cachedPrice;
+    }
+
+    try {
+      // 方法 1: Yahoo Finance API (主要)
+      const yahooResult = await this.fetchYahooFinanceWithProxy(symbol);
+      if (yahooResult) {
+        this.setCachedPrice(symbol, yahooResult);
+        return yahooResult;
+      }
+    } catch (error) {
+      logger.warn('stock', `Yahoo Finance 代理失敗 ${symbol}`, error);
+    }
+
+    try {
+      // 方法 2: 證交所 API (備援)
+      const twseResult = await this.fetchTWSEWithProxy(symbol);
+      if (twseResult) {
+        this.setCachedPrice(symbol, twseResult);
+        return twseResult;
+      }
+    } catch (error) {
+      logger.warn('stock', `證交所 API 代理失敗 ${symbol}`, error);
+    }
+
+    logger.error('stock', `所有 API 代理都失敗 ${symbol}`);
+    return null;
+  }
+
+  // 使用 CORS 代理調用 Yahoo Finance API
+  private async fetchYahooFinanceWithProxy(symbol: string): Promise<StockPrice | null> {
+    const suffixes = this.getStockSuffixes(symbol);
+    
+    for (const suffix of suffixes) {
+      try {
+        const yahooSymbol = `${symbol}${suffix}`;
+        const apiUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+        
+        logger.debug('stock', `Yahoo Finance 代理請求: ${yahooSymbol}`);
+        
+        const response = await fetch(proxyUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+          signal: AbortSignal.timeout(10000)
+        });
+
+        if (!response.ok) continue;
+
+        const proxyData = await response.json();
+        const data = JSON.parse(proxyData.contents);
+
+        if (data?.chart?.result?.[0]?.meta) {
+          const meta = data.chart.result[0].meta;
+          const price = meta.regularMarketPrice || 0;
+          const previousClose = meta.previousClose || price;
+          const change = price - previousClose;
+          const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+          const result: StockPrice = {
+            symbol: symbol,
+            price: price,
+            change: change,
+            changePercent: changePercent,
+            timestamp: new Date(),
+            source: 'Yahoo Finance' as any
+          };
+
+          logger.success('stock', `Yahoo Finance 成功獲取 ${symbol}`, {
+            price: result.price,
+            change: result.change,
+            suffix: suffix
+          });
+
+          return result;
+        }
+      } catch (error) {
+        logger.debug('stock', `Yahoo Finance ${symbol}${suffix} 失敗`, error);
+        continue;
+      }
+    }
+
+    return null;
+  }
+
+  // 使用 CORS 代理調用證交所 API
+  private async fetchTWSEWithProxy(symbol: string): Promise<StockPrice | null> {
+    try {
+      const apiUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw|otc_${symbol}.tw`;
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+      
+      logger.debug('stock', `證交所 API 代理請求: ${symbol}`);
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!response.ok) return null;
+
+      const proxyData = await response.json();
+      const data = JSON.parse(proxyData.contents);
+
+      if (data?.msgArray?.[0]) {
+        const stockData = data.msgArray[0];
+        const price = parseFloat(stockData.z) || 0;
+        const previousClose = parseFloat(stockData.y) || price;
+        const change = price - previousClose;
+        const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+        const result: StockPrice = {
+          symbol: symbol,
+          price: price,
+          change: change,
+          changePercent: changePercent,
+          timestamp: new Date(),
+          source: 'TWSE' as any
+        };
+
+        logger.success('stock', `證交所 API 成功獲取 ${symbol}`, {
+          price: result.price,
+          change: result.change
+        });
+
+        return result;
+      }
+    } catch (error) {
+      logger.debug('stock', `證交所 API ${symbol} 失敗`, error);
+    }
+
+    return null;
+  }
+
+  // 獲取股票後綴（根據代碼判斷市場）
+  private getStockSuffixes(symbol: string): string[] {
+    const code = parseInt(symbol.substring(0, 4));
+    const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+    
+    if (isBondETF) {
+      return ['.TWO', '.TW']; // 債券 ETF：櫃買中心優先
+    } else if (code >= 3000 && code <= 8999) {
+      return ['.TWO', '.TW']; // 上櫃股票：櫃買中心優先
+    } else {
+      return ['.TW', '.TWO']; // 上市股票：證交所優先
+    }
+  }
+
+  // 獲取快取的股價
+  private getCachedPrice(symbol: string): StockPrice | null {
+    try {
+      const cached = localStorage.getItem(`stock_price_${symbol}`);
+      if (cached) {
+        const data = JSON.parse(cached);
+        // 檢查快取是否過期（24小時）
+        const cacheAge = Date.now() - new Date(data.timestamp).getTime();
+        if (cacheAge < 24 * 60 * 60 * 1000) {
+          return {
+            ...data,
+            timestamp: new Date(data.timestamp)
+          };
+        }
+      }
+    } catch (error) {
+      logger.debug('stock', `讀取 ${symbol} 快取失敗`, error);
+    }
+    return null;
+  }
+
+  // 設定快取的股價
+  private setCachedPrice(symbol: string, price: StockPrice): void {
+    try {
+      localStorage.setItem(`stock_price_${symbol}`, JSON.stringify(price));
+    } catch (error) {
+      logger.debug('stock', `設定 ${symbol} 快取失敗`, error);
+    }
+  }
+
+  // 手動更新股價（供用戶使用）
+  async updateStockPriceManually(symbol: string, price: number): Promise<StockPrice> {
+    const stockPrice: StockPrice = {
+      symbol: symbol,
+      price: price,
+      change: 0, // 手動輸入時無法計算變化
+      changePercent: 0,
+      timestamp: new Date(),
+      source: 'Manual' as any
+    };
+    
+    this.setCachedPrice(symbol, stockPrice);
+    logger.info('stock', `手動更新 ${symbol} 股價: ${price}`);
+    
+    return stockPrice;
   }
 
   // 批次獲取多支股票價格

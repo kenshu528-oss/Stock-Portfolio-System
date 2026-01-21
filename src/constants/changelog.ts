@@ -12,6 +12,36 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0247',
+    date: '2026-01-21',
+    type: 'major',
+    title: '實作完整CORS代理解決方案',
+    description: '採用成功驗證的技術方案，使用api.allorigins.win作為CORS代理，完美解決GitHub Pages環境下的API調用問題。',
+    changes: [
+      '使用 api.allorigins.win 作為 CORS 代理服務',
+      '實作 Yahoo Finance API 代理調用',
+      '實作 FinMind API 代理調用',
+      '多重 API 備援機制（Yahoo Finance + 證交所 API）',
+      '智能股票後綴判斷（上市/上櫃/ETF/債券ETF）',
+      '客戶端快取機制（減少API調用）',
+      '完全解決 GitHub Pages 環境下的 CORS 限制'
+    ]
+  },
+  {
+    version: '1.0.2.0246',
+    date: '2026-01-21',
+    type: 'major',
+    title: '實作GitHub Pages純前端解決方案',
+    description: '針對GitHub Pages靜態託管環境，實作完全不依賴後端API的純前端解決方案，使用本地快取和手動更新機制。',
+    changes: [
+      '實作本地股價快取機制（24小時有效期）',
+      '提供手動更新股價功能',
+      'GitHub Pages 環境下完全避免 API 調用',
+      '優雅降級：API 失敗時自動使用快取資料',
+      '為需要手動更新的股票提供明確標記'
+    ]
+  },
+  {
     version: '1.0.2.0245',
     date: '2026-01-21',
     type: 'hotfix',
