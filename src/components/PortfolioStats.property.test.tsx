@@ -241,7 +241,7 @@ describe('PortfolioStats Property Tests', () => {
         // 在隱私模式下，不應該有實際的數字金額顯示
         // 但可能會有 "****" 或 "**%" 這樣的遮罩
         const hasActualNumbers = /\$[\d,]+/.test(textContent);
-        const hasActualPercentages = /[+\-]?\d+\.\d+%/.test(textContent);
+        const hasActualPercentages = /[+-]?\d+\.\d+%/.test(textContent);
         
         // 在隱私模式下，不應該顯示實際的金額和百分比
         if (stocks.filter(s => s.accountId === accountId).length > 0) {

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 226, // 修復Console錯誤：移除Modal調試日誌，改善API 404錯誤處理
+  PATCH: 227, // 修復ESLint錯誤：轉義字符和React Hooks條件調用問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

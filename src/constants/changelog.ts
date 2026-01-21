@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0227',
+    date: '2026-01-21',
+    type: 'hotfix',
+    title: '修復ESLint錯誤：轉義字符和React Hooks條件調用問題',
+    description: '修復代碼質量問題，確保符合ESLint規範。修復：1) 修復正則表達式中不必要的轉義字符（\\-改為-）；2) 修復React Hooks條件調用錯誤，確保Hooks在組件頂層正確調用；3) 提升代碼質量和穩定性。',
+    changes: [
+      '修復AccountManager.property.test.tsx和PortfolioStats.property.test.tsx中的轉義字符錯誤',
+      '修復React Hooks條件調用問題，確保符合React規範',
+      '提升ESLint檢查通過率，減少代碼質量問題'
+    ],
+    fixes: [
+      '修復正則表達式中不必要的轉義字符',
+      '修復React Hooks條件調用錯誤',
+      '改善代碼質量和穩定性'
+    ]
+  },
+  {
     version: '1.0.2.0226',
     date: '2026-01-20',
     type: 'hotfix',

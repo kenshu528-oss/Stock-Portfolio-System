@@ -358,7 +358,7 @@ describe('AccountManager Property-Based Tests', () => {
         // 生成要重新命名的帳戶
         fc.record({
           id: fc.string({ minLength: 1, maxLength: 20 })
-            .filter(id => id.trim().length > 0 && !/[^\w\-]/.test(id)), // 只允許字母數字和連字符
+            .filter(id => id.trim().length > 0 && !/[^\w-]/.test(id)), // 只允許字母數字和連字符
           name: fc.string({ minLength: 1, maxLength: 30 })
             .filter(name => {
               const trimmed = name.trim();
@@ -386,7 +386,7 @@ describe('AccountManager Property-Based Tests', () => {
         fc.array(
           fc.record({
             id: fc.string({ minLength: 1, maxLength: 20 })
-              .filter(id => id.trim().length > 0 && !/[^\w\-]/.test(id)), // 只允許字母數字和連字符
+              .filter(id => id.trim().length > 0 && !/[^\w-]/.test(id)), // 只允許字母數字和連字符
             name: fc.string({ minLength: 1, maxLength: 30 })
               .filter(name => {
                 const trimmed = name.trim();
@@ -479,7 +479,7 @@ describe('AccountManager Property-Based Tests', () => {
       fc.property(
         fc.record({
           id: fc.string({ minLength: 1, maxLength: 20 })
-            .filter(id => id.trim().length > 0 && !/[^\w\-]/.test(id)), // 只允許字母數字和連字符
+            .filter(id => id.trim().length > 0 && !/[^\w-]/.test(id)), // 只允許字母數字和連字符
           name: fc.string({ minLength: 1, maxLength: 30 })
             .filter(name => {
               const trimmed = name.trim();
@@ -668,7 +668,7 @@ describe('AccountManager Property-Based Tests', () => {
         fc.array(
           fc.record({
             id: fc.string({ minLength: 1, maxLength: 20 })
-              .filter(id => id.trim().length > 0 && !/[^\w\-]/.test(id)),
+              .filter(id => id.trim().length > 0 && !/[^\w-]/.test(id)),
             name: fc.string({ minLength: 1, maxLength: 30 })
               .filter(name => {
                 const trimmed = name.trim();
@@ -807,7 +807,7 @@ describe('AccountManager Property-Based Tests', () => {
         // 生成單個帳戶，測試邊界條件
         fc.record({
           id: fc.string({ minLength: 1, maxLength: 20 })
-            .filter(id => id.trim().length > 0 && !/[^\w\-]/.test(id)), // 只允許字母數字和連字符
+            .filter(id => id.trim().length > 0 && !/[^\w-]/.test(id)), // 只允許字母數字和連字符
           name: fc.string({ minLength: 1, maxLength: 30 })
             .filter(name => {
               const trimmed = name.trim();
