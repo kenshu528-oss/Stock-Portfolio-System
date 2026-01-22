@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0262',
+    date: '2026-01-22',
+    type: 'critical',
+    title: 'GitHub Pages 環境 API 修復：解決股票搜尋和價格更新失效問題',
+    description: '修復 GitHub Pages 環境下因 CORS 限制和 Netlify Functions 不存在導致的 API 調用失敗。實現智能環境檢測，GitHub Pages 使用靜態搜尋和直接 API，其他環境使用後端代理。確保所有環境下功能正常運行。',
+    changes: [
+      '修復 API 配置：GitHub Pages 環境返回 null，避免調用不存在的 Netlify Functions',
+      '修復股票搜尋：實現環境檢測，GitHub Pages 使用靜態搜尋服務',
+      '修復股價更新：updateAllStockPrices 支援無後端環境，使用統一股價服務',
+      '修復健康檢查：只在有後端支援時才檢查後端服務器狀態',
+      '添加靜態搜尋功能：使用本地股票清單進行搜尋匹配',
+      '優化錯誤處理：區分不同環境的錯誤處理策略'
+    ]
+  },
+  {
     version: '1.0.2.0261',
     date: '2026-01-22',
     type: 'hotfix',

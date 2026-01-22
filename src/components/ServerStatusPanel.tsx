@@ -40,20 +40,29 @@ export const ServerStatusPanel: React.FC = () => {
   // 只在開發環境中顯示
   const isDevelopment = import.meta.env.DEV;
   
-  const [servers, setServers] = useState<ServerStatus[]>([
-    {
-      name: '前端服務器',
-      url: getFrontendUrl(),
-      status: 'checking',
-      lastCheck: null
-    },
-    {
-      name: '後端API服務器',
-      url: API_ENDPOINTS.health(),
-      status: 'checking',
-      lastCheck: null
+  const [servers, setServers] = useState<ServerStatus[]>(() => {
+    const servers = [
+      {
+        name: '前端服務器',
+        url: getFrontendUrl(),
+        status: 'checking' as const,
+        lastCheck: null
+      }
+    ];
+    
+    // 只有在有後端支援時才添加後端服務器檢查
+    const healthEndpoint = API_ENDPOINTS.health();
+    if (healthEndpoint) {
+      servers.push({
+        name: '後端服務器',
+        url: healthEndpoint,
+        status: 'checking' as const,
+        lastCheck: null
+      });
     }
-  ]);
+    
+    return servers;
+  });
 
   const [isVisible, setIsVisible] = useState(false);
   const [restartingServers, setRestartingServers] = useState<Set<string>>(new Set());

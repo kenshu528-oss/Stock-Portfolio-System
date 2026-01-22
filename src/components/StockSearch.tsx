@@ -37,16 +37,13 @@ const StockSearch: React.FC<StockSearchProps> = ({
     if (!searchQuery.trim()) return [];
     
     try {
-      // 檢查是否為 GitHub Pages 環境
-      const isGitHubPages = window.location.hostname.includes('github.io') || 
-                           window.location.hostname.includes('github.com');
+      // 檢查是否有後端支援
+      const searchEndpoint = API_ENDPOINTS.searchStock(searchQuery);
       
-      if (isGitHubPages) {
-        // GitHub Pages 環境：使用直接 API 調用
-        return await searchStocksDirectly(searchQuery);
-      } else {
-        // 其他環境：使用後端代理
-        const response = await fetch(API_ENDPOINTS.searchStock(searchQuery));
+      if (searchEndpoint) {
+        // 有後端支援：使用後端代理
+        console.log('🔍 使用後端搜尋:', searchEndpoint);
+        const response = await fetch(searchEndpoint);
         if (response.ok) {
           const stockDataArray = await response.json();
           
@@ -71,26 +68,47 @@ const StockSearch: React.FC<StockSearchProps> = ({
               changePercent: stockDataArray.changePercent || 0
             }];
           }
+        } else {
+          console.warn('後端搜尋失敗，狀態碼:', response.status);
         }
+      } else {
+        // 無後端支援（GitHub Pages）：使用靜態搜尋
+        console.log('🔍 GitHub Pages 環境，使用靜態搜尋');
+        return await searchStocksStatically(searchQuery);
       }
     } catch (error) {
       console.error('搜尋API錯誤:', error);
-      // 🔧 修復：不再自動調用備用搜尋，避免雙重搜尋
-      // 只有在 GitHub Pages 環境下才使用直接搜尋
-      if (window.location.hostname.includes('github.io') || 
-          window.location.hostname.includes('github.com')) {
-        console.log('GitHub Pages 環境，使用直接搜尋作為備用');
-        return await searchStocksDirectly(searchQuery);
-      } else {
-        console.log('本機環境，後端搜尋失敗，返回空結果');
-        return []; // 本機環境下，後端失敗就返回空結果
-      }
+      
+      // 錯誤處理：嘗試靜態搜尋作為備用
+      console.log('🔍 API 失敗，嘗試靜態搜尋作為備用');
+      return await searchStocksStatically(searchQuery);
     }
     
     return [];
   };
 
-  // 直接搜尋股票（不依賴後端）
+  // 靜態搜尋股票（使用本地股票清單）
+  const searchStocksStatically = async (query: string): Promise<StockSearchResult[]> => {
+    try {
+      // 使用靜態股票搜尋服務
+      const { searchStocks: staticSearch } = await import('../services/staticStockSearch');
+      const results = await staticSearch(query);
+      
+      return results.map(result => ({
+        symbol: result.symbol,
+        name: result.name,
+        market: result.market || '台股',
+        price: 0, // 靜態搜尋不提供即時價格
+        change: 0,
+        changePercent: 0
+      }));
+    } catch (error) {
+      console.error('靜態搜尋失敗:', error);
+      return [];
+    }
+  };
+
+  // 直接搜尋股票（不依賴後端）- 保留作為備用
   const searchStocksDirectly = async (query: string): Promise<StockSearchResult[]> => {
     try {
       // 🔧 遵循 api-standards.md：Yahoo Finance 優先，FinMind 備用

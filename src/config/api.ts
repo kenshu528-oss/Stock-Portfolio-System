@@ -15,8 +15,15 @@ export const getApiBaseUrl = (): string | null => {
     return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
   }
   
-  // 生產環境一律使用 Netlify Functions
-  // (無論域名是什麼，生產環境都應該有後端支援)
+  // 生產環境：檢查是否為 GitHub Pages
+  const isGitHubPages = window.location.hostname.includes('github.io');
+  
+  if (isGitHubPages) {
+    // GitHub Pages 環境：無後端支援，返回 null
+    return null;
+  }
+  
+  // 其他生產環境（如 Netlify）使用 Netlify Functions
   return '/.netlify/functions';
 };
 
