@@ -27,8 +27,15 @@ jobs:
       env:
         FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
       run: |
-        # 更新 Python 腳本中的 Token
-        sed -i "s/MY_TOKEN = \".*\"/MY_TOKEN = \"$FINMIND_TOKEN\"/" backend/fetch_stock_list.py
+        # 檢查環境變數
+        if [ -z "$FINMIND_TOKEN" ]; then
+          echo "❌ 找不到 FINMIND_TOKEN 環境變數"
+          exit 1
+        fi
+        
+        echo "✅ FINMIND_TOKEN 環境變數已設定"
+        
+        # 執行股票清單抓取腳本
         python backend/fetch_stock_list.py
         
     - name: Copy to public directory
