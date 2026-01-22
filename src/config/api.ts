@@ -7,16 +7,16 @@
  * Netlify：使用 Netlify Functions
  */
 export const getApiBaseUrl = (): string | null => {
-  // 檢查是否為 GitHub Pages 環境
-  const isGitHubPages = window.location.hostname.includes('github.io') || 
-                       window.location.hostname.includes('github.com');
+  // 檢查是否為真正的 GitHub Pages 環境（只有 github.io 且路徑包含倉庫名）
+  const isRealGitHubPages = window.location.hostname === 'kenshu528-oss.github.io' && 
+                           window.location.pathname.startsWith('/Stock-Portfolio-System');
   
-  // 如果是 GitHub Pages，返回 null（不使用後端代理）
-  if (isGitHubPages) {
+  // 如果是真正的 GitHub Pages，返回 null（不使用後端代理）
+  if (isRealGitHubPages) {
     return null;
   }
   
-  // 如果是生產環境（Netlify），使用 Netlify Functions
+  // 如果是生產環境（包括 Netlify），使用 Netlify Functions
   if (import.meta.env.PROD) {
     return '/.netlify/functions';
   }
