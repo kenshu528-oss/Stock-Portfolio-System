@@ -40,11 +40,27 @@ export const API_ENDPOINTS = {
   // 股票相關
   getStock: (symbol: string) => {
     const baseUrl = getApiBaseUrl();
-    return baseUrl ? `${baseUrl}/api/stock/${encodeURIComponent(symbol)}` : null;
+    if (!baseUrl) return null;
+    
+    // Netlify Functions 使用不同的路徑結構
+    if (baseUrl.includes('netlify')) {
+      return `${baseUrl}/stock?symbol=${encodeURIComponent(symbol)}`;
+    }
+    
+    // 本地後端使用原有路徑
+    return `${baseUrl}/api/stock/${encodeURIComponent(symbol)}`;
   },
   searchStock: (query: string) => {
     const baseUrl = getApiBaseUrl();
-    return baseUrl ? `${baseUrl}/api/stock-search?query=${encodeURIComponent(query)}` : null;
+    if (!baseUrl) return null;
+    
+    // Netlify Functions 使用不同的路徑結構
+    if (baseUrl.includes('netlify')) {
+      return `${baseUrl}/stock-search?query=${encodeURIComponent(query)}`;
+    }
+    
+    // 本地後端使用原有路徑
+    return `${baseUrl}/api/stock-search?query=${encodeURIComponent(query)}`;
   },
   
   // 股息相關
