@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GitHub Token 測試</title>
+</head>
+<body>
+    <h1>GitHub Token 測試工具</h1>
+    <input type="text" id="tokenInput" placeholder="輸入您的 GitHub Token" style="width: 500px;">
+    <button onclick="testToken()">測試 Token</button>
+    <div id="result"></div>
+
+    <script>
+        async function testToken() {
+            const token = document.getElementById('tokenInput').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<p style="color: red;">請輸入 Token</p>';
+                return;
+            }
+            
+            try {
+                // 測試基本用戶資訊
+                const userResponse = await fetch('https://api.github.com/user', {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!userResponse.ok) {
+                    const error = await userResponse.json();
+                    resultDiv.innerHTML = `<p style="color: red;">❌ Token 無效: ${userResponse.status} - ${error.message}</p>`;
+                    return;
+                }
+                
+                const user = await userResponse.json();
+                
+                // 測試 Gist 權限
+                const gistResponse = await fetch('https://api.github.com/gists', {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!gistResponse.ok) {
+                    resultDiv.innerHTML = `<p style="color: orange;">⚠️ 用戶驗證成功，但 Gist 權限不足</p>
+                                         <p>用戶: ${user.login}</p>
+                                         <p>請確認 Token 具有 'gist' 權限</p>`;
+                    return;
+                }
+                
+                resultDiv.innerHTML = `<p style="color: green;">✅ Token 有效！</p>
+                                     <p>用戶: ${user.login}</p>
+                                     <p>Email: ${user.email || '未公開'}</p>
+                                     <p>具有 Gist 權限: ✅</p>`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">❌ 網路錯誤: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
