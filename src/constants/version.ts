@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 244, // 【本機端穩定版】修復前端搜尋過度匹配和後端重複結果：前後端都改為精確前綴匹配，添加去重邏輯
+  PATCH: 245, // 【雲端優化完成】修復線上版本環境檢測和API端點路徑，完成Netlify Functions部署
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

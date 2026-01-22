@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0245',
+    date: '2026-01-22',
+    type: 'patch',
+    title: '【雲端優化完成】修復線上版本環境檢測和API端點路徑，完成Netlify Functions部署',
+    description: '完成雲端版本優化部署。修復線上版本環境檢測邏輯錯誤和API端點路徑問題，確保Netlify Functions正確運作。解決CORS錯誤、404錯誤，恢復線上版本的股票搜尋和價格更新功能。同時修復本機端後端服務器啟動問題，確保本機端功能正常。',
+    changes: [
+      '🔧 修復線上版本環境檢測邏輯：避免誤判Netlify為GitHub Pages',
+      '🔧 修復API端點路徑：Netlify Functions使用正確路徑結構',
+      '✅ 完成Netlify Functions優化部署：stock.ts和stock-search.ts',
+      '✅ 解決線上版本CORS錯誤和404錯誤',
+      '🚀 啟動本機端後端服務器：確保開發環境正常',
+      '📋 遵循STEERING規則：正確進版和版本管理'
+    ],
+    fixes: [
+      '🔧 修復線上版本環境檢測錯誤',
+      '🔧 修復API端點路徑不匹配問題',
+      '🔧 修復本機端搜尋功能異常',
+      '🔧 修復線上版本功能失效問題'
+    ]
+  },
+  {
     version: '1.0.2.0244',
     date: '2026-01-22',
     type: 'hotfix',
