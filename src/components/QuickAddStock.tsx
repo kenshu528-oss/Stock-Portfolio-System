@@ -101,13 +101,14 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
       if (response.ok) {
         const data = await response.json();
         if (data.data && Array.isArray(data.data)) {
-          // 過濾符合查詢條件的股票
+          // 過濾符合查詢條件的股票 - 使用精確前綴匹配
           const filtered = data.data.filter((stock: any) => {
             const symbol = stock.stock_id || '';
             const name = stock.stock_name || '';
             
-            // 支援股票代碼或中文名稱搜尋
-            return symbol.includes(query) || name.includes(query);
+            // 精確前綴匹配，避免過度匹配
+            return symbol.toUpperCase().startsWith(query.toUpperCase()) || 
+                   name.includes(query);
           }).slice(0, 10); // 限制結果數量
           
           // 為每個股票獲取即時價格

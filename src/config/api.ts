@@ -7,22 +7,17 @@
  * Netlify：使用 Netlify Functions
  */
 export const getApiBaseUrl = (): string | null => {
-  // 檢查是否為真正的 GitHub Pages 環境（只有 github.io 且路徑包含倉庫名）
-  const isRealGitHubPages = window.location.hostname === 'kenshu528-oss.github.io' && 
-                           window.location.pathname.startsWith('/Stock-Portfolio-System');
+  // 檢查是否為開發環境
+  const isDevelopment = !import.meta.env.PROD;
   
-  // 如果是真正的 GitHub Pages，返回 null（不使用後端代理）
-  if (isRealGitHubPages) {
-    return null;
+  // 開發環境使用本地後端
+  if (isDevelopment) {
+    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
   }
   
-  // 如果是生產環境（包括 Netlify），使用 Netlify Functions
-  if (import.meta.env.PROD) {
-    return '/.netlify/functions';
-  }
-  
-  // 開發環境使用環境變數或預設值
-  return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+  // 生產環境一律使用 Netlify Functions
+  // (無論域名是什麼，生產環境都應該有後端支援)
+  return '/.netlify/functions';
 };
 
 /**
