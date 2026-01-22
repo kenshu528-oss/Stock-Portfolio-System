@@ -4,7 +4,7 @@
 
 ### 基本資訊
 - **專案名稱**: Stock Portfolio System
-- **版本**: v1.0.2.0221
+- **版本**: v1.0.2.0244
 - **類型**: 現代化股票投資組合管理系統
 - **技術棧**: React + TypeScript + Vite + Zustand + TailwindCSS
 - **目標用戶**: 個人投資者、股票交易員
