@@ -1291,25 +1291,92 @@ app.get('/api/stock-search', async (req, res) => {
       }
     }
     
-    // 如果沒有找到結果，返回一些常見的股票建議
+    // 如果沒有找到結果，使用本地股票數據庫搜尋
     if (searchResults.length === 0) {
-      console.log(`💡 提供常見股票建議`);
-      const commonStocks = [
+      console.log(`🔍 使用本地股票數據庫搜尋: "${query}"`);
+      
+      // 擴展的本地股票數據庫
+      const localStockDatabase = [
+        // 熱門股票
         { symbol: '2330', name: '台積電', market: '台股', type: 'stock' },
         { symbol: '2317', name: '鴻海', market: '台股', type: 'stock' },
         { symbol: '2454', name: '聯發科', market: '台股', type: 'stock' },
         { symbol: '2886', name: '兆豐金', market: '台股', type: 'stock' },
+        { symbol: '2891', name: '中信金', market: '台股', type: 'stock' },
+        { symbol: '2892', name: '第一金', market: '台股', type: 'stock' },
+        { symbol: '2881', name: '富邦金', market: '台股', type: 'stock' },
+        { symbol: '2882', name: '國泰金', market: '台股', type: 'stock' },
+        { symbol: '2412', name: '中華電', market: '台股', type: 'stock' },
+        { symbol: '2308', name: '台達電', market: '台股', type: 'stock' },
+        
+        // ETF
         { symbol: '0050', name: '元大台灣50', market: '台股', type: 'etf' },
-        { symbol: '00679B', name: '元大美債20年', market: '台股', type: 'bond' }
+        { symbol: '0056', name: '元大高股息', market: '台股', type: 'etf' },
+        { symbol: '00646', name: '元大S&P500', market: '台股', type: 'etf' },
+        { symbol: '00692', name: '富邦公司治理', market: '台股', type: 'etf' },
+        { symbol: '00878', name: '國泰永續高股息', market: '台股', type: 'etf' },
+        
+        // 債券 ETF
+        { symbol: '00679B', name: '元大美債20年', market: '台股', type: 'bond' },
+        { symbol: '00687B', name: '國泰20年美債', market: '台股', type: 'bond' },
+        { symbol: '00937B', name: '群益ESG投等20+', market: '台股', type: 'bond' },
+        { symbol: '00933B', name: '群益10Y+金融債', market: '台股', type: 'bond' },
+        { symbol: '00931B', name: '群益美債20+', market: '台股', type: 'bond' },
+        
+        // 上櫃股票
+        { symbol: '6188', name: '廣明', market: '台股', type: 'stock' },
+        { symbol: '4585', name: '達明', market: '台股', type: 'stock' },
+        { symbol: '7566', name: '亞果遊艇', market: '台股', type: 'stock' },
+        
+        // 其他常見股票
+        { symbol: '1802', name: '台玻', market: '台股', type: 'stock' },
+        { symbol: '2887', name: '台新金', market: '台股', type: 'stock' },
+        { symbol: '2890', name: '永豐金', market: '台股', type: 'stock' }
       ];
       
-      // 根據查詢字串過濾
-      const filtered = commonStocks.filter(stock => 
-        stock.symbol.includes(query.toUpperCase()) || 
+      // 精確前綴匹配搜尋
+      const filtered = localStockDatabase.filter(stock => 
+        stock.symbol.toUpperCase().startsWith(query.toUpperCase()) || 
         stock.name.includes(query)
       );
       
-      searchResults.push(...filtered.slice(0, 5));
+      // 為匹配的股票獲取即時價格
+      for (const stock of filtered.slice(0, 10)) {
+        try {
+          const yahooData = await getYahooStockPrice(stock.symbol);
+          if (yahooData && yahooData.price > 0) {
+            searchResults.push({
+              symbol: stock.symbol,
+              name: stock.name,
+              price: yahooData.price,
+              market: stock.market,
+              type: stock.type,
+              source: 'Local Database + Yahoo Finance'
+            });
+            console.log(`✅ 本地數據庫搜尋成功: ${stock.symbol} = ${stock.name} (${yahooData.price})`);
+          } else {
+            // 即使沒有價格也返回基本資訊
+            searchResults.push({
+              symbol: stock.symbol,
+              name: stock.name,
+              price: 0,
+              market: stock.market,
+              type: stock.type,
+              source: 'Local Database'
+            });
+          }
+        } catch (error) {
+          console.log(`⚠️ 獲取 ${stock.symbol} 價格失敗，使用基本資訊`);
+          searchResults.push({
+            symbol: stock.symbol,
+            name: stock.name,
+            price: 0,
+            market: stock.market,
+            type: stock.type,
+            source: 'Local Database'
+          });
+        }
+      }
     }
     
     console.log(`✅ 搜尋結果: ${searchResults.length} 筆`);

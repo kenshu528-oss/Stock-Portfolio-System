@@ -3,7 +3,7 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import { SearchIcon, CheckIcon, XIcon } from './ui/Icons';
 import type { StockFormData, StockSearchResult } from '../types';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS, shouldUseBackendProxy } from '../config/api';
 
 // 使用內建圖示替代 lucide-react
 const PlusIcon = () => (
@@ -45,16 +45,15 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // 從後端API搜尋股票
   const searchStocks = async (query: string): Promise<StockSearchResult[]> => {
     try {
-      // 檢查是否為 GitHub Pages 環境
-      const isGitHubPages = window.location.hostname.includes('github.io') || 
-                           window.location.hostname.includes('github.com');
-      
-      if (isGitHubPages) {
-        // GitHub Pages 環境：使用直接 API 調用
-        return await searchStocksDirectly(query);
-      } else {
-        // 其他環境：使用後端代理
-        const response = await fetch(API_ENDPOINTS.searchStock(query));
+      // 檢查是否應該使用後端代理
+      if (shouldUseBackendProxy()) {
+        // 使用後端代理
+        const endpoint = API_ENDPOINTS.searchStock(query);
+        if (!endpoint) {
+          return await searchStocksDirectly(query);
+        }
+        
+        const response = await fetch(endpoint);
         
         if (response.ok) {
           const data = await response.json();

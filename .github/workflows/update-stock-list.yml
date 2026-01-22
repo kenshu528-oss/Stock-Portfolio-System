@@ -1,0 +1,64 @@
+name: Update Stock List
+
+on:
+  schedule:
+    # 每日台灣時間 8:00 執行（UTC 0:00）
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 允許手動觸發
+
+jobs:
+  update-stock-list:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install Python dependencies
+      run: |
+        pip install FinMind tqdm pandas
+        
+    - name: Fetch stock list
+      env:
+        FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+      run: |
+        # 更新 Python 腳本中的 Token
+        sed -i "s/MY_TOKEN = \".*\"/MY_TOKEN = \"$FINMIND_TOKEN\"/" backend/fetch_stock_list.py
+        python backend/fetch_stock_list.py
+        
+    - name: Copy to public directory
+      run: |
+        mkdir -p public
+        # 複製今日的股票清單到 public 目錄
+        TODAY=$(date +%Y-%m-%d)
+        if [ -f "stock_list_$TODAY.json" ]; then
+          cp "stock_list_$TODAY.json" public/stock_list.json
+          echo "✅ 股票清單已複製到 public/stock_list.json"
+          
+          # 顯示統計資訊
+          STOCK_COUNT=$(jq '.count' public/stock_list.json)
+          echo "📊 股票總數: $STOCK_COUNT"
+        else
+          echo "❌ 找不到今日股票清單: stock_list_$TODAY.json"
+          exit 1
+        fi
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add public/stock_list.json
+        
+        # 檢查是否有變更
+        if git diff --staged --quiet; then
+          echo "📝 股票清單無變更，跳過提交"
+        else
+          git commit -m "🤖 自動更新股票清單 $(date +%Y-%m-%d)"
+          git push
+          echo "✅ 股票清單已更新並推送到倉庫"
+        fi
