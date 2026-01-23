@@ -1381,8 +1381,8 @@ function searchLocalStocks(query, stockList) {
     if (symbolUpper === queryUpper) {
       allMatches.push({ symbol, info, priority: 1 });
     }
-    // 🔧 智能匹配邏輯：
-    // - 如果查詢包含字母，只進行精確匹配
+    // 2. 🔧 智能開頭匹配邏輯：
+    // - 如果查詢包含字母，不進行開頭匹配（避免 00981a 匹配到 009810）
     // - 如果查詢是純數字，進行開頭匹配
     else if (symbolUpper.startsWith(queryUpper)) {
       const queryHasLetter = /[A-Z]/.test(queryUpper);
@@ -1391,13 +1391,11 @@ function searchLocalStocks(query, stockList) {
       if (queryIsNumber) {
         // 純數字查詢：進行開頭匹配
         allMatches.push({ symbol, info, priority: 2 });
-      } else if (queryHasLetter && query.length >= 6) {
-        // 包含字母且長度>=6：可能是完整股票代碼，降低優先級
-        allMatches.push({ symbol, info, priority: 3 });
-      } else {
-        // 其他情況：正常開頭匹配
+      } else if (!queryHasLetter) {
+        // 其他情況（不包含字母）：正常開頭匹配
         allMatches.push({ symbol, info, priority: 2 });
       }
+      // 包含字母的查詢不進行開頭匹配，只依賴精確匹配
     }
     // 3. 中文名稱包含查詢字串（中等優先級）
     else if (nameLower.includes(queryLower) || info.name.includes(query)) {

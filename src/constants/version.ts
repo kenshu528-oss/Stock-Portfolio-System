@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 261, // 【React Hook 依賴項修復】修復 useCallback 依賴項問題導致的重複搜尋，確保搜尋函數穩定性和單次執行
+  PATCH: 262, // 【搜尋邏輯徹底修復】修復後端包含字母查詢的開頭匹配問題，確保 00981a 不會匹配到 009810 等錯誤結果
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

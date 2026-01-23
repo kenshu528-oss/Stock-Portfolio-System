@@ -12,6 +12,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0262',
+    date: '2026-01-23',
+    type: 'hotfix',
+    title: '【搜尋邏輯徹底修復】修復後端包含字母查詢的開頭匹配問題',
+    description: '修復後端 searchLocalStocks 函數中包含字母查詢的邏輯錯誤。原本的邏輯在 startsWith 檢查之後才判斷是否包含字母，導致 "00981a" 仍然會匹配到以 "00981" 開頭的股票（如 009810, 009811, 009812）。現在改為先檢查查詢是否包含字母，如果包含字母則跳過開頭匹配，只依賴精確匹配。',
+    changes: [
+      '修復後端搜尋邏輯：包含字母的查詢不進行開頭匹配',
+      '確保 "00981a" 不會匹配到 "009810" 等錯誤結果',
+      '保持純數字查詢的開頭匹配功能正常',
+      '修復語法錯誤並重啟後端服務器'
+    ],
+    impact: 'high',
+    breaking: false,
+    migration: null
+  },
+  {
     version: '1.0.2.0261',
     date: '2026-01-22',
     type: 'hotfix',
