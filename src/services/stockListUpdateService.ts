@@ -119,26 +119,25 @@ class StockListUpdateService {
       this.updateStatus.error = undefined;
       this.saveUpdateStatus();
 
-      logger.info('stock', '開始觸發股票清單更新');
+      logger.info('stock', '開始背景自動更新股票清單');
 
       // 1. 嘗試調用後端更新 API
       const backendSuccess = await this.triggerBackendUpdate();
       
       if (backendSuccess) {
-        logger.success('stock', '後端股票清單更新成功');
+        logger.success('stock', '股票清單背景更新成功');
         this.updateStatus.lastUpdate = new Date().toISOString();
         this.updateStatus.needsUpdate = false;
         return true;
       }
 
-      // 2. 如果後端更新失敗，嘗試前端通知用戶手動更新
-      logger.warn('stock', '後端更新失敗，提示用戶手動更新');
-      this.showUpdateNotification();
+      // 2. 如果後端更新失敗，記錄但不打擾用戶
+      logger.warn('stock', '背景更新失敗，將在下次檢查時重試');
       
       return false;
 
     } catch (error) {
-      logger.error('stock', '觸發股票清單更新失敗', error);
+      logger.error('stock', '背景更新股票清單失敗', error);
       this.updateStatus.error = error instanceof Error ? error.message : '更新失敗';
       return false;
     } finally {
@@ -185,105 +184,24 @@ class StockListUpdateService {
    * 顯示更新通知給用戶
    */
   private showUpdateNotification(): void {
-    // 創建通知元素
-    const notification = document.createElement('div');
-    notification.id = 'stock-list-update-notification';
-    notification.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #1e293b;
-      color: white;
-      padding: 16px;
-      border-radius: 8px;
-      border-left: 4px solid #f59e0b;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      z-index: 10000;
-      max-width: 400px;
-      font-family: system-ui, -apple-system, sans-serif;
-    `;
-
-    notification.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <span style="font-size: 18px;">⚠️</span>
-        <strong>股票清單需要更新</strong>
-      </div>
-      <div style="font-size: 14px; color: #cbd5e1; margin-bottom: 12px;">
-        檢測到股票清單不是今日版本，建議更新以獲得最新資料。
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button id="update-stock-list-btn" style="
-          background: #f59e0b;
-          color: white;
-          border: none;
-          padding: 6px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 12px;
-        ">立即更新</button>
-        <button id="dismiss-notification-btn" style="
-          background: transparent;
-          color: #94a3b8;
-          border: 1px solid #475569;
-          padding: 6px 12px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 12px;
-        ">稍後提醒</button>
-      </div>
-    `;
-
-    // 添加到頁面
-    document.body.appendChild(notification);
-
-    // 綁定事件
-    const updateBtn = document.getElementById('update-stock-list-btn');
-    const dismissBtn = document.getElementById('dismiss-notification-btn');
-
-    updateBtn?.addEventListener('click', () => {
-      this.openUpdateInstructions();
-      this.dismissNotification();
-    });
-
-    dismissBtn?.addEventListener('click', () => {
-      this.dismissNotification();
-    });
-
-    // 10秒後自動消失
-    setTimeout(() => {
-      this.dismissNotification();
-    }, 10000);
+    // 🔧 移除用戶通知，改為靜默背景更新
+    logger.debug('stock', '跳過用戶通知，採用靜默背景更新模式');
   }
 
   /**
    * 開啟更新說明
    */
   private openUpdateInstructions(): void {
-    const instructions = `
-股票清單更新方法：
-
-方法1：執行批次檔（推薦）
-1. 開啟命令提示字元
-2. 執行：cd backend
-3. 執行：fetch_stock_list.bat
-
-方法2：直接執行Python
-1. 執行：python backend/fetch_stock_list.py
-
-更新完成後請重新載入頁面。
-    `;
-
-    alert(instructions);
+    // 🔧 移除手動更新指引，改為靜默背景更新
+    logger.debug('stock', '跳過手動更新指引，採用靜默背景更新模式');
   }
 
   /**
    * 關閉通知
    */
   private dismissNotification(): void {
-    const notification = document.getElementById('stock-list-update-notification');
-    if (notification) {
-      notification.remove();
-    }
+    // 🔧 移除通知關閉邏輯，改為靜默背景更新
+    logger.debug('stock', '跳過通知關閉，採用靜默背景更新模式');
   }
 
   /**
@@ -339,8 +257,14 @@ class StockListUpdateService {
     const needsUpdate = await this.checkStockListFreshness();
     
     if (needsUpdate) {
-      logger.info('stock', '檢測到需要更新，開始自動更新流程');
-      await this.triggerStockListUpdate();
+      logger.info('stock', '檢測到需要更新，開始背景自動更新');
+      const success = await this.triggerStockListUpdate();
+      
+      if (success) {
+        logger.success('stock', '股票清單已自動更新完成');
+      } else {
+        logger.warn('stock', '背景自動更新失敗，將在下次檢查時重試');
+      }
     } else {
       logger.info('stock', '股票清單是最新的，無需更新');
     }

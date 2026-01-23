@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0265',
+    date: '2026-01-23',
+    type: 'improvement',
+    title: '【靜默背景更新】優化用戶體驗，移除通知彈窗，改為完全靜默的背景自動更新',
+    description: '根據用戶反饋，移除股票清單更新的通知彈窗，改為完全靜默的背景自動更新機制。當檢測到股票清單不是今日版本時，系統會在背景自動執行更新，不打擾用戶正常使用。更新成功或失敗都只在 Console 中記錄日誌，提供無干擾的使用體驗。',
+    changes: [
+      '移除股票清單更新通知彈窗',
+      '改為完全靜默的背景自動更新',
+      '更新失敗時不打擾用戶，將在下次檢查時重試',
+      '保留詳細的 Console 日誌記錄供開發者查看',
+      '優化用戶體驗，無干擾的自動維護機制'
+    ],
+    impact: 'medium',
+    breaking: false,
+    migration: null
+  },
+  {
     version: '1.0.2.0264',
     date: '2026-01-23',
     type: 'feature',

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 264, // 【股票清單自動更新機制】建立 FLAG 檢查機制，開啟應用時自動檢查股票清單是否為當天日期，不是則觸發更新
+  PATCH: 265, // 【靜默背景更新】移除用戶通知，改為完全靜默的背景自動更新機制，提升用戶體驗
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
