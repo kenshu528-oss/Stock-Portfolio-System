@@ -367,20 +367,48 @@ function App() {
   }, []);
 
   // 🔧 初始化股票清單更新服務
-  const initializeStockListService = async () => {
+  const initializeStockListService = React.useCallback(async () => {
     try {
+      // 防止重複初始化
+      if (stockListUpdateService.getUpdateStatus().isUpdating) {
+        logger.debug('stock', '股票清單服務已在初始化中，跳過重複執行');
+        return;
+      }
+
+      // 檢查是否已經初始化過（避免 React 嚴格模式重複執行）
+      const hasInitialized = localStorage.getItem('stock-service-initialized');
+      const now = Date.now();
+      
+      if (hasInitialized) {
+        const lastInit = parseInt(hasInitialized);
+        if (now - lastInit < 5000) { // 5秒內不重複初始化
+          logger.debug('stock', '股票清單服務最近已初始化，跳過重複執行');
+          return;
+        }
+      }
+
+      // 標記初始化時間
+      localStorage.setItem('stock-service-initialized', now.toString());
+
       // 初始化服務
       stockListUpdateService.init();
       
-      // 立即檢查股票清單是否需要更新
-      await stockListUpdateService.checkAndUpdate();
+      // 延遲檢查，避免與其他初始化衝突
+      setTimeout(async () => {
+        try {
+          await stockListUpdateService.checkAndUpdate();
+          addOperationLog('info', '股票清單檢查完成');
+        } catch (error) {
+          logger.warn('stock', '股票清單檢查失敗', error);
+          addOperationLog('warn', '股票清單檢查失敗，請手動更新');
+        }
+      }, 1000);
       
-      addOperationLog('info', '股票清單檢查完成');
     } catch (error) {
-      console.error('初始化股票清單服務失敗:', error);
+      logger.error('stock', '初始化股票清單服務失敗', error);
       addOperationLog('warn', '股票清單檢查失敗，請手動更新');
     }
-  };
+  }, [addOperationLog]);
 
   // 檢查初始設定
   const checkInitialSetup = () => {

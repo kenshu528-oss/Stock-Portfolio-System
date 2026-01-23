@@ -83,7 +83,6 @@ const StockSearch: React.FC<StockSearchProps> = ({
         } else {
           console.log(`❌ [StockSearch] 後端搜尋失敗: HTTP ${response.status}`);
         }
-        }
       }
     } catch (error) {
       console.error('🚨 [StockSearch] 搜尋API錯誤:', error);

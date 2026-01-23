@@ -54,7 +54,7 @@ async function getFinMindStockPrice(symbol) {
       if (infoResponse.data?.status === 200 && infoResponse.data?.data?.length > 0) {
         const stockInfo = infoResponse.data.data[0];
         stockName = stockInfo.stock_name || symbol;
-        console.log(`✅ FinMind獲取 ${symbol} 中文名稱: ${stockName}`);
+        console.log(`FinMind獲取 ${symbol} 中文名稱: ${stockName}`);
       }
     } catch (infoError) {
       console.log(`FinMind股票資訊API失敗 ${symbol}:`, infoError.message);
@@ -93,7 +93,7 @@ async function getFinMindStockPrice(symbol) {
         const change = price - previousClose;
         
         if (price > 0) {
-          console.log(`✅ FinMind ${symbol} 股價: ${price}, 名稱: ${stockName}`);
+          console.log(`FinMind ${symbol} 股價: ${price}, 名稱: ${stockName}`);
           return {
             symbol,
             name: stockName, // 使用中文名稱
@@ -159,7 +159,7 @@ async function getYahooStockPrice(symbol) {
       description = '上市股票';
     }
     
-    console.log(`🔍 Yahoo Finance: ${symbol} (${description}) 嘗試後綴順序: ${suffixes.join(', ')}`);
+    console.log(` Yahoo Finance: ${symbol} (${description}) 嘗試後綴順序: ${suffixes.join(', ')}`);
     
     // 嘗試不同的後綴
     for (const suffix of suffixes) {
@@ -185,7 +185,7 @@ async function getYahooStockPrice(symbol) {
           const stockName = meta.longName || meta.shortName || symbol;
           
           if (price > 0) {
-            console.log(`✅ Yahoo Finance 成功: ${yahooSymbol} = ${price} (${stockName})`);
+            console.log(` Yahoo Finance 成功: ${yahooSymbol} = ${price} (${stockName})`);
             return {
               symbol,
               name: stockName,
@@ -204,7 +204,7 @@ async function getYahooStockPrice(symbol) {
       }
     }
     
-    console.log(`❌ Yahoo Finance: ${symbol} 所有後綴都失敗`);
+    console.log(` Yahoo Finance: ${symbol} 所有後綴都失敗`);
     return null;
   } catch (error) {
     console.error(`Yahoo API錯誤 ${symbol}:`, error.message);
@@ -316,7 +316,7 @@ async function getTWSEStockPrice(symbol) {
             const finalPrice = price > 0 ? price : (previousClose > 0 ? previousClose : 0);
             const status = price <= 0 ? '暫停交易' : '';
             
-            console.log(`✅ 上市API獲取 ${symbol}: ${stockName}, 價格: ${finalPrice}, 狀態: ${status}`);
+            console.log(` 上市API獲取 ${symbol}: ${stockName}, 價格: ${finalPrice}, 狀態: ${status}`);
             return {
               symbol,
               name: stockName + (status ? ` (${status})` : ''),
@@ -358,7 +358,7 @@ async function getTWSEStockPrice(symbol) {
           }
           
           if (stockName && price > 0) {
-            console.log(`✅ 上櫃API成功獲取 ${symbol}: ${stockName}, 價格: ${price}`);
+            console.log(` 上櫃API成功獲取 ${symbol}: ${stockName}, 價格: ${price}`);
             return {
               symbol,
               name: stockName,
@@ -398,7 +398,7 @@ async function getTWSEStockPrice(symbol) {
           }
           
           if (stockName && price > 0) {
-            console.log(`✅ 興櫃API成功獲取 ${symbol}: ${stockName}, 價格: ${price}`);
+            console.log(` 興櫃API成功獲取 ${symbol}: ${stockName}, 價格: ${price}`);
             return {
               symbol,
               name: stockName,
@@ -473,7 +473,7 @@ app.get('/api/stock/:symbol', async (req, res) => {
       console.log(`${upperSymbol}: 🔬 實驗：優先嘗試 Yahoo Finance API（測試即時性）`);
       stockData = await getYahooStockPrice(upperSymbol);
       if (stockData && stockData.price > 0) {
-        console.log(`✅ Yahoo Finance 成功獲取 ${upperSymbol} 股價資料（即時）`);
+        console.log(` Yahoo Finance 成功獲取 ${upperSymbol} 股價資料（即時）`);
         
         // 嘗試從 FinMind 獲取中文名稱（不影響股價）
         try {
@@ -503,7 +503,7 @@ app.get('/api/stock/:symbol', async (req, res) => {
         console.log(`${upperSymbol}: Yahoo Finance 失敗，嘗試 FinMind API（中文名稱）`);
         stockData = await getFinMindStockPrice(upperSymbol);
         if (stockData && stockData.price > 0) {
-          console.log(`✅ FinMind 成功獲取 ${upperSymbol} 中文名稱股價資料`);
+          console.log(` FinMind 成功獲取 ${upperSymbol} 中文名稱股價資料`);
           stockCache.set(cacheKey, {
             data: stockData,
             timestamp: Date.now()
@@ -529,9 +529,9 @@ app.get('/api/stock/:symbol', async (req, res) => {
           if (chineseName) {
             stockData.name = chineseName;
             stockData.source = 'FinMind+TWSE'; // 標記混合來源
-            console.log(`✅ 證交所獲取股價，使用 FinMind 中文名稱: ${chineseName}`);
+            console.log(` 證交所獲取股價，使用 FinMind 中文名稱: ${chineseName}`);
           } else {
-            console.log(`✅ 證交所成功獲取 ${upperSymbol} 中文名稱股價資料`);
+            console.log(` 證交所成功獲取 ${upperSymbol} 中文名稱股價資料`);
           }
           stockCache.set(cacheKey, {
             data: stockData,
@@ -581,7 +581,7 @@ async function getFinMindDividendData(symbol) {
     // 注意：使用 data_id 參數（免費無 token 可用）
     const finmindUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockDividend&data_id=${symbol}&start_date=2020-01-01&end_date=2025-12-31&token=`;
     
-    console.log(`🔍 正在獲取 ${symbol} 的股息資料...`);
+    console.log(` 正在獲取 ${symbol} 的股息資料...`);
     const finmindResponse = await axios.get(finmindUrl, {
       timeout: 15000,
       headers: {
@@ -591,21 +591,21 @@ async function getFinMindDividendData(symbol) {
     });
     
     if (!finmindResponse.data || !finmindResponse.data.data || finmindResponse.data.data.length === 0) {
-      console.log(`❌ FinMind API 沒有找到 ${symbol} 的股息資料`);
+      console.log(` FinMind API 沒有找到 ${symbol} 的股息資料`);
       return null;
     }
 
     const finmindData = finmindResponse.data.data;
-    console.log(`📊 FinMind API 返回 ${finmindData.length} 筆股息記錄`);
+    console.log(` FinMind API 返回 ${finmindData.length} 筆股息記錄`);
     
     // 輸出第一筆原始資料來檢查欄位結構
     if (finmindData.length > 0) {
-      console.log(`🔍 FinMind 原始資料範例 (第一筆):`, JSON.stringify(finmindData[0], null, 2));
+      console.log(` FinMind 原始資料範例 (第一筆):`, JSON.stringify(finmindData[0], null, 2));
     }
 
     // 處理FinMind資料
     const dividends = finmindData.map(item => {
-      console.log(`\n🔍 處理股息記錄 (原始資料):`, item);
+      console.log(`\n 處理股息記錄 (原始資料):`, item);
 
       // 使用除息交易日期（如果有的話，否則使用公告日期）
       const exDate = item.CashExDividendTradingDate || item.StockExDividendTradingDate || item.date;
@@ -674,7 +674,7 @@ async function getFinMindDividendData(symbol) {
     .sort((a, b) => new Date(b.exDate) - new Date(a.exDate)); // 按日期排序
     
     if (dividends.length > 0) {
-      console.log(`✅ FinMind成功獲取 ${symbol} 的 ${dividends.length} 筆股息記錄`);
+      console.log(` FinMind成功獲取 ${symbol} 的 ${dividends.length} 筆股息記錄`);
       return {
         symbol,
         dividends: dividends
@@ -759,7 +759,7 @@ async function getGoodInfoDividendData(symbol) {
       const dividends = parseGoodInfoDividendData(html, symbol);
       
       if (dividends && dividends.length > 0) {
-        console.log(`✅ GoodInfo成功獲取 ${symbol} 的 ${dividends.length} 筆股息記錄`);
+        console.log(` GoodInfo成功獲取 ${symbol} 的 ${dividends.length} 筆股息記錄`);
         return {
           symbol,
           dividends: dividends
@@ -950,12 +950,12 @@ function parseGoodInfoDate(dateStr) {
 // 備用股息資料（當API無法獲取時使用）
 function getBackupDividendData(symbol) {
   // 遵循 API 資料完整性規則：
-  // ❌ 絕對禁止使用本地硬編碼股票名稱對照表
-  // ❌ 絕對禁止提供虛假或過時的股票資料  
-  // ❌ 絕對禁止在API失敗時返回預設價格
-  // ❌ 絕對禁止混用真實API資料和虛假本地資料
+  //  絕對禁止使用本地硬編碼股票名稱對照表
+  //  絕對禁止提供虛假或過時的股票資料  
+  //  絕對禁止在API失敗時返回預設價格
+  //  絕對禁止混用真實API資料和虛假本地資料
   
-  console.log(`❌ 不提供備用股息資料 ${symbol}：遵循API資料完整性規則`);
+  console.log(` 不提供備用股息資料 ${symbol}：遵循API資料完整性規則`);
   return null;
 }
 async function getYahooDividendData(symbol) {
@@ -969,7 +969,7 @@ async function getYahooDividendData(symbol) {
     
     for (const yahooSymbol of symbolVariants) {
       try {
-        console.log(`🔍 Yahoo Finance: 嘗試 ${yahooSymbol}...`);
+        console.log(` Yahoo Finance: 嘗試 ${yahooSymbol}...`);
         
         // 方法1: 使用 chart API (包含股息事件)
         const chartUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?range=5y&interval=1d&events=div`;
@@ -987,7 +987,7 @@ async function getYahooDividendData(symbol) {
           const dividends = chartResponse.data.chart.result[0].events.dividends;
           const dividendArray = [];
           
-          console.log(`✅ Yahoo Finance (${yahooSymbol}) 找到 ${Object.keys(dividends).length} 筆股息記錄`);
+          console.log(` Yahoo Finance (${yahooSymbol}) 找到 ${Object.keys(dividends).length} 筆股息記錄`);
           
           // 轉換Yahoo Finance股息資料格式
           for (const [timestamp, dividendInfo] of Object.entries(dividends)) {
@@ -1004,7 +1004,7 @@ async function getYahooDividendData(symbol) {
           // 按日期排序（最新的在前）
           dividendArray.sort((a, b) => new Date(b.exDate) - new Date(a.exDate));
           
-          console.log(`✅ Yahoo Finance 成功返回 ${dividendArray.length} 筆股息資料`);
+          console.log(` Yahoo Finance 成功返回 ${dividendArray.length} 筆股息資料`);
           
           return {
             symbol,
@@ -1025,7 +1025,7 @@ async function getYahooDividendData(symbol) {
           });
           
           if (v7Response.data && typeof v7Response.data === 'string' && v7Response.data.includes('Dividends')) {
-            console.log(`✅ Yahoo Finance v7 API (${yahooSymbol}) 找到股息資料`);
+            console.log(` Yahoo Finance v7 API (${yahooSymbol}) 找到股息資料`);
             
             // 解析 CSV 格式
             const lines = v7Response.data.split('\n').filter(line => line.trim());
@@ -1052,7 +1052,7 @@ async function getYahooDividendData(symbol) {
             
             if (dividendArray.length > 0) {
               dividendArray.sort((a, b) => new Date(b.exDate) - new Date(a.exDate));
-              console.log(`✅ Yahoo Finance v7 成功返回 ${dividendArray.length} 筆股息資料`);
+              console.log(` Yahoo Finance v7 成功返回 ${dividendArray.length} 筆股息資料`);
               
               return {
                 symbol,
@@ -1074,7 +1074,7 @@ async function getYahooDividendData(symbol) {
     return null;
     
   } catch (error) {
-    console.error(`❌ Yahoo股息API錯誤 ${symbol}:`, error.message);
+    console.error(` Yahoo股息API錯誤 ${symbol}:`, error.message);
     return null;
   }
 }
@@ -1085,12 +1085,12 @@ app.get('/api/dividend/:symbol', async (req, res) => {
     const { symbol } = req.params;
     const upperSymbol = symbol.toUpperCase();
     
-    console.log(`\n📊 ===== 獲取 ${upperSymbol} 股息資料 =====`);
+    console.log(`\n ===== 獲取 ${upperSymbol} 股息資料 =====`);
     
     const cacheKey = `dividend_${upperSymbol}`;
     const cached = stockCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION * 10) { // 股息資料快取10分鐘
-      console.log(`✅ 從快取返回 ${upperSymbol} 股息資料`);
+      console.log(` 從快取返回 ${upperSymbol} 股息資料`);
       return res.json(cached.data);
     }
     
@@ -1128,17 +1128,17 @@ app.get('/api/dividend/:symbol', async (req, res) => {
         data: dividendData,
         timestamp: Date.now()
       });
-      console.log(`✅ 成功返回 ${upperSymbol} ${dividendData.dividends.length} 筆股息資料\n`);
+      console.log(` 成功返回 ${upperSymbol} ${dividendData.dividends.length} 筆股息資料\n`);
       res.json(dividendData);
     } else {
-      console.log(`❌ 所有 API 都無法獲取 ${upperSymbol} 股息資料\n`);
+      console.log(` 所有 API 都無法獲取 ${upperSymbol} 股息資料\n`);
       
       // 針對債券 ETF 提供特別的提示
       const suggestions = isBondETF ? [
-        '💡 債券 ETF 配息資料建議手動輸入',
-        '📊 資料來源：GoodInfo (https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID=' + upperSymbol + ')',
-        '📅 月配息 ETF 建議每月更新一次',
-        '✅ 使用「手動股息管理」功能添加配息記錄'
+        ' 債券 ETF 配息資料建議手動輸入',
+        ' 資料來源：GoodInfo (https://goodinfo.tw/tw/StockDividendPolicy.asp?STOCK_ID=' + upperSymbol + ')',
+        ' 月配息 ETF 建議每月更新一次',
+        ' 使用「手動股息管理」功能添加配息記錄'
       ] : [
         '該股票可能沒有配息記錄',
         '或者是新上市股票尚無股息資料',
@@ -1155,7 +1155,7 @@ app.get('/api/dividend/:symbol', async (req, res) => {
     }
     
   } catch (error) {
-    console.error('❌ 股息API錯誤:', error);
+    console.error(' 股息API錯誤:', error);
     res.status(500).json({
       error: 'Internal server error',
       message: '獲取股息資料時發生錯誤'
@@ -1210,7 +1210,7 @@ function loadTodayStockList() {
     if (fs.existsSync(todayFilePath)) {
       const data = fs.readFileSync(todayFilePath, 'utf8');
       const stockData = JSON.parse(data);
-      console.log(`✅ 載入今日股票清單: ${todayFilename} (${stockData.count} 支股票)`);
+      console.log(` 載入今日股票清單: ${todayFilename} (${stockData.count} 支股票)`);
       return stockData.stocks;
     }
     
@@ -1223,7 +1223,7 @@ function loadTodayStockList() {
       .sort()
       .reverse(); // 按日期降序排列，最新的在前
     
-    console.log(`🔍 找到股票清單檔案: ${stockListFiles.slice(0, 3).join(', ')}${stockListFiles.length > 3 ? '...' : ''}`);
+    console.log(` 找到股票清單檔案: ${stockListFiles.slice(0, 3).join(', ')}${stockListFiles.length > 3 ? '...' : ''}`);
     
     // 嘗試載入最新的檔案
     for (const filename of stockListFiles.slice(0, 5)) { // 最多嘗試5個最新檔案
@@ -1236,7 +1236,7 @@ function loadTodayStockList() {
           const fileDate = filename.replace('stock_list_', '').replace('.json', '');
           const daysOld = Math.floor((new Date(today) - new Date(fileDate)) / (1000 * 60 * 60 * 24));
           
-          console.log(`✅ 載入備援股票清單: ${filename} (${stockData.count} 支股票, ${daysOld} 天前)`);
+          console.log(` 載入備援股票清單: ${filename} (${stockData.count} 支股票, ${daysOld} 天前)`);
           
           if (daysOld > 7) {
             console.log(`⚠️ 警告：股票清單已過期 ${daysOld} 天，建議更新`);
@@ -1245,16 +1245,16 @@ function loadTodayStockList() {
           return stockData.stocks;
         }
       } catch (fileError) {
-        console.log(`❌ 載入 ${filename} 失敗: ${fileError.message}`);
+        console.log(` 載入 ${filename} 失敗: ${fileError.message}`);
         continue;
       }
     }
     
-    console.log(`❌ 所有股票清單檔案都無法載入`);
+    console.log(` 所有股票清單檔案都無法載入`);
     return null;
     
   } catch (error) {
-    console.error('❌ 載入股票清單失敗:', error.message);
+    console.error(' 載入股票清單失敗:', error.message);
     return null;
   }
 }
@@ -1303,7 +1303,7 @@ const BUILTIN_STOCK_LIST = {
 // FinMind API 直接搜尋函數（作為備援）
 async function searchStocksViaFinMindAPI(query) {
   try {
-    console.log(`🔍 FinMind API 直接搜尋: "${query}"`);
+    console.log(` FinMind API 直接搜尋: "${query}"`);
     
     const finmindUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInfo&token=`;
     const response = await axios.get(finmindUrl, {
@@ -1386,13 +1386,13 @@ async function searchStocksViaFinMindAPI(query) {
         }
       }
       
-      console.log(`✅ FinMind API 搜尋結果: ${results.length} 筆`);
+      console.log(` FinMind API 搜尋結果: ${results.length} 筆`);
       return results;
     }
     
     return [];
   } catch (error) {
-    console.error(`❌ FinMind API 搜尋失敗: ${error.message}`);
+    console.error(` FinMind API 搜尋失敗: ${error.message}`);
     return [];
   }
 }
@@ -1401,18 +1401,18 @@ async function searchStocksViaFinMindAPI(query) {
 function searchLocalStocks(query, stockList) {
   if (!stockList) return [];
   
-  console.log(`🔍 [searchLocalStocks] 開始本地搜尋: "${query}"`);
+  console.log(` [searchLocalStocks] 開始本地搜尋: "${query}"`);
   
   const queryUpper = query.toUpperCase().trim();
   const queryLower = query.toLowerCase().trim();
   
-  console.log(`🔤 [searchLocalStocks] 查詢轉換: "${query}" → 大寫:"${queryUpper}" 小寫:"${queryLower}"`);
+  console.log(` [searchLocalStocks] 查詢轉換: "${query}" → 大寫:"${queryUpper}" 小寫:"${queryLower}"`);
   
   // 檢查查詢是否包含字母
   const queryHasLetter = /[A-Z]/.test(queryUpper);
   const queryIsNumber = /^\d+$/.test(queryUpper);
   
-  console.log(`🧮 [searchLocalStocks] 查詢分析: 包含字母=${queryHasLetter}, 純數字=${queryIsNumber}`);
+  console.log(` [searchLocalStocks] 查詢分析: 包含字母=${queryHasLetter}, 純數字=${queryIsNumber}`);
   
   // 收集所有匹配的股票
   const allMatches = [];
@@ -1423,7 +1423,7 @@ function searchLocalStocks(query, stockList) {
     
     // 1. 精確匹配股票代碼（最高優先級，大小寫不敏感）
     if (symbolUpper === queryUpper) {
-      console.log(`✅ [searchLocalStocks] 精確匹配: ${symbol}`);
+      console.log(` [searchLocalStocks] 精確匹配: ${symbol}`);
       allMatches.push({ symbol, info, priority: 1 });
     }
     // 2. 🔧 智能開頭匹配邏輯：
@@ -1450,12 +1450,12 @@ function searchLocalStocks(query, stockList) {
     }
     // 4. 股票代碼包含查詢字串（低優先級，但排除過短的查詢和過長的查詢）
     else if (query.length >= 3 && query.length < 5 && symbolUpper.includes(queryUpper)) {
-      console.log(`🔤 [searchLocalStocks] 代碼包含匹配: ${symbol}`);
+      console.log(` [searchLocalStocks] 代碼包含匹配: ${symbol}`);
       allMatches.push({ symbol, info, priority: 5 });
     }
   }
 
-  console.log(`📊 [searchLocalStocks] 總共找到 ${allMatches.length} 筆匹配`);
+  console.log(` [searchLocalStocks] 總共找到 ${allMatches.length} 筆匹配`);
 
   // 按優先級和字母順序排序
   allMatches.sort((a, b) => {
@@ -1475,7 +1475,7 @@ function searchLocalStocks(query, stockList) {
       industry: match.info.industry,
       market: match.info.market
     }));
-    console.log(`📋 [searchLocalStocks] 精確匹配結果:`, results.map(r => r.symbol));
+    console.log(` [searchLocalStocks] 精確匹配結果:`, results.map(r => r.symbol));
     return results;
   }
 
@@ -1490,24 +1490,24 @@ function searchLocalStocks(query, stockList) {
     });
   }
   
-  console.log(`📋 [searchLocalStocks] 最終返回 ${results.length} 筆結果:`, results.map(r => r.symbol));
+  console.log(` [searchLocalStocks] 最終返回 ${results.length} 筆結果:`, results.map(r => r.symbol));
   return results;
 }
 
 // API路由：股票搜尋 - 本地匹配 + Yahoo Finance 股價
 app.get('/api/stock-search', async (req, res) => {
   const requestId = Math.random().toString(36).substr(2, 9);
-  console.log(`🔍 [Backend-${requestId}] 收到搜尋請求`);
+  console.log(` [Backend-${requestId}] 收到搜尋請求`);
   
   try {
     const { query } = req.query;
     
     if (!query || query.length < 2) {
-      console.log(`🔍 [Backend-${requestId}] 搜尋查詢太短，返回空結果: "${query}"`);
+      console.log(` [Backend-${requestId}] 搜尋查詢太短，返回空結果: "${query}"`);
       return res.json([]);
     }
     
-    console.log(`🔍 [Backend-${requestId}] 股票搜尋開始: "${query}" - 本地匹配 + Yahoo Finance 股價`);
+    console.log(` [Backend-${requestId}] 股票搜尋開始: "${query}" - 本地匹配 + Yahoo Finance 股價`);
     
     // 1. 載入今日股票清單（改善版：支援備援）
     const stockList = loadTodayStockList();
@@ -1519,17 +1519,17 @@ app.get('/api/stock-search', async (req, res) => {
     res.set('X-Stock-List-Is-Today', stockListDate === today ? 'true' : 'false');
     
     if (!stockList) {
-      console.log(`❌ [Backend-${requestId}] 無法載入股票清單，嘗試 API 直接搜尋...`);
+      console.log(` [Backend-${requestId}] 無法載入股票清單，嘗試 API 直接搜尋...`);
       
       // 🔧 降級策略：使用 FinMind API 直接搜尋
       try {
         const finmindResults = await searchStocksViaFinMindAPI(query);
         if (finmindResults.length > 0) {
-          console.log(`✅ [Backend-${requestId}] FinMind API 直接搜尋成功: ${finmindResults.length} 筆結果`);
+          console.log(` [Backend-${requestId}] FinMind API 直接搜尋成功: ${finmindResults.length} 筆結果`);
           return res.json(finmindResults);
         }
       } catch (apiError) {
-        console.log(`❌ [Backend-${requestId}] FinMind API 搜尋也失敗: ${apiError.message}`);
+        console.log(` [Backend-${requestId}] FinMind API 搜尋也失敗: ${apiError.message}`);
       }
       
       return res.status(503).json({
@@ -1544,15 +1544,15 @@ app.get('/api/stock-search', async (req, res) => {
       });
     }
     
-    console.log(`📊 [Backend-${requestId}] 股票清單載入成功，共 ${Object.keys(stockList).length} 支股票`);
+    console.log(` [Backend-${requestId}] 股票清單載入成功，共 ${Object.keys(stockList).length} 支股票`);
     
     // 2. 本地搜尋匹配的股票
     const matchedStocks = searchLocalStocks(query, stockList);
-    console.log(`✅ [Backend-${requestId}] 本地匹配找到 ${matchedStocks.length} 支股票`);
-    console.log(`📋 [Backend-${requestId}] 匹配的股票:`, matchedStocks.map(s => s.symbol));
+    console.log(` [Backend-${requestId}] 本地匹配找到 ${matchedStocks.length} 支股票`);
+    console.log(` [Backend-${requestId}] 匹配的股票:`, matchedStocks.map(s => s.symbol));
     
     if (matchedStocks.length === 0) {
-      console.log(`❌ [Backend-${requestId}] 沒有找到匹配的股票，返回空結果`);
+      console.log(` [Backend-${requestId}] 沒有找到匹配的股票，返回空結果`);
       return res.json([]);
     }
     
@@ -1561,7 +1561,7 @@ app.get('/api/stock-search', async (req, res) => {
     
     for (const stock of matchedStocks) {
       try {
-        console.log(`📊 [Backend-${requestId}] 獲取 ${stock.symbol} 的即時股價...`);
+        console.log(` [Backend-${requestId}] 獲取 ${stock.symbol} 的即時股價...`);
         
         // 使用 Yahoo Finance 獲取即時股價
         const yahooData = await getYahooStockPrice(stock.symbol);
@@ -1577,7 +1577,7 @@ app.get('/api/stock-search', async (req, res) => {
           source: yahooData ? 'Local+Yahoo' : 'Local Only'
         });
         
-        console.log(`✅ ${stock.symbol} (${stock.name}) 價格: ${price}`);
+        console.log(` ${stock.symbol} (${stock.name}) 價格: ${price}`);
         
       } catch (priceError) {
         console.log(`⚠️ 獲取 ${stock.symbol} 股價失敗:`, priceError.message);
@@ -1595,12 +1595,12 @@ app.get('/api/stock-search', async (req, res) => {
       }
     }
     
-    console.log(`✅ [Backend-${requestId}] 搜尋結果: ${searchResults.length} 筆`);
-    console.log(`📋 [Backend-${requestId}] 最終返回結果:`, searchResults.map(r => r.symbol));
+    console.log(` [Backend-${requestId}] 搜尋結果: ${searchResults.length} 筆`);
+    console.log(` [Backend-${requestId}] 最終返回結果:`, searchResults.map(r => r.symbol));
     res.json(searchResults);
     
   } catch (error) {
-    console.error(`❌ [Backend-${requestId}] 股票搜尋錯誤:`, error);
+    console.error(` [Backend-${requestId}] 股票搜尋錯誤:`, error);
     res.status(500).json({
       error: 'Search failed',
       message: '搜尋失敗'
@@ -1629,7 +1629,7 @@ app.post('/api/update-stock-list', async (req, res) => {
     const todayFilePath = path.join(__dirname, '..', todayFilename);
     
     if (fs.existsSync(todayFilePath)) {
-      console.log(`✅ 今日股票清單已存在: ${todayFilename}`);
+      console.log(` 今日股票清單已存在: ${todayFilename}`);
       return res.json({
         success: true,
         message: '今日股票清單已是最新版本',
@@ -1639,10 +1639,11 @@ app.post('/api/update-stock-list', async (req, res) => {
     }
     
     // 嘗試執行 Python 腳本更新股票清單
-    console.log('🐍 執行 Python 股票清單更新腳本...');
+    console.log(' 執行 Python 股票清單更新腳本...');
     
     const { spawn } = require('child_process');
-    const pythonProcess = spawn('python', ['fetch_stock_list.py'], {
+    // 添加 --force 參數強制更新
+    const pythonProcess = spawn('python', ['fetch_stock_list.py', '--force'], {
       cwd: path.join(__dirname),
       stdio: ['pipe', 'pipe', 'pipe']
     });
@@ -1660,7 +1661,7 @@ app.post('/api/update-stock-list', async (req, res) => {
     
     pythonProcess.on('close', (code) => {
       if (code === 0) {
-        console.log('✅ Python 腳本執行成功');
+        console.log(' Python 腳本執行成功');
         console.log('輸出:', output);
         
         // 檢查檔案是否成功創建
@@ -1681,7 +1682,7 @@ app.post('/api/update-stock-list', async (req, res) => {
           });
         }
       } else {
-        console.error('❌ Python 腳本執行失敗');
+        console.error(' Python 腳本執行失敗');
         console.error('錯誤輸出:', errorOutput);
         
         res.status(500).json({
@@ -1713,7 +1714,7 @@ app.post('/api/update-stock-list', async (req, res) => {
     }, 30000);
     
   } catch (error) {
-    console.error('❌ 股票清單更新API錯誤:', error);
+    console.error(' 股票清單更新API錯誤:', error);
     res.status(500).json({
       success: false,
       message: '股票清單更新失敗',
@@ -1750,8 +1751,8 @@ app.post('/api/restart', (req, res) => {
 
 // 啟動伺服器
 app.listen(PORT, () => {
-  console.log(`🚀 股票代理伺服器啟動於 http://localhost:${PORT}`);
-  console.log(`📊 支援的API端點:`);
+  console.log(` 股票代理伺服器啟動於 http://localhost:${PORT}`);
+  console.log(` 支援的API端點:`);
   console.log(`   GET /api/stock/:symbol - 獲取股票價格`);
   console.log(`   GET /api/dividend/:symbol - 股息資料（建議手動管理）`);
   console.log(`   GET /api/stock-search?query=XXX - 股票搜尋`);

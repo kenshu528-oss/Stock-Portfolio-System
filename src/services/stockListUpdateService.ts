@@ -30,13 +30,10 @@ class StockListUpdateService {
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       logger.info('stock', '檢查股票清單新鮮度', { today });
 
-      // 1. 檢查本地是否有今日的股票清單檔案
-      const hasLocalFile = await this.checkLocalStockListFile(today);
-      
-      // 2. 檢查後端是否載入了今日的股票清單
+      // 主要檢查後端是否載入了今日的股票清單
       const backendStatus = await this.checkBackendStockList();
       
-      const needsUpdate = !hasLocalFile || !backendStatus.isToday;
+      const needsUpdate = !backendStatus.isToday;
       
       this.updateStatus = {
         ...this.updateStatus,
@@ -48,7 +45,6 @@ class StockListUpdateService {
       this.saveUpdateStatus();
 
       logger.info('stock', '股票清單檢查完成', {
-        hasLocalFile,
         backendIsToday: backendStatus.isToday,
         backendDate: backendStatus.date,
         needsUpdate
@@ -64,19 +60,6 @@ class StockListUpdateService {
     }
   }
 
-  /**
-   * 檢查本地是否有今日的股票清單檔案
-   */
-  private async checkLocalStockListFile(today: string): Promise<boolean> {
-    try {
-      // 檢查根目錄是否有今日的股票清單檔案
-      const response = await fetch(`/stock_list_${today}.json`, { method: 'HEAD' });
-      return response.ok;
-    } catch (error) {
-      logger.debug('stock', '本地股票清單檔案不存在', { today });
-      return false;
-    }
-  }
 
   /**
    * 檢查後端股票清單狀態
@@ -84,7 +67,8 @@ class StockListUpdateService {
   private async checkBackendStockList(): Promise<{ isToday: boolean; date?: string }> {
     try {
       // 檢查後端是否有可用的股票清單
-      const response = await fetch('/api/stock-search?query=test', { method: 'HEAD' });
+      const backendUrl = 'http://localhost:3001/api/stock-search?query=test';
+      const response = await fetch(backendUrl, { method: 'HEAD' });
       
       if (!response.ok) {
         return { isToday: false };
@@ -110,7 +94,13 @@ class StockListUpdateService {
    */
   async triggerStockListUpdate(): Promise<boolean> {
     if (this.updateStatus.isUpdating) {
-      logger.warn('stock', '股票清單更新已在進行中，跳過重複觸發');
+      // 在開發環境下，React 嚴格模式會重複執行，降低警告等級
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      if (isDevelopment) {
+        logger.debug('stock', '股票清單更新已在進行中，跳過重複觸發（開發模式）');
+      } else {
+        logger.warn('stock', '股票清單更新已在進行中，跳過重複觸發');
+      }
       return false;
     }
 
@@ -161,7 +151,8 @@ class StockListUpdateService {
       }
 
       // 調用後端更新 API（如果存在）
-      const response = await fetch('/api/update-stock-list', {
+      const backendUrl = 'http://localhost:3001/api/update-stock-list';
+      const response = await fetch(backendUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
