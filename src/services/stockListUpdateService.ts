@@ -66,7 +66,36 @@ class StockListUpdateService {
    */
   private async checkBackendStockList(): Promise<{ isToday: boolean; date?: string }> {
     try {
-      // 檢查後端是否有可用的股票清單
+      // 檢查是否為本機環境
+      const isDevelopment = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1';
+
+      if (!isDevelopment) {
+        // 雲端環境：檢查本地股票清單檔案
+        logger.debug('stock', '雲端環境，檢查本地股票清單檔案');
+        
+        try {
+          const response = await fetch('/public/stock_list.json');
+          if (response.ok) {
+            const data = await response.json();
+            const today = new Date().toISOString().split('T')[0];
+            const fileDate = data.date;
+            
+            logger.debug('stock', '本地股票清單檔案檢查', { fileDate, today });
+            
+            return {
+              isToday: fileDate === today,
+              date: fileDate
+            };
+          }
+        } catch (error) {
+          logger.debug('stock', '無法載入本地股票清單檔案', error);
+        }
+        
+        return { isToday: false };
+      }
+
+      // 本機環境：檢查後端 API
       const backendUrl = 'http://localhost:3001/api/stock-search?query=test';
       const response = await fetch(backendUrl, { method: 'HEAD' });
       
@@ -146,8 +175,8 @@ class StockListUpdateService {
                            window.location.hostname === '127.0.0.1';
 
       if (!isDevelopment) {
-        logger.debug('stock', '非本機環境，跳過後端更新');
-        return false;
+        logger.debug('stock', '雲端環境，股票清單由 GitHub Actions 自動更新，跳過前端觸發');
+        return true; // 雲端環境下認為更新成功，因為有 GitHub Actions 負責
       }
 
       // 調用後端更新 API（如果存在）

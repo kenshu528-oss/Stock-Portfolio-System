@@ -43,6 +43,53 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   const resultsRef = useRef<HTMLDivElement>(null);
   const currentRequestRef = useRef<AbortController | null>(null); // 🔧 添加請求控制器
 
+  // 搜尋本地股票清單
+  const searchLocalStockList = (query: string, stocks: Record<string, any>): StockSearchResult[] => {
+    const queryUpper = query.toUpperCase();
+    const results: StockSearchResult[] = [];
+    
+    // 搜尋股票代碼和名稱
+    for (const [symbol, info] of Object.entries(stocks)) {
+      const symbolUpper = symbol.toUpperCase();
+      const name = info.name || '';
+      
+      // 精確匹配股票代碼
+      if (symbolUpper === queryUpper) {
+        results.push({
+          symbol,
+          name,
+          price: 0, // 本地清單沒有價格資訊
+          market: info.market || '台股'
+        });
+        continue;
+      }
+      
+      // 股票代碼開頭匹配
+      if (symbolUpper.startsWith(queryUpper)) {
+        results.push({
+          symbol,
+          name,
+          price: 0,
+          market: info.market || '台股'
+        });
+        continue;
+      }
+      
+      // 名稱包含匹配
+      if (name.includes(query)) {
+        results.push({
+          symbol,
+          name,
+          price: 0,
+          market: info.market || '台股'
+        });
+      }
+    }
+    
+    // 排序：精確匹配 > 開頭匹配 > 名稱匹配
+    return results.slice(0, 10); // 限制結果數量
+  };
+
   // 從後端API搜尋股票
   const searchStocks = async (query: string): Promise<StockSearchResult[]> => {
     console.log(`🔍 [QuickAddStock] 開始搜尋: "${query}"`);
@@ -113,8 +160,28 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
           throw new Error(`API錯誤: ${response.status}`);
         }
       } else {
-        console.log(`🌐 [QuickAddStock] 不使用後端，返回空結果`);
-        return [];
+        console.log(`🌐 [QuickAddStock] GitHub Pages 環境，使用本地股票清單搜尋`);
+        
+        // 在 GitHub Pages 環境下，使用本地股票清單搜尋
+        try {
+          // 嘗試載入本地股票清單
+          const stockListResponse = await fetch('/public/stock_list.json');
+          if (stockListResponse.ok) {
+            const stockListData = await stockListResponse.json();
+            console.log(`📋 [QuickAddStock] 載入本地股票清單成功: ${stockListData.count} 支股票`);
+            
+            // 搜尋匹配的股票
+            const results = searchLocalStockList(query, stockListData.stocks);
+            console.log(`🔍 [QuickAddStock] 本地搜尋結果: ${results.length} 筆`);
+            return results;
+          } else {
+            console.log(`❌ [QuickAddStock] 無法載入本地股票清單，返回空結果`);
+            return [];
+          }
+        } catch (error) {
+          console.error('🚨 [QuickAddStock] 本地股票清單搜尋失敗:', error);
+          return [];
+        }
       }
       
     } catch (error) {
