@@ -21,7 +21,8 @@ const FINMIND_CONFIG = {
   retryDelay: 2000,
   datasets: {
     stockPrice: 'TaiwanStockPrice',
-    stockInfo: 'TaiwanStockInfo'
+    stockInfo: 'TaiwanStockInfo',
+    dividend: 'TaiwanStockDividend'
   },
   // 從環境變數獲取 Token
   getToken: () => import.meta.env.VITE_FINMIND_TOKEN || ''
@@ -318,7 +319,7 @@ export class FinMindAPIProvider implements APIProvider {
     try {
       // 構建 FinMind API URL
       const finmindUrl = new URL(FINMIND_CONFIG.baseUrl);
-      finmindUrl.searchParams.set('dataset', 'TaiwanStockDividend');
+      finmindUrl.searchParams.set('dataset', FINMIND_CONFIG.datasets.dividend);
       finmindUrl.searchParams.set('data_id', symbol);
       
       // 添加 Token 參數
@@ -350,19 +351,50 @@ export class FinMindAPIProvider implements APIProvider {
       
       const data: FinMindResponse = await response.json();
       
+      logger.debug('api', `FinMind 原始回應 ${symbol}`, { 
+        status: data.status, 
+        msg: data.msg, 
+        dataCount: data.data?.length || 0 
+      });
+      
       if (!data.data || data.data.length === 0) {
         logger.debug('api', `FinMind 無 ${symbol} 股息資料`);
         return null;
       }
       
-      // 轉換為標準格式
-      const dividendRecords = data.data.map((item: any) => ({
-        exDividendDate: item.CashExDividendTradingDate || item.StockExDividendTradingDate,
-        cashDividendPerShare: (item.CashEarningsDistribution || 0) + (item.CashStatutorySurplus || 0),
-        stockDividendRatio: ((item.StockEarningsDistribution || 0) + (item.StockStatutorySurplus || 0)) / 10 * 1000
-      })).filter((record: any) => record.exDividendDate);
+      // 記錄原始資料樣本（用於調試）
+      if (data.data.length > 0) {
+        logger.debug('api', `FinMind ${symbol} 原始股息資料樣本`, data.data[0]);
+      }
       
-      logger.success('api', `FinMind 成功獲取 ${symbol} 股息`, { count: dividendRecords.length });
+      // 轉換為標準格式
+      const dividendRecords = data.data.map((item: any) => {
+        const record = {
+          exDividendDate: item.CashExDividendTradingDate || item.StockExDividendTradingDate,
+          cashDividendPerShare: (item.CashEarningsDistribution || 0) + (item.CashStatutorySurplus || 0),
+          stockDividendRatio: ((item.StockEarningsDistribution || 0) + (item.StockStatutorySurplus || 0)) / 10 * 1000
+        };
+        
+        logger.trace('api', `FinMind ${symbol} 轉換記錄`, {
+          原始: {
+            CashExDividendTradingDate: item.CashExDividendTradingDate,
+            StockExDividendTradingDate: item.StockExDividendTradingDate,
+            CashEarningsDistribution: item.CashEarningsDistribution,
+            CashStatutorySurplus: item.CashStatutorySurplus,
+            StockEarningsDistribution: item.StockEarningsDistribution,
+            StockStatutorySurplus: item.StockStatutorySurplus
+          },
+          轉換後: record
+        });
+        
+        return record;
+      }).filter((record: any) => record.exDividendDate);
+      
+      logger.info('api', `FinMind 成功獲取 ${symbol} 股息`, { 
+        原始記錄數: data.data.length,
+        有效記錄數: dividendRecords.length 
+      });
+      
       return dividendRecords;
       
     } catch (error) {

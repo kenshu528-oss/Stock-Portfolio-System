@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 288, // 【FinMind CORS 修復】所有 FinMind API 調用改用代理服務，解決雲端環境 CORS 錯誤
+  PATCH: 290, // 【股息配置優化】添加股息資料集配置，統一使用 FINMIND_CONFIG.datasets.dividend
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

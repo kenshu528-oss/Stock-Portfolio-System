@@ -12,6 +12,44 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0290',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【股息配置優化】統一股息資料集配置管理',
+    description: '發現 00940 無股息資料是正常現象（較新的 ETF），同時優化 FinMind 配置管理，添加股息資料集配置，統一使用配置常數而非硬編碼字串。',
+    changes: [
+      '添加 FINMIND_CONFIG.datasets.dividend 配置',
+      '統一使用配置中的股息資料集名稱',
+      '改善配置管理的一致性',
+      '保持詳細的診斷日誌功能'
+    ],
+    fixes: [
+      '統一股息資料集配置管理',
+      '避免硬編碼資料集名稱',
+      '提高配置的可維護性'
+    ]
+  },
+  {
+    version: '1.0.2.0289',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【股息診斷】添加詳細日誌診斷股息資料缺失問題',
+    description: 'CORS 錯誤已修復，但股息資料仍未顯示。添加詳細的診斷日誌來檢查 FinMind API 回應內容、資料轉換過程和過濾邏輯，以找出股息資料缺失的根本原因。',
+    changes: [
+      '添加 FinMind API 原始回應日誌記錄',
+      '添加原始股息資料樣本日誌',
+      '添加資料轉換過程的詳細日誌',
+      '記錄原始記錄數和有效記錄數對比',
+      '增強錯誤診斷和調試能力'
+    ],
+    fixes: [
+      '診斷股息資料轉換問題',
+      '檢查 FinMind API 回應格式',
+      '驗證資料過濾邏輯',
+      '找出股息資料缺失的根本原因'
+    ]
+  },
+  {
     version: '1.0.2.0288',
     date: '2026-01-23',
     type: 'patch',
