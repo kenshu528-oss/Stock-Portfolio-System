@@ -22,7 +22,9 @@ const FINMIND_CONFIG = {
   datasets: {
     stockPrice: 'TaiwanStockPrice',
     stockInfo: 'TaiwanStockInfo'
-  }
+  },
+  // 從環境變數獲取 Token
+  getToken: () => import.meta.env.VITE_FINMIND_TOKEN || ''
 };
 
 // FinMind API 回應介面
@@ -140,6 +142,12 @@ export class FinMindAPIProvider implements APIProvider {
       url.searchParams.set('dataset', FINMIND_CONFIG.datasets.stockInfo);
       url.searchParams.set('data_id', symbol);
       
+      // 添加 Token 參數
+      const token = FINMIND_CONFIG.getToken();
+      if (token) {
+        url.searchParams.set('token', token);
+      }
+      
       logger.trace('api', `FinMind 股票資訊請求: ${symbol}`);
       
       const response = await fetch(url.toString(), {
@@ -220,6 +228,12 @@ export class FinMindAPIProvider implements APIProvider {
       url.searchParams.set('data_id', symbol);
       url.searchParams.set('start_date', this.formatDate(startDate));
       url.searchParams.set('end_date', this.formatDate(endDate));
+      
+      // 添加 Token 參數
+      const token = FINMIND_CONFIG.getToken();
+      if (token) {
+        url.searchParams.set('token', token);
+      }
       
       logger.trace('api', `FinMind 股價請求: ${symbol}`);
       

@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0286',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【FinMind Token 修復】添加 API Token 支援，解決股價獲取失敗',
+    description: '用戶提供了有效的 FinMind Token（額度充足：0/300），但系統中的 FinMind API 實作沒有使用 Token，導致 API 調用失敗。添加環境變數配置和 Token 參數支援。',
+    changes: [
+      '添加 VITE_FINMIND_TOKEN 環境變數配置',
+      '修復 FinMind API 配置，添加 getToken() 方法',
+      '修復 getStockInfo() 方法，添加 Token 參數',
+      '修復 getLatestStockPrice() 方法，添加 Token 參數',
+      '所有 FinMind API 調用現在都會自動包含 Token'
+    ],
+    fixes: [
+      '修復 FinMind API 股價獲取失敗問題',
+      '修復 FinMind API 股票資訊獲取失敗問題',
+      '解決 Console 中 FinMind API 失敗警告',
+      '充分利用用戶的 FinMind API 額度（0/300）'
+    ]
+  },
+  {
     version: '1.0.2.0285',
     date: '2026-01-23',
     type: 'patch',

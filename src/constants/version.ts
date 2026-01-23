@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 285, // 【徹底清理舊代理】修復 yahooFinanceAPI.ts 中殘留的舊代理服務配置，完全移除 CORS Anywhere、AllOrigins、ThingProxy
+  PATCH: 286, // 【FinMind Token 修復】添加 FinMind API Token 支援，修復股價和股票資訊獲取失敗問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
