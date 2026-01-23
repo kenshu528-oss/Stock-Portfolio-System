@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0284',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【代理服務優化】修復 Console 錯誤，替換不可用代理服務',
+    description: '分析 Console 錯誤發現 CORS Anywhere (403)、ThingProxy (DNS 解析失敗) 等代理服務不可用。移除問題代理，替換為更穩定的 Proxy API 和 Heroku Proxy，減少 Console 錯誤輸出。',
+    changes: [
+      '移除不可用的 CORS Anywhere 代理服務（403 Forbidden）',
+      '移除不可用的 ThingProxy 代理服務（DNS 解析失敗）',
+      '移除不穩定的 JSONProxy 代理服務',
+      '新增 Yahoo Finance (Proxy API) 代理服務',
+      '新增 Yahoo Finance (Heroku Proxy) 代理服務',
+      '優化代理服務優先順序：AllOrigins → Proxy API → FinMind → Heroku Proxy'
+    ],
+    fixes: [
+      '修復 CORS Anywhere 403 錯誤',
+      '修復 ThingProxy DNS 解析失敗錯誤',
+      '減少 Console 中的網路錯誤輸出',
+      '提高代理服務可用性和穩定性'
+    ]
+  },
+  {
     version: '1.0.2.0283',
     date: '2026-01-23',
     type: 'patch',
