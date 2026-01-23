@@ -2,7 +2,7 @@
 // 遵循 api-data-integrity.md：使用真實API資料，不提供虛假預設資料
 
 import type { StockRecord, DividendRecord } from '../types';
-import { API_ENDPOINTS } from '../config/api';
+import { API_ENDPOINTS, shouldUseBackendProxy } from '../config/api';
 
 export interface DividendAPIResponse {
   symbol: string;
@@ -22,7 +22,32 @@ export interface DividendAPIResponse {
  */
 async function fetchDividendData(symbol: string): Promise<DividendAPIResponse | null> {
   try {
-    // 嘗試從後端API獲取股息資料
+    // 🔧 遵循 api-standards.md：檢查環境，GitHub Pages 下使用 DividendApiService
+    if (!shouldUseBackendProxy()) {
+      console.log(`🔧 [DEBUG] dividendAutoService GitHub Pages 環境，使用 DividendApiService: ${symbol}`);
+      
+      // 在 GitHub Pages 環境下，使用 DividendApiService
+      const { DividendApiService } = await import('./dividendApiService');
+      const dividendRecords = await DividendApiService.getDividendData(symbol);
+      
+      if (dividendRecords.length === 0) {
+        return null;
+      }
+      
+      // 轉換為 DividendAPIResponse 格式
+      const dividends = dividendRecords.map(record => ({
+        exDividendDate: record.exDividendDate,
+        cashDividendPerShare: record.dividendPerShare || record.cashDividendPerShare || 0,
+        stockDividendRatio: record.stockDividendRatio || 0,
+        recordDate: record.recordDate,
+        paymentDate: record.paymentDate
+      }));
+      
+      return { dividends };
+    }
+    
+    // 開發環境：使用後端API
+    console.log(`🔧 [DEBUG] dividendAutoService 開發環境，使用後端 API: ${symbol}`);
     const response = await fetch(API_ENDPOINTS.getDividend(symbol));
     
     if (!response.ok) {

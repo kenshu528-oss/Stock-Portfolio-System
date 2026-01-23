@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0294',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【股息修復】修復 GitHub Pages 環境股息獲取失敗',
+    description: '修復 dividendAutoService 在 GitHub Pages 環境下直接調用後端 API 導致 404 錯誤的問題。在 GitHub Pages 環境下改用 DividendApiService 直接調用 FinMind API。',
+    changes: [
+      '修復 dividendAutoService.ts：添加環境檢測',
+      '在 GitHub Pages 環境下使用 DividendApiService',
+      '保持開發環境使用後端 API 的邏輯',
+      '添加詳細的診斷日誌',
+      '確保股息自動計算功能在所有環境下正常工作'
+    ],
+    fixes: [
+      '修復 GitHub Pages 環境下股息獲取 404 錯誤',
+      '修復新增股票時 dividendCount 為 0 的問題',
+      '確保股息自動計算功能完全正常'
+    ]
+  },
+  {
     version: '1.0.2.0290',
     date: '2026-01-23',
     type: 'patch',

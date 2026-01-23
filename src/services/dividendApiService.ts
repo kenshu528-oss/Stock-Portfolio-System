@@ -3,6 +3,11 @@ import { logger } from '../utils/logger';
 import { API_ENDPOINTS, shouldUseBackendProxy } from '../config/api';
 import { FinMindAPIProvider } from './finMindAPI';
 
+// 導入 FinMind 配置以檢查 Token
+const FINMIND_CONFIG = {
+  getToken: () => import.meta.env.VITE_FINMIND_TOKEN || ''
+};
+
 export interface DividendApiRecord {
   symbol: string;
   exDividendDate: string;
@@ -32,15 +37,20 @@ export class DividendApiService {
    * 從證交所API獲取股息資料
    */
   static async getDividendData(symbol: string): Promise<DividendApiRecord[]> {
+    // 強制診斷日誌
+    console.log(`🔧 [DEBUG] getDividendData 被調用: ${symbol}`);
+    
     // 檢查快取
     const cacheKey = `dividend_${symbol}`;
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      console.log(`🔧 [DEBUG] 使用快取資料: ${symbol}`);
       logger.debug('api', `從快取返回 ${symbol} 股息資料`);
       return cached.data;
     }
 
     try {
+      console.log(`🔧 [DEBUG] 開始獲取 ${symbol} 股息資料...`);
       logger.debug('api', `獲取 ${symbol} 股息資料...`);
       
       let dividendData: DividendApiRecord[] = [];
@@ -48,14 +58,18 @@ export class DividendApiService {
       // 🔧 遵循 api-standards.md：Yahoo Finance 優先，FinMind 備用
       // 後端已經整合了 Yahoo Finance（優先）+ FinMind（備用）策略
       try {
+        console.log(`🔧 [DEBUG] 準備調用 fetchFromAlternativeAPI: ${symbol}`);
         dividendData = await this.fetchFromAlternativeAPI(symbol);
+        console.log(`🔧 [DEBUG] fetchFromAlternativeAPI 返回結果:`, dividendData);
         if (dividendData.length > 0) {
           logger.info('api', `API成功獲取 ${symbol} 股息 (Yahoo Finance 優先)`, { count: dividendData.length });
         } else {
+          console.log(`🔧 [DEBUG] fetchFromAlternativeAPI 返回空陣列`);
           logger.debug('api', `${symbol} 無股息資料`);
         }
       } catch (error) {
         // 404 是正常情況（資料不存在），不需要警告
+        console.log(`🔧 [DEBUG] fetchFromAlternativeAPI 拋出錯誤:`, error);
         logger.debug('api', `API失敗`, error);
       }
 
@@ -90,8 +104,15 @@ export class DividendApiService {
    */
   private static async fetchFromAlternativeAPI(symbol: string): Promise<DividendApiRecord[]> {
     try {
+      // 強制日誌：診斷用
+      console.log(`🔧 [DEBUG] fetchFromAlternativeAPI 被調用: ${symbol}`);
+      console.log(`🔧 [DEBUG] shouldUseBackendProxy(): ${shouldUseBackendProxy()}`);
+      console.log(`🔧 [DEBUG] 當前環境: ${import.meta.env.PROD ? '生產' : '開發'}`);
+      console.log(`🔧 [DEBUG] hostname: ${window.location.hostname}`);
+      
       // 檢查是否應該使用後端代理
       if (!shouldUseBackendProxy()) {
+        console.log(`🔧 [DEBUG] GitHub Pages 環境，使用 Yahoo Finance 優先策略`);
         logger.debug('dividend', `GitHub Pages 環境，使用 Yahoo Finance 優先策略獲取 ${symbol} 股息...`);
         
         // 🔧 遵循 api-standards.md：Yahoo Finance 優先，FinMind 備用
@@ -100,19 +121,27 @@ export class DividendApiService {
         
         // 檢查是否為債券 ETF
         const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+        console.log(`🔧 [DEBUG] ${symbol} isBondETF: ${isBondETF}`);
         
         if (isBondETF) {
+          console.log(`🔧 [DEBUG] ${symbol} 被識別為債券 ETF`);
           logger.debug('dividend', `${symbol} 是債券 ETF，優先使用 Yahoo Finance`);
           // 債券 ETF 建議手動管理，因為 API 資料可能不完整
           logger.info('dividend', `債券 ETF ${symbol} 建議使用手動股息管理功能`);
         } else {
+          console.log(`🔧 [DEBUG] ${symbol} 被識別為一般股票，準備調用 FinMind API`);
           logger.debug('dividend', `${symbol} 是一般股票，使用 FinMind 備用`);
           // 一般股票使用 FinMind API
           const finMindProvider = new FinMindAPIProvider();
           try {
+            console.log(`🔧 [DEBUG] 開始調用 finMindProvider.getDividendData(${symbol})`);
+            console.log(`🔧 [DEBUG] FinMind Token 存在: ${!!FINMIND_CONFIG.getToken()}`);
+            console.log(`🔧 [DEBUG] FinMind Token 長度: ${FINMIND_CONFIG.getToken().length}`);
             const dividendData = await finMindProvider.getDividendData(symbol);
+            console.log(`🔧 [DEBUG] FinMind API 回應:`, dividendData);
             
             if (dividendData && dividendData.length > 0) {
+              console.log(`🔧 [DEBUG] FinMind API 成功獲取 ${symbol} 股息，記錄數: ${dividendData.length}`);
               logger.info('dividend', `FinMind API 成功獲取 ${symbol} 股息`, { count: dividendData.length });
               return dividendData.map(item => ({
                 symbol: symbol,
@@ -121,8 +150,11 @@ export class DividendApiService {
                 stockDividendRatio: item.stockDividendRatio,
                 source: 'FinMind (備用)'
               }));
+            } else {
+              console.log(`🔧 [DEBUG] FinMind API 返回空資料或 null`);
             }
           } catch (error) {
+            console.log(`🔧 [DEBUG] FinMind API 調用失敗:`, error);
             logger.warn('dividend', `FinMind API 獲取 ${symbol} 股息失敗`, error);
             // 如果是 402 錯誤，記錄但不影響功能
             if (error instanceof Error && error.message.includes('402')) {
