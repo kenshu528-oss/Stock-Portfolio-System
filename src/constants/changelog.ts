@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0279',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【API CORS 修復】修復 Yahoo Finance API 直接調用被 CORS 阻擋的問題',
+    description: '分析發現右上角更新功能失效的根因：Yahoo Finance API 的 CORS 政策變更，直接調用被阻擋。修復方案：統一 yahooFinanceAPI.ts 在生產環境使用 AllOrigins 代理服務，確保搜尋個股和右上角更新功能都使用相同的代理策略。',
+    changes: [
+      '修復 yahooFinanceAPI.ts 的 CORS 問題',
+      '生產環境統一使用 AllOrigins 代理服務',
+      '開發環境保持使用後端代理',
+      '修改 fetchStockData 方法支援代理調用',
+      '統一搜尋和更新功能的 API 調用策略',
+      '保持向後相容性和錯誤處理'
+    ],
+    fixes: [
+      '修復右上角更新功能的 CORS 錯誤',
+      '修復所有 Yahoo Finance 直接調用問題',
+      '確保股價獲取和除權息更新正常運作',
+      '統一不同功能的 API 調用方式'
+    ]
+  },
+  {
     version: '1.0.2.0278',
     date: '2026-01-23',
     type: 'patch',

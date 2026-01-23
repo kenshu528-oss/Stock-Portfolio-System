@@ -18,7 +18,8 @@ import { APIProvider, APIProviderPriority, APIProviderStatus, APICallResult } fr
 const YAHOO_CONFIG = {
   baseUrl: process.env.NODE_ENV === 'development' 
     ? '/api/yahoo/v8/finance/chart'  // 開發環境使用代理
-    : 'https://query1.finance.yahoo.com/v8/finance/chart',  // 生產環境直接調用
+    : 'https://api.allorigins.win/get',  // 🔧 生產環境使用 AllOrigins 代理
+  directUrl: 'https://query1.finance.yahoo.com/v8/finance/chart', // 直接調用的 URL
   timeout: 10000,
   maxRetries: 3,
   retryDelay: 1000,
@@ -238,21 +239,36 @@ export class YahooFinanceAPIProvider implements APIProvider {
       // 速率限制
       await this.rateLimitDelay();
       
-      const url = `${YAHOO_CONFIG.baseUrl}/${yahooSymbol}`;
+      let url: string;
+      let response: Response;
       const startTime = Date.now();
       
-      logger.trace('api', `Yahoo Finance 請求: ${url}`);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': YAHOO_CONFIG.userAgent,
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Cache-Control': 'no-cache'
-        },
-        signal: AbortSignal.timeout(this.timeout)
-      });
+      if (process.env.NODE_ENV === 'development') {
+        // 開發環境：使用後端代理
+        url = `${YAHOO_CONFIG.baseUrl}/${yahooSymbol}`;
+        logger.trace('api', `Yahoo Finance 請求 (開發環境): ${url}`);
+        
+        response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': YAHOO_CONFIG.userAgent,
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache'
+          },
+          signal: AbortSignal.timeout(this.timeout)
+        });
+      } else {
+        // 生產環境：使用 AllOrigins 代理
+        const directUrl = `${YAHOO_CONFIG.directUrl}/${yahooSymbol}`;
+        url = `${YAHOO_CONFIG.baseUrl}?url=${encodeURIComponent(directUrl)}`;
+        logger.trace('api', `Yahoo Finance 請求 (代理): ${url}`);
+        
+        response = await fetch(url, {
+          method: 'GET',
+          signal: AbortSignal.timeout(this.timeout)
+        });
+      }
       
       const duration = Date.now() - startTime;
       this.requestCount++;
@@ -266,7 +282,16 @@ export class YahooFinanceAPIProvider implements APIProvider {
         );
       }
       
-      const data: YahooFinanceResponse = await response.json();
+      let data: YahooFinanceResponse;
+      
+      if (process.env.NODE_ENV === 'development') {
+        // 開發環境：直接解析 JSON
+        data = await response.json();
+      } else {
+        // 生產環境：解析代理回應
+        const proxyData = await response.json();
+        data = JSON.parse(proxyData.contents);
+      }
       
       logger.trace('api', `Yahoo Finance 回應: ${yahooSymbol}`, {
         duration: `${duration}ms`,
