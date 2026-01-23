@@ -18,8 +18,14 @@ import { APIProvider, APIProviderPriority, APIProviderStatus, APICallResult } fr
 const YAHOO_CONFIG = {
   baseUrl: process.env.NODE_ENV === 'development' 
     ? '/api/yahoo/v8/finance/chart'  // 開發環境使用代理
-    : 'https://api.allorigins.win/get',  // 🔧 生產環境使用 AllOrigins 代理
+    : 'https://cors-anywhere.herokuapp.com',  // 🔧 生產環境使用 CORS Anywhere 代理
   directUrl: 'https://query1.finance.yahoo.com/v8/finance/chart', // 直接調用的 URL
+  // 🔧 備用代理服務列表
+  proxyServices: [
+    'https://cors-anywhere.herokuapp.com',
+    'https://api.allorigins.win/get',
+    'https://thingproxy.freeboard.io/fetch'
+  ],
   timeout: 10000,
   maxRetries: 3,
   retryDelay: 1000,
@@ -259,15 +265,50 @@ export class YahooFinanceAPIProvider implements APIProvider {
           signal: AbortSignal.timeout(this.timeout)
         });
       } else {
-        // 生產環境：使用 AllOrigins 代理
-        const directUrl = `${YAHOO_CONFIG.directUrl}/${yahooSymbol}`;
-        url = `${YAHOO_CONFIG.baseUrl}?url=${encodeURIComponent(directUrl)}`;
-        logger.trace('api', `Yahoo Finance 請求 (代理): ${url}`);
+        // 生產環境：嘗試多個代理服務
+        let lastError: Error | null = null;
         
-        response = await fetch(url, {
-          method: 'GET',
-          signal: AbortSignal.timeout(this.timeout)
-        });
+        for (const proxyService of YAHOO_CONFIG.proxyServices) {
+          try {
+            const directUrl = `${YAHOO_CONFIG.directUrl}/${yahooSymbol}`;
+            
+            if (proxyService.includes('allorigins.win')) {
+              // AllOrigins 格式
+              url = `${proxyService}?url=${encodeURIComponent(directUrl)}`;
+            } else if (proxyService.includes('cors-anywhere')) {
+              // CORS Anywhere 格式
+              url = `${proxyService}/${directUrl}`;
+            } else if (proxyService.includes('thingproxy')) {
+              // ThingProxy 格式
+              url = `${proxyService}/${directUrl}`;
+            } else {
+              // 預設格式
+              url = `${proxyService}?url=${encodeURIComponent(directUrl)}`;
+            }
+            
+            logger.trace('api', `Yahoo Finance 請求 (代理 ${proxyService}): ${url}`);
+            
+            response = await fetch(url, {
+              method: 'GET',
+              signal: AbortSignal.timeout(this.timeout)
+            });
+            
+            if (response.ok) {
+              break; // 成功，跳出循環
+            } else {
+              throw new Error(`HTTP ${response.status}`);
+            }
+          } catch (proxyError) {
+            lastError = proxyError instanceof Error ? proxyError : new Error(String(proxyError));
+            logger.warn('api', `代理 ${proxyService} 失敗: ${lastError.message}`);
+            continue; // 嘗試下一個代理
+          }
+        }
+        
+        // 如果所有代理都失敗
+        if (!response || !response.ok) {
+          throw lastError || new Error('所有代理服務都失敗');
+        }
       }
       
       const duration = Date.now() - startTime;
@@ -288,9 +329,21 @@ export class YahooFinanceAPIProvider implements APIProvider {
         // 開發環境：直接解析 JSON
         data = await response.json();
       } else {
-        // 生產環境：解析代理回應
-        const proxyData = await response.json();
-        data = JSON.parse(proxyData.contents);
+        // 生產環境：根據代理類型解析回應
+        const responseText = await response.text();
+        
+        try {
+          // 嘗試直接解析 JSON（適用於 CORS Anywhere 和 ThingProxy）
+          data = JSON.parse(responseText);
+        } catch {
+          // 如果失敗，嘗試 AllOrigins 格式
+          try {
+            const proxyData = JSON.parse(responseText);
+            data = JSON.parse(proxyData.contents);
+          } catch {
+            throw new Error('無法解析代理回應');
+          }
+        }
       }
       
       logger.trace('api', `Yahoo Finance 回應: ${yahooSymbol}`, {

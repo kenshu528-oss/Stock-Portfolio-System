@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0280',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【多重代理備援】實作多個代理服務備援機制',
+    description: '發現 AllOrigins 代理服務也出現 CORS 問題和 500 錯誤。實作多重代理備援機制：當一個代理失敗時自動嘗試下一個，包括 CORS Anywhere、AllOrigins、ThingProxy 等服務，提高雲端環境的穩定性。',
+    changes: [
+      '新增多個代理服務選項',
+      '實作代理服務自動切換機制',
+      '支援不同代理服務的回應格式',
+      '保持本機端後端代理不變',
+      '增強錯誤處理和日誌記錄',
+      '提高雲端環境 API 調用成功率'
+    ],
+    fixes: [
+      '修復 AllOrigins 代理服務失效問題',
+      '修復雲端環境 API 超時和 CORS 錯誤',
+      '提供多重備援確保服務穩定性',
+      '保持本機端開發環境正常運作'
+    ]
+  },
+  {
     version: '1.0.2.0279',
     date: '2026-01-23',
     type: 'patch',

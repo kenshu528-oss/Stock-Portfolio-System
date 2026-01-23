@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 279, // 【API CORS 修復】修復 Yahoo Finance API 直接調用被 CORS 阻擋的問題，統一使用代理服務
+  PATCH: 280, // 【多重代理備援】實作多個代理服務備援機制，解決 AllOrigins 服務失效問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
