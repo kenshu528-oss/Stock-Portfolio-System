@@ -80,16 +80,28 @@ class CloudStockPriceService {
         fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
-        name: 'FinMind Direct',
+        name: 'Yahoo Finance (CORS Anywhere)',
         priority: 2,
+        timeout: 5000,
+        fetcher: this.fetchFromYahooCorsAnywhere.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (ThingProxy)',
+        priority: 3,
+        timeout: 5000,
+        fetcher: this.fetchFromYahooThingProxy.bind(this)
+      },
+      {
+        name: 'FinMind Direct',
+        priority: 4,
         timeout: 8000,
         fetcher: this.fetchFromFinMindDirect.bind(this)
       },
       {
-        name: 'Yahoo Finance (Backup)',
-        priority: 3,
+        name: 'Yahoo Finance (JSONProxy)',
+        priority: 5,
         timeout: 3000,
-        fetcher: this.fetchFromYahooBackup.bind(this)
+        fetcher: this.fetchFromYahooJSONProxy.bind(this)
       }
     ];
   }
@@ -169,12 +181,97 @@ class CloudStockPriceService {
   }
 
   /**
-   * Yahoo Finance 備用方案（其他代理）
+   * Yahoo Finance 通過 CORS Anywhere 代理
    */
-  private async fetchFromYahooBackup(symbol: string): Promise<StockPrice | null> {
-    // 可以在這裡實作其他 CORS 代理或備用方案
-    // 目前先返回 null，表示不可用
-    return null;
+  private async fetchFromYahooCorsAnywhere(symbol: string): Promise<StockPrice | null> {
+    const yahooSymbol = this.getYahooSymbol(symbol);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+    const proxyUrl = `https://cors-anywhere.herokuapp.com/${yahooUrl}`;
+
+    const response = await fetch(proxyUrl, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const yahooData = await response.json();
+    
+    const result = yahooData?.chart?.result?.[0];
+    if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+
+    const currentPrice = result.meta.regularMarketPrice || 0;
+    const previousClose = result.meta.previousClose || 0;
+    const change = currentPrice - previousClose;
+    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+    return {
+      price: currentPrice,
+      change,
+      changePercent,
+      source: 'Yahoo Finance (CORS Anywhere)',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Yahoo Finance 通過 ThingProxy 代理
+   */
+  private async fetchFromYahooThingProxy(symbol: string): Promise<StockPrice | null> {
+    const yahooSymbol = this.getYahooSymbol(symbol);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+    const proxyUrl = `https://thingproxy.freeboard.io/fetch/${yahooUrl}`;
+
+    const response = await fetch(proxyUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const yahooData = await response.json();
+    
+    const result = yahooData?.chart?.result?.[0];
+    if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+
+    const currentPrice = result.meta.regularMarketPrice || 0;
+    const previousClose = result.meta.previousClose || 0;
+    const change = currentPrice - previousClose;
+    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+    return {
+      price: currentPrice,
+      change,
+      changePercent,
+      source: 'Yahoo Finance (ThingProxy)',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Yahoo Finance 通過 JSONProxy 代理
+   */
+  private async fetchFromYahooJSONProxy(symbol: string): Promise<StockPrice | null> {
+    const yahooSymbol = this.getYahooSymbol(symbol);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+    const proxyUrl = `https://jsonp.afeld.me/?url=${encodeURIComponent(yahooUrl)}`;
+
+    const response = await fetch(proxyUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const yahooData = await response.json();
+    
+    const result = yahooData?.chart?.result?.[0];
+    if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+
+    const currentPrice = result.meta.regularMarketPrice || 0;
+    const previousClose = result.meta.previousClose || 0;
+    const change = currentPrice - previousClose;
+    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+    return {
+      price: currentPrice,
+      change,
+      changePercent,
+      source: 'Yahoo Finance (JSONProxy)',
+      timestamp: new Date().toISOString()
+    };
   }
 
   /**

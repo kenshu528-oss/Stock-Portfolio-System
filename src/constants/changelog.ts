@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0283',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【多重代理備援】增強 Yahoo Finance 股價獲取穩定性',
+    description: '針對部分股票透過 AllOrigins 代理失敗的問題，新增多個代理服務備援：CORS Anywhere、ThingProxy、JSONProxy。現在系統會依序嘗試 5 個不同的代理服務，大幅提高股價獲取成功率。',
+    changes: [
+      '新增 Yahoo Finance (CORS Anywhere) 代理服務',
+      '新增 Yahoo Finance (ThingProxy) 代理服務', 
+      '新增 Yahoo Finance (JSONProxy) 代理服務',
+      '優化代理服務優先順序：AllOrigins → CORS Anywhere → ThingProxy → FinMind → JSONProxy',
+      '每個代理服務都有獨立的超時設定和錯誤處理'
+    ],
+    fixes: [
+      '修復部分股票（如 4585、6188）Yahoo Finance 代理失敗問題',
+      '提高雲端環境股價獲取成功率',
+      '減少因單一代理服務不穩定導致的股價獲取失敗'
+    ]
+  },
+  {
     version: '1.0.2.0282',
     date: '2026-01-23',
     type: 'patch',

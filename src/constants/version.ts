@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 282, // 【雲端股價修復】統一右上角更新與搜尋個股使用相同的 cloudStockPriceService，修復雲端環境跳閃問題
+  PATCH: 283, // 【多重代理備援】增加 CORS Anywhere、ThingProxy、JSONProxy 等多個代理服務，提高 Yahoo Finance 股價獲取成功率
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
