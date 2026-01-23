@@ -18,13 +18,12 @@ import { APIProvider, APIProviderPriority, APIProviderStatus, APICallResult } fr
 const YAHOO_CONFIG = {
   baseUrl: process.env.NODE_ENV === 'development' 
     ? '/api/yahoo/v8/finance/chart'  // 開發環境使用代理
-    : 'https://cors-anywhere.herokuapp.com',  // 🔧 生產環境使用 CORS Anywhere 代理
+    : 'https://api.codetabs.com/v1/proxy',  // 🔧 生產環境使用 Proxy API
   directUrl: 'https://query1.finance.yahoo.com/v8/finance/chart', // 直接調用的 URL
   // 🔧 備用代理服務列表
   proxyServices: [
-    'https://cors-anywhere.herokuapp.com',
-    'https://api.allorigins.win/get',
-    'https://thingproxy.freeboard.io/fetch'
+    'https://api.codetabs.com/v1/proxy',
+    'https://cors-proxy.htmldriven.com'
   ],
   timeout: 10000,
   maxRetries: 3,
@@ -272,15 +271,12 @@ export class YahooFinanceAPIProvider implements APIProvider {
           try {
             const directUrl = `${YAHOO_CONFIG.directUrl}/${yahooSymbol}`;
             
-            if (proxyService.includes('allorigins.win')) {
-              // AllOrigins 格式
-              url = `${proxyService}?url=${encodeURIComponent(directUrl)}`;
-            } else if (proxyService.includes('cors-anywhere')) {
-              // CORS Anywhere 格式
-              url = `${proxyService}/${directUrl}`;
-            } else if (proxyService.includes('thingproxy')) {
-              // ThingProxy 格式
-              url = `${proxyService}/${directUrl}`;
+            if (proxyService.includes('codetabs.com')) {
+              // Codetabs Proxy API 格式
+              url = `${proxyService}?quest=${encodeURIComponent(directUrl)}`;
+            } else if (proxyService.includes('htmldriven.com')) {
+              // HTML Driven CORS Proxy 格式
+              url = `${proxyService}/?url=${encodeURIComponent(directUrl)}`;
             } else {
               // 預設格式
               url = `${proxyService}?url=${encodeURIComponent(directUrl)}`;
@@ -333,16 +329,15 @@ export class YahooFinanceAPIProvider implements APIProvider {
         const responseText = await response.text();
         
         try {
-          // 嘗試直接解析 JSON（適用於 CORS Anywhere 和 ThingProxy）
+          // 嘗試直接解析 JSON（適用於大多數代理服務）
           data = JSON.parse(responseText);
-        } catch {
-          // 如果失敗，嘗試 AllOrigins 格式
-          try {
-            const proxyData = JSON.parse(responseText);
-            data = JSON.parse(proxyData.contents);
-          } catch {
-            throw new Error('無法解析代理回應');
+          
+          // 檢查是否是 HTML Driven 代理的格式
+          if (data.body && typeof data.body === 'string') {
+            data = JSON.parse(data.body);
           }
+        } catch {
+          throw new Error('無法解析代理回應');
         }
       }
       

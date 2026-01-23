@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 284, // 【代理服務優化】移除不可用的代理服務（CORS Anywhere、ThingProxy），替換為更穩定的 Proxy API 和 Heroku Proxy
+  PATCH: 285, // 【徹底清理舊代理】修復 yahooFinanceAPI.ts 中殘留的舊代理服務配置，完全移除 CORS Anywhere、AllOrigins、ThingProxy
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

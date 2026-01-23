@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0285',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【徹底清理舊代理】修復 yahooFinanceAPI.ts 中的殘留配置',
+    description: '發現 Console 中仍有 CORS Anywhere 403 錯誤和 AllOrigins CORS 錯誤，追查發現 yahooFinanceAPI.ts 中還有舊的代理服務配置。徹底清理所有舊代理服務，統一使用新的穩定代理。',
+    changes: [
+      '修復 yahooFinanceAPI.ts 中的 YAHOO_CONFIG 配置',
+      '移除 CORS Anywhere、AllOrigins、ThingProxy 配置',
+      '統一使用 Codetabs Proxy API 和 HTML Driven CORS Proxy',
+      '更新代理服務處理邏輯和響應解析邏輯',
+      '確保所有股價服務使用相同的穩定代理'
+    ],
+    fixes: [
+      '徹底修復 CORS Anywhere 403 錯誤',
+      '徹底修復 AllOrigins CORS 錯誤',
+      '消除 Console 中的代理服務錯誤',
+      '統一所有股價服務的代理配置'
+    ]
+  },
+  {
     version: '1.0.2.0284',
     date: '2026-01-23',
     type: 'patch',
