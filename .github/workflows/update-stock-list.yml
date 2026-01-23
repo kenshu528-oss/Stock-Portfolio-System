@@ -2,8 +2,8 @@ name: Update Stock List
 
 on:
   schedule:
-    # 每日台灣時間 8:00 執行（UTC 0:00）
-    - cron: '0 0 * * *'
+    # 每日台灣時間 9:00 執行（UTC 1:00）
+    - cron: '0 1 * * *'
   workflow_dispatch: # 允許手動觸發
 
 jobs:
@@ -30,28 +30,35 @@ jobs:
         # 檢查環境變數
         if [ -z "$FINMIND_TOKEN" ]; then
           echo "❌ 找不到 FINMIND_TOKEN 環境變數"
-          exit 1
+          echo "使用腳本內建的 Token"
+        else
+          echo "✅ FINMIND_TOKEN 環境變數已設定"
         fi
         
-        echo "✅ FINMIND_TOKEN 環境變數已設定"
+        # 執行股票清單抓取腳本（強制更新）
+        python backend/fetch_stock_list.py --force
         
-        # 執行股票清單抓取腳本
-        python backend/fetch_stock_list.py
-        
-    - name: Copy to public directory
+    - name: Check and copy stock list
       run: |
         mkdir -p public
-        # 複製今日的股票清單到 public 目錄
         TODAY=$(date +%Y-%m-%d)
+        
+        echo "🔍 檢查今日股票清單檔案..."
+        ls -la stock_list_*.json || echo "沒有找到股票清單檔案"
+        
+        # 尋找今日的股票清單檔案
         if [ -f "stock_list_$TODAY.json" ]; then
           cp "stock_list_$TODAY.json" public/stock_list.json
-          echo "✅ 股票清單已複製到 public/stock_list.json"
+          cp "stock_list_$TODAY.json" "public/stock_list_$TODAY.json"
+          echo "✅ 股票清單已複製: stock_list_$TODAY.json"
           
           # 顯示統計資訊
           STOCK_COUNT=$(jq '.count' public/stock_list.json)
           echo "📊 股票總數: $STOCK_COUNT"
         else
           echo "❌ 找不到今日股票清單: stock_list_$TODAY.json"
+          echo "📋 可用的檔案:"
+          ls -la stock_list_*.json || echo "沒有股票清單檔案"
           exit 1
         fi
         
@@ -59,13 +66,17 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add public/stock_list.json
+        
+        # 添加所有股票清單相關檔案
+        git add public/stock_list*.json
+        git add stock_list_*.json
         
         # 檢查是否有變更
         if git diff --staged --quiet; then
           echo "📝 股票清單無變更，跳過提交"
         else
-          git commit -m "🤖 自動更新股票清單 $(date +%Y-%m-%d)"
+          TODAY=$(date +%Y-%m-%d)
+          git commit -m "🤖 自動更新股票清單 $TODAY"
           git push
           echo "✅ 股票清單已更新並推送到倉庫"
         fi
