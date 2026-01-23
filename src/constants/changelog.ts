@@ -12,6 +12,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0267',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【雲端搜尋修復】修復 GitHub Pages 環境個股搜尋功能，解決雲端無後端問題',
+    description: '修復 GitHub Pages 雲端環境下個股搜尋功能無法使用的問題。根本原因：雲端環境沒有後端服務，但搜尋邏輯依賴後端 API。修復：添加本地股票清單搜尋功能，使用 public/stock_list.json (4050支股票) 作為搜尋資料來源，同時優化股票清單更新服務的雲端環境邏輯。',
+    changes: [
+      '修復 QuickAddStock.tsx：添加本地股票清單搜尋功能',
+      '支援股票代碼精確匹配、開頭匹配和名稱包含匹配',
+      '雲端環境下載入 /public/stock_list.json 作為搜尋資料來源',
+      '修復 stockListUpdateService.ts：優化雲端環境邏輯',
+      '雲端環境下跳過後端更新，依賴 GitHub Actions 自動更新',
+      '檢查本地股票清單檔案日期而非後端 API',
+      '消除雲端環境下的無意義警告訊息'
+    ],
+    fixes: [
+      '修復雲端環境個股搜尋返回空結果的問題',
+      '修復股票清單背景更新失敗警告',
+      '修復雲端環境下無法參照 Stock List 的問題',
+      '優化 Console 日誌，減少無效錯誤訊息'
+    ]
+  },
+  {
     version: '1.0.2.0266',
     date: '2026-01-23',
     type: 'patch',
