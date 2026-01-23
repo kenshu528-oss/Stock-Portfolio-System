@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0264',
+    date: '2026-01-23',
+    type: 'feature',
+    title: '【股票清單自動更新機制】建立智能檢查系統，應用啟動時自動檢測並更新股票清單',
+    description: '實作完整的股票清單自動更新機制。應用啟動時會檢查當前股票清單是否為今日版本，如果不是則自動觸發更新流程。包含前端檢查服務、後端 API 支援、用戶通知系統和手動更新指引。確保用戶始終使用最新的股票清單進行搜尋，提升搜尋準確性和用戶體驗。',
+    changes: [
+      '新增 stockListUpdateService 股票清單更新服務',
+      '實作應用啟動時自動檢查股票清單日期',
+      '添加後端 /api/update-stock-list 更新 API 端點',
+      '實作 Python 腳本自動執行機制',
+      '添加用戶友好的更新通知系統',
+      '集成到 App.tsx 主應用初始化流程',
+      '支援本機環境自動更新和手動更新指引'
+    ],
+    impact: 'high',
+    breaking: false,
+    migration: null
+  },
+  {
     version: '1.0.2.0263',
     date: '2026-01-23',
     type: 'hotfix',

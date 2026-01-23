@@ -1163,6 +1163,40 @@ app.get('/api/dividend/:symbol', async (req, res) => {
   }
 });
 
+// 獲取當前載入的股票清單日期
+function getStockListDate() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const rootDir = path.join(__dirname, '..');
+    
+    // 檢查今日檔案
+    const todayFilename = `stock_list_${today}.json`;
+    const todayFilePath = path.join(rootDir, todayFilename);
+    
+    if (fs.existsSync(todayFilePath)) {
+      return today;
+    }
+    
+    // 尋找最新的股票清單檔案
+    const files = fs.readdirSync(rootDir);
+    const stockListFiles = files
+      .filter(file => file.startsWith('stock_list_') && file.endsWith('.json'))
+      .sort()
+      .reverse();
+    
+    if (stockListFiles.length > 0) {
+      const latestFile = stockListFiles[0];
+      const dateMatch = latestFile.match(/stock_list_(\d{4}-\d{2}-\d{2})\.json/);
+      return dateMatch ? dateMatch[1] : null;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('獲取股票清單日期失敗:', error);
+    return null;
+  }
+}
+
 // 載入本地股票清單的函數 - 改善版：支援備援機制
 function loadTodayStockList() {
   try {
@@ -1477,6 +1511,13 @@ app.get('/api/stock-search', async (req, res) => {
     
     // 1. 載入今日股票清單（改善版：支援備援）
     const stockList = loadTodayStockList();
+    
+    // 🔧 添加股票清單日期到響應頭
+    const today = new Date().toISOString().split('T')[0];
+    const stockListDate = getStockListDate();
+    res.set('X-Stock-List-Date', stockListDate || 'unknown');
+    res.set('X-Stock-List-Is-Today', stockListDate === today ? 'true' : 'false');
+    
     if (!stockList) {
       console.log(`❌ [Backend-${requestId}] 無法載入股票清單，嘗試 API 直接搜尋...`);
       
@@ -1563,6 +1604,120 @@ app.get('/api/stock-search', async (req, res) => {
     res.status(500).json({
       error: 'Search failed',
       message: '搜尋失敗'
+    });
+  }
+});
+
+// API路由：觸發股票清單更新
+app.post('/api/update-stock-list', async (req, res) => {
+  try {
+    console.log('🔄 收到股票清單更新請求');
+    
+    // 檢查是否為本機環境
+    const isLocalhost = req.hostname === 'localhost' || req.hostname === '127.0.0.1';
+    
+    if (!isLocalhost) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: '股票清單更新僅限本機環境'
+      });
+    }
+    
+    // 檢查今日檔案是否已存在
+    const today = new Date().toISOString().split('T')[0];
+    const todayFilename = `stock_list_${today}.json`;
+    const todayFilePath = path.join(__dirname, '..', todayFilename);
+    
+    if (fs.existsSync(todayFilePath)) {
+      console.log(`✅ 今日股票清單已存在: ${todayFilename}`);
+      return res.json({
+        success: true,
+        message: '今日股票清單已是最新版本',
+        date: today,
+        filename: todayFilename
+      });
+    }
+    
+    // 嘗試執行 Python 腳本更新股票清單
+    console.log('🐍 執行 Python 股票清單更新腳本...');
+    
+    const { spawn } = require('child_process');
+    const pythonProcess = spawn('python', ['fetch_stock_list.py'], {
+      cwd: path.join(__dirname),
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+    
+    let output = '';
+    let errorOutput = '';
+    
+    pythonProcess.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+    
+    pythonProcess.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+    
+    pythonProcess.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Python 腳本執行成功');
+        console.log('輸出:', output);
+        
+        // 檢查檔案是否成功創建
+        if (fs.existsSync(todayFilePath)) {
+          res.json({
+            success: true,
+            message: '股票清單更新成功',
+            date: today,
+            filename: todayFilename,
+            output: output
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: '腳本執行成功但檔案未創建',
+            output: output,
+            error: errorOutput
+          });
+        }
+      } else {
+        console.error('❌ Python 腳本執行失敗');
+        console.error('錯誤輸出:', errorOutput);
+        
+        res.status(500).json({
+          success: false,
+          message: 'Python 腳本執行失敗',
+          code: code,
+          output: output,
+          error: errorOutput,
+          suggestions: [
+            '檢查 Python 是否正確安裝',
+            '檢查 FinMind 套件是否安裝',
+            '檢查網路連線',
+            '檢查 FinMind Token 是否有效'
+          ]
+        });
+      }
+    });
+    
+    // 設定超時（30秒）
+    setTimeout(() => {
+      pythonProcess.kill();
+      if (!res.headersSent) {
+        res.status(408).json({
+          success: false,
+          message: '股票清單更新超時',
+          timeout: 30000
+        });
+      }
+    }, 30000);
+    
+  } catch (error) {
+    console.error('❌ 股票清單更新API錯誤:', error);
+    res.status(500).json({
+      success: false,
+      message: '股票清單更新失敗',
+      error: error.message
     });
   }
 });

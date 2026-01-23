@@ -8,6 +8,7 @@ import StockList from './components/StockList';
 import PortfolioStats from './components/PortfolioStats';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ServerStatusPanel } from './components/ServerStatusPanel';
+import { stockListUpdateService } from './services/stockListUpdateService';
 import { CloudSyncSettings } from './components/CloudSyncSettings';
 import { InitialSetup } from './components/InitialSetup';
 import { addOperationLog } from './components/OperationLog';
@@ -355,12 +356,31 @@ function App() {
     // 檢查是否需要顯示初始設定
     checkInitialSetup();
     
+    // 🔧 初始化股票清單更新服務並檢查
+    initializeStockListService();
+    
     // 🚫 禁用股息自動載入，避免不必要的 404 錯誤和 Console 輸出
     // 用戶可以通過「更新除權息資料」按鈕手動更新
     // setTimeout(() => {
     //   loadDividendsForExistingStocks();
     // }, 3000);
   }, []);
+
+  // 🔧 初始化股票清單更新服務
+  const initializeStockListService = async () => {
+    try {
+      // 初始化服務
+      stockListUpdateService.init();
+      
+      // 立即檢查股票清單是否需要更新
+      await stockListUpdateService.checkAndUpdate();
+      
+      addOperationLog('info', '股票清單檢查完成');
+    } catch (error) {
+      console.error('初始化股票清單服務失敗:', error);
+      addOperationLog('warn', '股票清單檢查失敗，請手動更新');
+    }
+  };
 
   // 檢查初始設定
   const checkInitialSetup = () => {

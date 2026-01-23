@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 263, // 【搜尋功能徹底修復】修復前端競態條件導致的雙重搜尋問題，添加 AbortController 請求取消機制
+  PATCH: 264, // 【股票清單自動更新機制】建立 FLAG 檢查機制，開啟應用時自動檢查股票清單是否為當天日期，不是則觸發更新
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
