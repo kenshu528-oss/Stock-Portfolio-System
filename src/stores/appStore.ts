@@ -449,22 +449,44 @@ export const useAppStore = create<AppState & AppActions>()(
               try {
                 logger.debug('stock', `開始更新 ${stock.symbol} 股價和除權息`);
                 
-                // 1. 更新股價（添加超時處理）
-                const priceController = new AbortController();
-                const priceTimeout = setTimeout(() => priceController.abort(), 10000); // 10秒超時
+                // 1. 檢查是否有後端支援
+                const stockEndpoint = API_ENDPOINTS.getStock(stock.symbol);
+                let priceData = null;
                 
-                const priceResponse = await fetch(API_ENDPOINTS.getStock(stock.symbol), {
-                  signal: priceController.signal
-                });
-                clearTimeout(priceTimeout);
-                
-                if (priceResponse.ok) {
-                  const priceData = await priceResponse.json();
-                  
-                  // 2. 同時更新除權息資料（添加超時處理）
-                  // ⚠️ 關鍵：傳入 forceRecalculate: true，確保每次批量更新都強制重新計算
+                if (stockEndpoint) {
+                  // 有後端支援：使用後端 API
                   try {
-                    const dividendPromise = updateStockDividendData(stock, state, true); // 強制重新計算
+                    const priceController = new AbortController();
+                    const priceTimeout = setTimeout(() => priceController.abort(), 10000);
+                    
+                    const priceResponse = await fetch(stockEndpoint, {
+                      signal: priceController.signal
+                    });
+                    clearTimeout(priceTimeout);
+                    
+                    if (priceResponse.ok) {
+                      priceData = await priceResponse.json();
+                    }
+                  } catch (error) {
+                    logger.warn('stock', `${stock.symbol} 後端API失敗，嘗試直接獲取`, error.message);
+                  }
+                }
+                
+                // 2. 如果後端失敗或無後端支援，使用直接 API 調用
+                if (!priceData) {
+                  try {
+                    // 使用統一股價服務
+                    const { unifiedStockPriceService } = await import('../services/unifiedStockPriceService');
+                    priceData = await unifiedStockPriceService.getStockPrice(stock.symbol);
+                  } catch (error) {
+                    logger.warn('stock', `${stock.symbol} 統一服務失敗，跳過`, error.message);
+                  }
+                }
+                
+                if (priceData && priceData.price > 0) {
+                  // 3. 同時更新除權息資料
+                  try {
+                    const dividendPromise = updateStockDividendData(stock, state, true);
                     const dividendTimeout = new Promise((_, reject) => 
                       setTimeout(() => reject(new Error('除權息更新超時')), 15000)
                     );
@@ -475,20 +497,20 @@ export const useAppStore = create<AppState & AppActions>()(
                     logger.warn('dividend', `${stock.symbol} 除權息更新失敗，股價更新繼續`, dividendError.message);
                   }
                   
-                  // 3. 更新股價資料（強制觸發 React 重新渲染）
+                  // 4. 更新股價資料
                   state.updateStock(stock.id, {
                     currentPrice: priceData.price,
                     lastUpdated: new Date(),
-                    priceSource: priceData.source === 'Yahoo Finance' ? 'Yahoo' : priceData.source || 'Unknown'
+                    priceSource: priceData.source || 'API'
                   });
                   
-                  // 🔬 實驗：強制觸發狀態更新
+                  // 強制觸發狀態更新
                   set({ lastPriceUpdate: new Date() });
                   
                   logger.success('stock', `${stock.symbol} 更新成功: ${priceData.price}`);
                   successCount++;
                 } else {
-                  logger.warn('stock', `${stock.symbol} 股價更新失敗: ${priceResponse.status}`);
+                  logger.warn('stock', `${stock.symbol} 無法獲取股價資料`);
                   failCount++;
                 }
                 
