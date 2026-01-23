@@ -12,22 +12,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.0.2.0294',
+    version: '1.0.2.0295',
     date: '2026-01-23',
     type: 'patch',
-    title: '【股息修復】修復 GitHub Pages 環境股息獲取失敗',
-    description: '修復 dividendAutoService 在 GitHub Pages 環境下直接調用後端 API 導致 404 錯誤的問題。在 GitHub Pages 環境下改用 DividendApiService 直接調用 FinMind API。',
+    title: '【GitHub Pages 修復】修復 FinMind Token 缺失問題',
+    description: '修復 GitHub Pages 環境下 FinMind Token 無法讀取的問題。在 GitHub Actions 部署流程中添加環境變數，確保股息功能正常工作。',
     changes: [
-      '修復 dividendAutoService.ts：添加環境檢測',
-      '在 GitHub Pages 環境下使用 DividendApiService',
-      '保持開發環境使用後端 API 的邏輯',
-      '添加詳細的診斷日誌',
-      '確保股息自動計算功能在所有環境下正常工作'
+      '修復 .github/workflows/deploy.yml：添加 VITE_FINMIND_TOKEN 環境變數',
+      '確保 GitHub Pages 環境下能正確讀取 FinMind Token',
+      '修復股息獲取功能在生產環境下的問題'
     ],
     fixes: [
-      '修復 GitHub Pages 環境下股息獲取 404 錯誤',
-      '修復新增股票時 dividendCount 為 0 的問題',
-      '確保股息自動計算功能完全正常'
+      '修復 GitHub Pages 環境下 FinMind Token 長度為 0 的問題',
+      '修復股息自動計算功能在生產環境下失效',
+      '確保 dividendCount 不再是 0'
     ]
   },
   {

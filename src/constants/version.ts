@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 294, // 【股息修復】修復 dividendAutoService 在 GitHub Pages 環境下的 API 調用問題
+  PATCH: 295, // 【GitHub Pages 修復】添加 FinMind Token 到 GitHub Actions 部署流程
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
