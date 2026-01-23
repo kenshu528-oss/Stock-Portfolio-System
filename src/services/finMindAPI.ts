@@ -299,6 +299,65 @@ export class FinMindAPIProvider implements APIProvider {
   private formatDate(date: Date): string {
     return date.toISOString().split('T')[0];
   }
+
+  /**
+   * 獲取股息數據
+   * 
+   * @param symbol 股票代碼
+   * @returns 股息記錄陣列或 null
+   */
+  async getDividendData(symbol: string): Promise<any[] | null> {
+    try {
+      const url = new URL(FINMIND_CONFIG.baseUrl);
+      url.searchParams.set('dataset', 'TaiwanStockDividend');
+      url.searchParams.set('data_id', symbol);
+      
+      // 添加 Token 參數
+      const token = FINMIND_CONFIG.getToken();
+      if (token) {
+        url.searchParams.set('token', token);
+      }
+      
+      logger.trace('api', `FinMind 股息請求: ${symbol}`);
+      
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Stock-Portfolio-System/1.0'
+        },
+        signal: AbortSignal.timeout(this.timeout)
+      });
+      
+      if (!response.ok) {
+        if (response.status === 402) {
+          throw new Error('FinMind API 需要付費');
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data: FinMindResponse = await response.json();
+      
+      if (!data.data || data.data.length === 0) {
+        logger.debug('api', `FinMind 無 ${symbol} 股息資料`);
+        return null;
+      }
+      
+      // 轉換為標準格式
+      const dividendRecords = data.data.map((item: any) => ({
+        exDividendDate: item.CashExDividendTradingDate || item.StockExDividendTradingDate,
+        cashDividendPerShare: (item.CashEarningsDistribution || 0) + (item.CashStatutorySurplus || 0),
+        stockDividendRatio: ((item.StockEarningsDistribution || 0) + (item.StockStatutorySurplus || 0)) / 10 * 1000
+      })).filter((record: any) => record.exDividendDate);
+      
+      logger.success('api', `FinMind 成功獲取 ${symbol} 股息`, { count: dividendRecords.length });
+      return dividendRecords;
+      
+    } catch (error) {
+      logger.error('api', `FinMind 獲取 ${symbol} 股息失敗`, error);
+      return null;
+    }
+  }
 }
 
 // 創建單例實例

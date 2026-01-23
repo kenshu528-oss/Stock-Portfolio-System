@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0287',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【FinMind 股息修復】添加缺失的 getDividendData 方法',
+    description: 'Console 顯示 FinMind API 股息失敗，追查發現 FinMindAPIProvider 類別缺少 getDividendData 方法，但 dividendApiService.ts 在調用它。添加完整的股息數據獲取實作。',
+    changes: [
+      '為 FinMindAPIProvider 添加 getDividendData 方法',
+      '使用 TaiwanStockDividend 數據集獲取股息資料',
+      '支援現金股利和股票股利數據轉換',
+      '添加 Token 參數支援（與其他方法一致）',
+      '實作標準的錯誤處理和日誌記錄'
+    ],
+    fixes: [
+      '修復 FinMind API 股息獲取失敗問題',
+      '修復 Console 中的股息失敗警告',
+      '解決 dividendApiService.ts 調用不存在方法的錯誤',
+      '確保股息數據能正確獲取和轉換'
+    ]
+  },
+  {
     version: '1.0.2.0286',
     date: '2026-01-23',
     type: 'patch',
