@@ -1367,8 +1367,18 @@ async function searchStocksViaFinMindAPI(query) {
 function searchLocalStocks(query, stockList) {
   if (!stockList) return [];
   
+  console.log(`🔍 [searchLocalStocks] 開始本地搜尋: "${query}"`);
+  
   const queryUpper = query.toUpperCase().trim();
   const queryLower = query.toLowerCase().trim();
+  
+  console.log(`🔤 [searchLocalStocks] 查詢轉換: "${query}" → 大寫:"${queryUpper}" 小寫:"${queryLower}"`);
+  
+  // 檢查查詢是否包含字母
+  const queryHasLetter = /[A-Z]/.test(queryUpper);
+  const queryIsNumber = /^\d+$/.test(queryUpper);
+  
+  console.log(`🧮 [searchLocalStocks] 查詢分析: 包含字母=${queryHasLetter}, 純數字=${queryIsNumber}`);
   
   // 收集所有匹配的股票
   const allMatches = [];
@@ -1379,33 +1389,39 @@ function searchLocalStocks(query, stockList) {
     
     // 1. 精確匹配股票代碼（最高優先級，大小寫不敏感）
     if (symbolUpper === queryUpper) {
+      console.log(`✅ [searchLocalStocks] 精確匹配: ${symbol}`);
       allMatches.push({ symbol, info, priority: 1 });
     }
     // 2. 🔧 智能開頭匹配邏輯：
     // - 如果查詢包含字母，不進行開頭匹配（避免 00981a 匹配到 009810）
     // - 如果查詢是純數字，進行開頭匹配
     else if (symbolUpper.startsWith(queryUpper)) {
-      const queryHasLetter = /[A-Z]/.test(queryUpper);
-      const queryIsNumber = /^\d+$/.test(queryUpper);
-      
       if (queryIsNumber) {
         // 純數字查詢：進行開頭匹配
+        console.log(`📝 [searchLocalStocks] 純數字開頭匹配: ${symbol}`);
         allMatches.push({ symbol, info, priority: 2 });
       } else if (!queryHasLetter) {
         // 其他情況（不包含字母）：正常開頭匹配
+        console.log(`📝 [searchLocalStocks] 一般開頭匹配: ${symbol}`);
         allMatches.push({ symbol, info, priority: 2 });
+      } else {
+        // 包含字母的查詢不進行開頭匹配，只依賴精確匹配
+        console.log(`⚠️ [searchLocalStocks] 跳過包含字母的開頭匹配: ${symbol} (查詢: ${query})`);
       }
-      // 包含字母的查詢不進行開頭匹配，只依賴精確匹配
     }
     // 3. 中文名稱包含查詢字串（中等優先級）
     else if (nameLower.includes(queryLower) || info.name.includes(query)) {
+      console.log(`🏷️ [searchLocalStocks] 名稱匹配: ${symbol} - ${info.name}`);
       allMatches.push({ symbol, info, priority: 4 });
     }
     // 4. 股票代碼包含查詢字串（低優先級，但排除過短的查詢和過長的查詢）
     else if (query.length >= 3 && query.length < 5 && symbolUpper.includes(queryUpper)) {
+      console.log(`🔤 [searchLocalStocks] 代碼包含匹配: ${symbol}`);
       allMatches.push({ symbol, info, priority: 5 });
     }
   }
+
+  console.log(`📊 [searchLocalStocks] 總共找到 ${allMatches.length} 筆匹配`);
 
   // 按優先級和字母順序排序
   allMatches.sort((a, b) => {
@@ -1418,12 +1434,14 @@ function searchLocalStocks(query, stockList) {
   // 🔧 修復：如果有精確匹配，只返回精確匹配結果
   const exactMatches = allMatches.filter(match => match.priority === 1);
   if (exactMatches.length > 0) {
+    console.log(`🎯 [searchLocalStocks] 找到精確匹配，只返回精確匹配結果: ${exactMatches.length} 筆`);
     const results = exactMatches.map(match => ({
       symbol: match.symbol,
       name: match.info.name,
       industry: match.info.industry,
       market: match.info.market
     }));
+    console.log(`📋 [searchLocalStocks] 精確匹配結果:`, results.map(r => r.symbol));
     return results;
   }
 
@@ -1438,34 +1456,39 @@ function searchLocalStocks(query, stockList) {
     });
   }
   
+  console.log(`📋 [searchLocalStocks] 最終返回 ${results.length} 筆結果:`, results.map(r => r.symbol));
   return results;
 }
 
 // API路由：股票搜尋 - 本地匹配 + Yahoo Finance 股價
 app.get('/api/stock-search', async (req, res) => {
+  const requestId = Math.random().toString(36).substr(2, 9);
+  console.log(`🔍 [Backend-${requestId}] 收到搜尋請求`);
+  
   try {
     const { query } = req.query;
     
     if (!query || query.length < 2) {
+      console.log(`🔍 [Backend-${requestId}] 搜尋查詢太短，返回空結果: "${query}"`);
       return res.json([]);
     }
     
-    console.log(`🔍 股票搜尋: "${query}" - 本地匹配 + Yahoo Finance 股價`);
+    console.log(`🔍 [Backend-${requestId}] 股票搜尋開始: "${query}" - 本地匹配 + Yahoo Finance 股價`);
     
     // 1. 載入今日股票清單（改善版：支援備援）
     const stockList = loadTodayStockList();
     if (!stockList) {
-      console.log(`❌ 無法載入股票清單，嘗試 API 直接搜尋...`);
+      console.log(`❌ [Backend-${requestId}] 無法載入股票清單，嘗試 API 直接搜尋...`);
       
       // 🔧 降級策略：使用 FinMind API 直接搜尋
       try {
         const finmindResults = await searchStocksViaFinMindAPI(query);
         if (finmindResults.length > 0) {
-          console.log(`✅ FinMind API 直接搜尋成功: ${finmindResults.length} 筆結果`);
+          console.log(`✅ [Backend-${requestId}] FinMind API 直接搜尋成功: ${finmindResults.length} 筆結果`);
           return res.json(finmindResults);
         }
       } catch (apiError) {
-        console.log(`❌ FinMind API 搜尋也失敗: ${apiError.message}`);
+        console.log(`❌ [Backend-${requestId}] FinMind API 搜尋也失敗: ${apiError.message}`);
       }
       
       return res.status(503).json({
@@ -1480,11 +1503,15 @@ app.get('/api/stock-search', async (req, res) => {
       });
     }
     
+    console.log(`📊 [Backend-${requestId}] 股票清單載入成功，共 ${Object.keys(stockList).length} 支股票`);
+    
     // 2. 本地搜尋匹配的股票
     const matchedStocks = searchLocalStocks(query, stockList);
-    console.log(`✅ 本地匹配找到 ${matchedStocks.length} 支股票`);
+    console.log(`✅ [Backend-${requestId}] 本地匹配找到 ${matchedStocks.length} 支股票`);
+    console.log(`📋 [Backend-${requestId}] 匹配的股票:`, matchedStocks.map(s => s.symbol));
     
     if (matchedStocks.length === 0) {
+      console.log(`❌ [Backend-${requestId}] 沒有找到匹配的股票，返回空結果`);
       return res.json([]);
     }
     
@@ -1493,7 +1520,7 @@ app.get('/api/stock-search', async (req, res) => {
     
     for (const stock of matchedStocks) {
       try {
-        console.log(`📊 獲取 ${stock.symbol} 的即時股價...`);
+        console.log(`📊 [Backend-${requestId}] 獲取 ${stock.symbol} 的即時股價...`);
         
         // 使用 Yahoo Finance 獲取即時股價
         const yahooData = await getYahooStockPrice(stock.symbol);
@@ -1527,11 +1554,12 @@ app.get('/api/stock-search', async (req, res) => {
       }
     }
     
-    console.log(`✅ 搜尋結果: ${searchResults.length} 筆`);
+    console.log(`✅ [Backend-${requestId}] 搜尋結果: ${searchResults.length} 筆`);
+    console.log(`📋 [Backend-${requestId}] 最終返回結果:`, searchResults.map(r => r.symbol));
     res.json(searchResults);
     
   } catch (error) {
-    console.error('❌ 股票搜尋錯誤:', error);
+    console.error(`❌ [Backend-${requestId}] 股票搜尋錯誤:`, error);
     res.status(500).json({
       error: 'Search failed',
       message: '搜尋失敗'

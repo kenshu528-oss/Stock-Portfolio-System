@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 262, // 【搜尋邏輯徹底修復】修復後端包含字母查詢的開頭匹配問題，確保 00981a 不會匹配到 009810 等錯誤結果
+  PATCH: 263, // 【搜尋功能徹底修復】修復前端競態條件導致的雙重搜尋問題，添加 AbortController 請求取消機制
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

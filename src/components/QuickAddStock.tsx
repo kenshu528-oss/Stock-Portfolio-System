@@ -41,26 +41,46 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const currentRequestRef = useRef<AbortController | null>(null); // 🔧 添加請求控制器
 
   // 從後端API搜尋股票
   const searchStocks = async (query: string): Promise<StockSearchResult[]> => {
+    console.log(`🔍 [QuickAddStock] 開始搜尋: "${query}"`);
+    
+    // 🔧 取消之前的請求
+    if (currentRequestRef.current) {
+      console.log(`🚫 [QuickAddStock] 取消之前的請求`);
+      currentRequestRef.current.abort();
+    }
+    
+    // 🔧 創建新的請求控制器
+    const abortController = new AbortController();
+    currentRequestRef.current = abortController;
+    
     try {
       // 檢查是否應該使用後端代理
       const useBackend = shouldUseBackendProxy();
+      console.log(`🌐 [QuickAddStock] 環境檢查: useBackend=${useBackend}`);
       
       if (useBackend) {
         // 使用後端代理
         const endpoint = API_ENDPOINTS.searchStock(query);
+        console.log(`🖥️ [QuickAddStock] 使用後端搜尋，端點: ${endpoint}`);
         
         if (!endpoint) {
+          console.log(`❌ [QuickAddStock] 後端端點為空，使用前端直接搜尋`);
           const directResults = await searchStocksDirectly(query);
           return directResults;
         }
         
-        const response = await fetch(endpoint);
+        console.log(`📡 [QuickAddStock] 發送後端請求: ${endpoint}`);
+        const response = await fetch(endpoint, {
+          signal: abortController.signal // 🔧 添加請求取消信號
+        });
         
         if (response.ok) {
           const data = await response.json();
+          console.log(`✅ [QuickAddStock] 後端搜尋成功:`, data);
           
           // 後端返回陣列格式，直接使用
           if (Array.isArray(data)) {
@@ -70,6 +90,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
               price: stock.price || 0,
               market: stock.market || '台灣'
             }));
+            console.log(`📊 [QuickAddStock] 處理後端結果: ${results.length} 筆`);
+            console.log(`📋 [QuickAddStock] 後端結果詳情:`, results.map(r => r.symbol));
             return results;
           } else {
             // 如果是單一物件，轉換為陣列
@@ -79,39 +101,58 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
               price: data.price || 0,
               market: data.market || '台灣'
             }];
+            console.log(`📊 [QuickAddStock] 處理後端單一結果:`, result);
             return result;
           }
         } else if (response.status === 404) {
           // 股票不存在
+          console.log(`❌ [QuickAddStock] 後端返回 404，股票不存在`);
           return [];
         } else {
+          console.log(`❌ [QuickAddStock] 後端搜尋失敗: HTTP ${response.status}`);
           throw new Error(`API錯誤: ${response.status}`);
         }
       } else {
+        console.log(`🌐 [QuickAddStock] 不使用後端，返回空結果`);
         return [];
       }
       
     } catch (error) {
-      console.error('QuickAddStock 搜尋API錯誤:', error);
+      // 🔧 檢查是否為請求取消
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log(`🚫 [QuickAddStock] 請求已取消: "${query}"`);
+        return []; // 請求被取消，返回空結果
+      }
+      
+      console.error('🚨 [QuickAddStock] 搜尋API錯誤:', error);
       
       // 🔧 修復：與 StockSearch 保持一致，不自動觸發備用搜尋
       if (window.location.hostname.includes('github.io') || 
           window.location.hostname.includes('github.com')) {
+        console.log(`🌐 [QuickAddStock] GitHub Pages 環境，使用前端直接搜尋`);
         const directResults = await searchStocksDirectly(query);
         return directResults;
       } else {
+        console.log(`🖥️ [QuickAddStock] 本機環境，後端搜尋失敗，返回空結果`);
         return []; // 本機環境下，後端失敗就返回空結果
+      }
+    } finally {
+      // 🔧 清理請求控制器
+      if (currentRequestRef.current === abortController) {
+        currentRequestRef.current = null;
       }
     }
   };
 
   // 直接搜尋股票（不依賴後端）- 保留模糊匹配，Yahoo Finance 優先獲取股價
   const searchStocksDirectly = async (query: string): Promise<StockSearchResult[]> => {
+    console.log(`🔍 [QuickAddStock] 開始前端直接搜尋: "${query}"`);
+    
     try {
       // 🔧 遵循 api-standards.md：Yahoo Finance 優先，FinMind 備用
-      // 🔧 保留原有的模糊匹配功能
+      // 🔧 修復搜尋邏輯：與後端保持一致
       
-      console.log(`🔍 FinMind 搜尋股票列表: ${query}`);
+      console.log(`🔍 [QuickAddStock] FinMind 搜尋股票列表: ${query}`);
       try {
         const finmindUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInfo&token=`;
         const response = await fetch(finmindUrl);
@@ -119,18 +160,83 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
         if (response.ok) {
           const data = await response.json();
           if (data.data && Array.isArray(data.data)) {
-            // 🔧 使用更寬鬆的模糊匹配邏輯
+            console.log(`📊 [QuickAddStock] FinMind 返回 ${data.data.length} 筆股票資料`);
+            
+            // 🔧 修復：使用與後端一致的智能匹配邏輯
+            const queryUpper = query.toUpperCase().trim();
+            const queryLower = query.toLowerCase().trim();
+            const queryHasLetter = /[A-Z]/.test(queryUpper);
+            const queryIsNumber = /^\d+$/.test(queryUpper);
+            
+            console.log(`🧮 [QuickAddStock] 查詢分析: 包含字母=${queryHasLetter}, 純數字=${queryIsNumber}`);
+            
             const filtered = data.data.filter((stock: any) => {
               const symbol = stock.stock_id || '';
               const name = stock.stock_name || '';
+              const symbolUpper = symbol.toUpperCase();
+              const nameLower = name.toLowerCase();
               
-              // 支援部分匹配：股票代碼包含查詢字串，或名稱包含查詢字串
-              return symbol.includes(query) || name.includes(query);
+              // 1. 精確匹配股票代碼（最高優先級）
+              if (symbolUpper === queryUpper) {
+                console.log(`✅ [QuickAddStock] 精確匹配: ${symbol}`);
+                return true;
+              }
+              
+              // 2. 智能開頭匹配：包含字母的查詢不進行開頭匹配
+              if (symbolUpper.startsWith(queryUpper)) {
+                if (queryIsNumber) {
+                  console.log(`📝 [QuickAddStock] 純數字開頭匹配: ${symbol}`);
+                  return true;
+                } else if (!queryHasLetter) {
+                  console.log(`📝 [QuickAddStock] 一般開頭匹配: ${symbol}`);
+                  return true;
+                } else {
+                  console.log(`⚠️ [QuickAddStock] 跳過包含字母的開頭匹配: ${symbol} (查詢: ${query})`);
+                  return false;
+                }
+              }
+              
+              // 3. 中文名稱包含查詢字串
+              if (nameLower.includes(queryLower) || name.includes(query)) {
+                console.log(`🏷️ [QuickAddStock] 名稱匹配: ${symbol} - ${name}`);
+                return true;
+              }
+              
+              // 4. 股票代碼包含查詢字串（低優先級，排除過短查詢）
+              if (query.length >= 3 && query.length < 5 && symbolUpper.includes(queryUpper)) {
+                console.log(`🔤 [QuickAddStock] 代碼包含匹配: ${symbol}`);
+                return true;
+              }
+              
+              return false;
+            });
+            
+            console.log(`🎯 [QuickAddStock] 過濾後找到 ${filtered.length} 筆匹配結果`);
+            
+            // 按匹配優先級排序
+            const sortedFiltered = filtered.sort((a: any, b: any) => {
+              const aSymbol = (a.stock_id || '').toUpperCase();
+              const bSymbol = (b.stock_id || '').toUpperCase();
+              
+              // 精確匹配排在最前面
+              if (aSymbol === queryUpper && bSymbol !== queryUpper) return -1;
+              if (bSymbol === queryUpper && aSymbol !== queryUpper) return 1;
+              
+              // 開頭匹配排在前面
+              const aStarts = aSymbol.startsWith(queryUpper);
+              const bStarts = bSymbol.startsWith(queryUpper);
+              if (aStarts && !bStarts) return -1;
+              if (bStarts && !aStarts) return 1;
+              
+              return aSymbol.localeCompare(bSymbol);
             }).slice(0, 10); // 限制結果數量
+            
+            console.log(`📋 [QuickAddStock] 排序後結果:`, sortedFiltered.map((s: any) => s.stock_id));
             
             // 🔧 為每個股票獲取即時價格（Yahoo Finance 優先）
             const stocksWithPrice = await Promise.all(
-              filtered.map(async (stock: any) => {
+              sortedFiltered.map(async (stock: any) => {
+                console.log(`💰 [QuickAddStock] 獲取 ${stock.stock_id} 股價...`);
                 const price = await getStockPriceDirectly(stock.stock_id);
                 return {
                   symbol: stock.stock_id,
@@ -141,23 +247,24 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
               })
             );
             
+            console.log(`✅ [QuickAddStock] 最終返回 ${stocksWithPrice.length} 筆結果`);
             return stocksWithPrice;
           }
         }
       } catch (finmindError) {
-        console.error('FinMind 搜尋失敗:', finmindError);
+        console.error('❌ [QuickAddStock] FinMind 搜尋失敗:', finmindError);
         // 如果是 402 錯誤，記錄但不影響功能
         if (finmindError instanceof Error && finmindError.message.includes('402')) {
-          console.log(`💡 FinMind API 需要付費，已跳過`);
+          console.log(`💡 [QuickAddStock] FinMind API 需要付費，已跳過`);
         }
       }
       
       // 如果所有方法都失敗，返回空陣列
-      console.log(`❌ 搜尋失敗: ${query}`);
+      console.log(`❌ [QuickAddStock] 搜尋失敗: ${query}`);
       return [];
       
     } catch (error) {
-      console.error('直接搜尋失敗:', error);
+      console.error('❌ [QuickAddStock] 直接搜尋失敗:', error);
       return [];
     }
   };
@@ -279,12 +386,14 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   
   // 實際的搜尋函數
   const performSearch = useCallback(async (query: string) => {
+    console.log(`🔍 [QuickAddStock] performSearch 開始: "${query}"`);
     setError('');
     
     const trimmedQuery = query.trim();
     
     // 如果查詢字串太短，不進行搜尋
     if (trimmedQuery.length < 2) {
+      console.log(`⚠️ [QuickAddStock] 查詢太短，跳過搜尋: "${trimmedQuery}"`);
       setSearchResults([]);
       setShowResults(false);
       return;
@@ -295,14 +404,17 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     
     // 如果是純數字但少於 3 碼，不搜尋（避免過多結果）
     if (isNumeric && trimmedQuery.length < 3) {
+      console.log(`⚠️ [QuickAddStock] 純數字查詢太短，跳過搜尋: "${trimmedQuery}"`);
       setSearchResults([]);
       setShowResults(false);
       return;
     }
     
+    console.log(`🚀 [QuickAddStock] 開始執行搜尋: "${query}"`);
     setIsSearching(true);
     try {
       const results = await searchStocks(query);
+      console.log(`✅ [QuickAddStock] performSearch 完成: ${results.length} 筆結果`);
       setSearchResults(results);
       setShowResults(true);
       
@@ -312,31 +424,34 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
         setError('');
       }
     } catch (err) {
-      console.error('搜尋錯誤:', err);
+      console.error('🚨 [QuickAddStock] performSearch 搜尋錯誤:', err);
       setError(err instanceof Error ? err.message : '搜尋失敗，請稍後再試');
       setSearchResults([]);
       setShowResults(false);
     } finally {
       setIsSearching(false);
     }
-  }, [searchStocks]);
+  }, []); // 🔧 修復：移除 searchStocks 依賴，在函數內部直接調用
 
   // 處理搜尋（帶防抖）
   const handleSearch = useCallback((query: string) => {
+    console.log(`🎯 [QuickAddStock] handleSearch 被調用: "${query}"`);
     setSearchQuery(query);
     
     // 清除之前的定時器
     if (searchTimeout) {
+      console.log(`⏰ [QuickAddStock] 清除之前的搜尋計時器`);
       clearTimeout(searchTimeout);
     }
     
     // 設置新的定時器（300ms 防抖）
     const newTimeout = setTimeout(() => {
+      console.log(`🚀 [QuickAddStock] 防抖計時器觸發，開始搜尋: "${query}"`);
       performSearch(query);
     }, 300);
     
     setSearchTimeout(newTimeout);
-  }, [performSearch]);
+  }, []); // 🔧 修復：移除 performSearch 依賴，避免循環依賴
 
   // 清理定時器
   useEffect(() => {

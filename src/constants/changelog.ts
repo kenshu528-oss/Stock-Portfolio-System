@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0263',
+    date: '2026-01-23',
+    type: 'hotfix',
+    title: '【搜尋功能徹底修復】修復前端競態條件導致的雙重搜尋問題',
+    description: '經過詳細的 debug 日誌追蹤，發現搜尋 "00981a" 時會出現兩次不同的結果：第一次正確返回精確匹配 ["00981A"]，第二次錯誤返回開頭匹配 ["009810", "009811", "009812"]。根本原因是前端存在競態條件：延遲的 "00981" 搜尋請求會覆蓋 "00981a" 的正確結果。修復方案：在 QuickAddStock 組件中添加 AbortController 請求取消機制，確保新搜尋會取消舊請求，防止延遲響應覆蓋最新結果。',
+    changes: [
+      '添加 AbortController 請求取消機制到 QuickAddStock 組件',
+      '修復前端競態條件：新搜尋自動取消之前的請求',
+      '防止延遲的搜尋結果覆蓋最新的搜尋結果',
+      '添加詳細的請求追蹤和取消日誌',
+      '確保搜尋 "00981a" 只返回精確匹配 "00981A"'
+    ],
+    impact: 'high',
+    breaking: false,
+    migration: null
+  },
+  {
     version: '1.0.2.0262',
     date: '2026-01-23',
     type: 'hotfix',

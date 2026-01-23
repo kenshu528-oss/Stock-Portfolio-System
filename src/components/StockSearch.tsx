@@ -36,19 +36,28 @@ const StockSearch: React.FC<StockSearchProps> = ({
   const searchStocks = async (searchQuery: string): Promise<StockSearchResult[]> => {
     if (!searchQuery.trim()) return [];
     
+    console.log(`🔍 [StockSearch] 開始搜尋: "${searchQuery}"`);
+    
     try {
       // 檢查是否為 GitHub Pages 環境
       const isGitHubPages = window.location.hostname.includes('github.io') || 
                            window.location.hostname.includes('github.com');
       
+      console.log(`🌐 [StockSearch] 環境檢查: ${isGitHubPages ? 'GitHub Pages' : '本機環境'}`);
+      
       if (isGitHubPages) {
         // GitHub Pages 環境：使用直接 API 調用
+        console.log(`📡 [StockSearch] 使用前端直接搜尋: "${searchQuery}"`);
         return await searchStocksDirectly(searchQuery);
       } else {
         // 其他環境：使用後端代理
+        console.log(`🖥️ [StockSearch] 使用後端搜尋: "${searchQuery}"`);
         const response = await fetch(API_ENDPOINTS.searchStock(searchQuery));
         if (response.ok) {
           const stockDataArray = await response.json();
+          
+          console.log(`✅ [StockSearch] 後端搜尋成功: ${Array.isArray(stockDataArray) ? stockDataArray.length : 1} 筆結果`);
+          console.log(`📊 [StockSearch] 後端返回資料:`, stockDataArray);
           
           // 後端返回的是陣列，直接使用
           if (Array.isArray(stockDataArray)) {
@@ -71,18 +80,21 @@ const StockSearch: React.FC<StockSearchProps> = ({
               changePercent: stockDataArray.changePercent || 0
             }];
           }
+        } else {
+          console.log(`❌ [StockSearch] 後端搜尋失敗: HTTP ${response.status}`);
+        }
         }
       }
     } catch (error) {
-      console.error('搜尋API錯誤:', error);
+      console.error('🚨 [StockSearch] 搜尋API錯誤:', error);
       // 🔧 修復：不再自動調用備用搜尋，避免雙重搜尋
       // 只有在 GitHub Pages 環境下才使用直接搜尋
       if (window.location.hostname.includes('github.io') || 
           window.location.hostname.includes('github.com')) {
-        console.log('GitHub Pages 環境，使用直接搜尋作為備用');
+        console.log('🌐 [StockSearch] GitHub Pages 環境，使用直接搜尋作為備用');
         return await searchStocksDirectly(searchQuery);
       } else {
-        console.log('本機環境，後端搜尋失敗，返回空結果');
+        console.log('🖥️ [StockSearch] 本機環境，後端搜尋失敗，返回空結果');
         return []; // 本機環境下，後端失敗就返回空結果
       }
     }
@@ -92,11 +104,13 @@ const StockSearch: React.FC<StockSearchProps> = ({
 
   // 直接搜尋股票（不依賴後端）
   const searchStocksDirectly = async (query: string): Promise<StockSearchResult[]> => {
+    console.log(`🔍 [searchStocksDirectly] 開始前端直接搜尋: "${query}"`);
+    
     try {
       // 🔧 遵循 api-standards.md：Yahoo Finance 優先，FinMind 備用
       // 🔧 保留原有的模糊匹配功能
       
-      console.log(`🔍 FinMind 搜尋股票列表: ${query}`);
+      console.log(`🔍 [searchStocksDirectly] FinMind 搜尋股票列表: ${query}`);
       try {
         const finmindUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInfo&token=`;
         const response = await fetch(finmindUrl);
@@ -104,6 +118,8 @@ const StockSearch: React.FC<StockSearchProps> = ({
         if (response.ok) {
           const data = await response.json();
           if (data.data && Array.isArray(data.data)) {
+            console.log(`📊 [searchStocksDirectly] FinMind 返回 ${data.data.length} 筆股票資料`);
+            
             // 🔧 改善搜尋邏輯：精確匹配優先，大小寫不敏感
             const filtered = data.data.filter((stock: any) => {
               const symbol = stock.stock_id || '';
@@ -114,19 +130,33 @@ const StockSearch: React.FC<StockSearchProps> = ({
               const nameLower = name.toLowerCase();
               
               // 1. 精確匹配股票代碼（最高優先級，大小寫不敏感）
-              if (symbolUpper === queryUpper) return true;
+              if (symbolUpper === queryUpper) {
+                console.log(`✅ [searchStocksDirectly] 精確匹配: ${symbol}`);
+                return true;
+              }
               
               // 2. 股票代碼開頭匹配（高優先級，大小寫不敏感）
-              if (symbolUpper.startsWith(queryUpper)) return true;
+              if (symbolUpper.startsWith(queryUpper)) {
+                console.log(`📝 [searchStocksDirectly] 開頭匹配: ${symbol}`);
+                return true;
+              }
               
               // 3. 中文名稱包含查詢字串（中優先級，大小寫不敏感）
-              if (nameLower.includes(queryLower) || name.includes(query)) return true;
+              if (nameLower.includes(queryLower) || name.includes(query)) {
+                console.log(`🏷️ [searchStocksDirectly] 名稱匹配: ${symbol} - ${name}`);
+                return true;
+              }
               
               // 4. 股票代碼包含查詢字串（低優先級，但排除過短的查詢）
-              if (query.length >= 3 && symbolUpper.includes(queryUpper)) return true;
+              if (query.length >= 3 && symbolUpper.includes(queryUpper)) {
+                console.log(`🔤 [searchStocksDirectly] 代碼包含匹配: ${symbol}`);
+                return true;
+              }
               
               return false;
             });
+            
+            console.log(`🎯 [searchStocksDirectly] 過濾後找到 ${filtered.length} 筆匹配結果`);
             
             // 🔧 按匹配優先級排序（大小寫不敏感）
             const sortedFiltered = filtered.sort((a: any, b: any) => {
@@ -148,6 +178,8 @@ const StockSearch: React.FC<StockSearchProps> = ({
               return aSymbol.localeCompare(bSymbol);
             }).slice(0, 10); // 限制結果數量
             
+            console.log(`📋 [searchStocksDirectly] 排序後結果:`, sortedFiltered.map((s: any) => s.stock_id));
+            
             // 🔧 去重：使用 Map 確保每個股票代碼只出現一次
             const uniqueStocks = new Map();
             sortedFiltered.forEach((stock: any) => {
@@ -156,9 +188,12 @@ const StockSearch: React.FC<StockSearchProps> = ({
               }
             });
             
+            console.log(`🔄 [searchStocksDirectly] 去重後剩餘 ${uniqueStocks.size} 筆結果`);
+            
             // 🔧 為每個股票獲取即時價格（Yahoo Finance 優先）
             const stocksWithPrice = await Promise.all(
               Array.from(uniqueStocks.values()).map(async (stock: any) => {
+                console.log(`💰 [searchStocksDirectly] 獲取 ${stock.stock_id} 股價...`);
                 const priceData = await getStockPriceDirectly(stock.stock_id);
                 return {
                   symbol: stock.stock_id,
@@ -171,23 +206,24 @@ const StockSearch: React.FC<StockSearchProps> = ({
               })
             );
             
+            console.log(`✅ [searchStocksDirectly] 最終返回 ${stocksWithPrice.length} 筆結果`);
             return stocksWithPrice;
           }
         }
       } catch (finmindError) {
-        console.error('FinMind 搜尋失敗:', finmindError);
+        console.error('❌ [searchStocksDirectly] FinMind 搜尋失敗:', finmindError);
         // 如果是 402 錯誤，記錄但不影響功能
         if (finmindError instanceof Error && finmindError.message.includes('402')) {
-          console.log(`💡 FinMind API 需要付費，已跳過`);
+          console.log(`💡 [searchStocksDirectly] FinMind API 需要付費，已跳過`);
         }
       }
       
       // 如果所有方法都失敗，返回空陣列
-      console.log(`❌ 搜尋失敗: ${query}`);
+      console.log(`❌ [searchStocksDirectly] 搜尋失敗: ${query}`);
       return [];
       
     } catch (error) {
-      console.error('直接搜尋失敗:', error);
+      console.error('❌ [searchStocksDirectly] 直接搜尋失敗:', error);
       return [];
     }
   };
@@ -339,30 +375,41 @@ const StockSearch: React.FC<StockSearchProps> = ({
 
   // 處理輸入變化
   useEffect(() => {
+    console.log(`🎯 [useEffect] 搜尋輸入變化: "${query}"`);
+    
     // 清除之前的搜尋計時器
     if (searchTimeoutRef.current) {
+      console.log(`⏰ [useEffect] 清除之前的搜尋計時器`);
       clearTimeout(searchTimeoutRef.current);
     }
 
     if (query.trim()) {
       setIsLoading(true);
       currentSearchRef.current = query; // 記錄當前搜尋
+      console.log(`📝 [useEffect] 設定當前搜尋: "${query}"`);
       
       // 使用真實API搜尋
       const delay = query.length >= 5 ? 200 : 300; // 較長的查詢延遲更短
+      console.log(`⏱️ [useEffect] 設定搜尋延遲: ${delay}ms`);
+      
       searchTimeoutRef.current = setTimeout(async () => {
         const searchQuery = query.trim();
+        console.log(`🚀 [useEffect] 開始執行搜尋: "${searchQuery}"`);
         
         // 檢查是否還是當前的搜尋（避免過期的搜尋結果覆蓋新的）
         if (currentSearchRef.current !== searchQuery) {
+          console.log(`⚠️ [useEffect] 搜尋已過期，跳過: "${searchQuery}" (當前: "${currentSearchRef.current}")`);
           return;
         }
         
         try {
           const searchResults = await searchStocks(searchQuery);
+          console.log(`📊 [useEffect] 搜尋結果: ${searchResults.length} 筆`);
+          console.log(`📋 [useEffect] 搜尋結果詳情:`, searchResults.map(s => s.symbol));
           
           // 再次檢查是否還是當前的搜尋
           if (currentSearchRef.current !== searchQuery) {
+            console.log(`⚠️ [useEffect] 搜尋結果已過期，跳過更新: "${searchQuery}"`);
             return;
           }
           
@@ -371,23 +418,30 @@ const StockSearch: React.FC<StockSearchProps> = ({
             index === self.findIndex(s => s.symbol === stock.symbol)
           );
           
+          if (uniqueResults.length !== searchResults.length) {
+            console.log(`🔄 [useEffect] 去重: ${searchResults.length} → ${uniqueResults.length} 筆`);
+          }
+          
           setResults(uniqueResults);
           setShowResults(true);
           setSelectedIndex(-1);
+          console.log(`✅ [useEffect] 搜尋完成，顯示 ${uniqueResults.length} 筆結果`);
         } catch (error) {
           // 只有當前搜尋才處理錯誤
           if (currentSearchRef.current === searchQuery) {
-            console.error('搜尋失敗:', error);
+            console.error('🚨 [useEffect] 搜尋失敗:', error);
             setResults([]);
           }
         } finally {
           // 只有當前搜尋才更新載入狀態
           if (currentSearchRef.current === searchQuery) {
+            console.log(`🏁 [useEffect] 搜尋結束，關閉載入狀態`);
             setIsLoading(false);
           }
         }
       }, delay); // 動態延遲以減少API調用
     } else {
+      console.log(`🧹 [useEffect] 清空搜尋結果`);
       setResults([]);
       setShowResults(false);
       setSelectedIndex(-1);
@@ -398,6 +452,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
     // 清理函數
     return () => {
       if (searchTimeoutRef.current) {
+        console.log(`🧹 [useEffect cleanup] 清理搜尋計時器`);
         clearTimeout(searchTimeoutRef.current);
       }
     };
