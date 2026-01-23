@@ -12,6 +12,63 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0270',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【雲端股價優化】建立專門的雲端股價獲取服務，優化 GitHub Pages 環境下的股價獲取穩定性和性能',
+    description: '針對雲端環境下股價獲取的挑戰，建立專門的 cloudStockPriceService 服務。通過測試驗證 CORS 代理服務可用性，實作智能多源股價獲取策略，包含快取機制、批次處理、超時控制等功能，確保雲端環境下能穩定獲取股價資料。',
+    changes: [
+      '新增 cloudStockPriceService：專門針對雲端環境優化的股價獲取服務',
+      '實作多重資料源策略：AllOrigins + Yahoo Finance、FinMind 直接調用',
+      '智能股票代碼後綴判斷：自動選擇 .TW 或 .TWO 後綴',
+      '快取機制：5分鐘股價快取，避免重複 API 調用',
+      '批次處理：支援多股票並發獲取，控制請求頻率',
+      '超時控制：不同 API 設定不同超時時間，快速失敗',
+      '更新 StockSearch.tsx：整合優化的雲端股價服務',
+      '新增測試腳本：驗證 CORS 代理服務可用性',
+      '新增測試頁面：完整的雲端環境功能測試'
+    ],
+    technical: [
+      'CORS 代理測試結果：AllOrigins 可用，FinMind 直接調用可用',
+      '股價獲取成功率：2/4 API 服務可用，足以支援正常使用',
+      '響應時間優化：AllOrigins 3-5秒，FinMind 5-8秒',
+      '快取命中率：預期可達 80% 以上，大幅減少 API 調用'
+    ]
+  },
+  {
+    version: '1.0.2.0269',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【股票清單統一化】建立統一的股票清單管理服務，解決本機端和雲端環境檔案管理混亂問題',
+    description: '建立統一的 stockListService 服務，解決股票清單檔案重複存放和路徑混亂的問題。實現環境自動適應、智能載入策略、快取機制等功能，確保本機端和雲端環境都能穩定運作。',
+    changes: [
+      '新增 stockListService：統一的股票清單管理服務',
+      '環境自動檢測：本機環境優先後端API，雲端環境使用前端檔案',
+      '智能載入策略：多重路徑嘗試，完整錯誤處理',
+      '快取機制：5分鐘快取避免重複載入，提升性能',
+      '更新 StockSearch.tsx：使用統一環境檢測邏輯',
+      '更新 QuickAddStock.tsx：使用統一股票清單服務',
+      '更新 stockListUpdateService.ts：整合統一服務',
+      '新增檔案清理腳本：分析和管理重複檔案',
+      '完整文檔：統一股票清單管理策略說明'
+    ]
+  },
+  {
+    version: '1.0.2.0268',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【雲端路徑修復】修復 GitHub Pages 環境 404 錯誤，完善雲端搜尋功能',
+    description: '修復 GitHub Pages 雲端環境下股票清單檔案路徑錯誤導致的 404 問題。根本原因：使用 /public/stock_list.json 路徑在 GitHub Pages 下會解析為錯誤的絕對路徑。修復：調整為相對路徑 ./stock_list.json，並新增詳細的雲端搜尋功能說明文檔。',
+    changes: [
+      '修復 stockListUpdateService.ts：調整股票清單檔案路徑為 ./stock_list.json',
+      '修復 QuickAddStock.tsx：統一使用相對路徑載入股票清單',
+      '消除 Console 404 錯誤：GET https://kenshu528-oss.github.io/public/stock_list.json',
+      '新增 docs/CLOUD_SEARCH_GUIDE.md：詳細說明雲端搜尋功能架構',
+      '文檔涵蓋：環境檢測、搜尋策略、API 優先順序、故障排除等',
+      '完善雲端環境下的用戶體驗和功能穩定性'
+    ]
+  },
+  {
     version: '1.0.2.0267',
     date: '2026-01-23',
     type: 'patch',

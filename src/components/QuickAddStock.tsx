@@ -4,6 +4,7 @@ import Input from './ui/Input';
 import { SearchIcon, CheckIcon, XIcon } from './ui/Icons';
 import type { StockFormData, StockSearchResult } from '../types';
 import { API_ENDPOINTS, shouldUseBackendProxy } from '../config/api';
+import { stockListService } from '../services/stockListService';
 
 // 使用內建圖示替代 lucide-react
 const PlusIcon = () => (
@@ -162,24 +163,24 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
       } else {
         console.log(`🌐 [QuickAddStock] GitHub Pages 環境，使用本地股票清單搜尋`);
         
-        // 在 GitHub Pages 環境下，使用本地股票清單搜尋
+        console.log(`🌐 [QuickAddStock] 雲端環境，使用統一股票清單服務`);
+        
+        // 使用統一的股票清單服務
         try {
-          // 嘗試載入本地股票清單
-          const stockListResponse = await fetch('/public/stock_list.json');
-          if (stockListResponse.ok) {
-            const stockListData = await stockListResponse.json();
-            console.log(`📋 [QuickAddStock] 載入本地股票清單成功: ${stockListData.count} 支股票`);
+          const stockListData = await stockListService.loadStockList();
+          if (stockListData && stockListData.stocks) {
+            console.log(`📋 [QuickAddStock] 載入股票清單成功: ${stockListData.count} 支股票`);
             
             // 搜尋匹配的股票
             const results = searchLocalStockList(query, stockListData.stocks);
             console.log(`🔍 [QuickAddStock] 本地搜尋結果: ${results.length} 筆`);
             return results;
           } else {
-            console.log(`❌ [QuickAddStock] 無法載入本地股票清單，返回空結果`);
+            console.log(`❌ [QuickAddStock] 無法載入股票清單，返回空結果`);
             return [];
           }
         } catch (error) {
-          console.error('🚨 [QuickAddStock] 本地股票清單搜尋失敗:', error);
+          console.error('🚨 [QuickAddStock] 股票清單載入失敗:', error);
           return [];
         }
       }

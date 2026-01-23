@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_ENDPOINTS } from '../config/api';
+import { stockListService } from '../services/stockListService';
+import { cloudStockPriceService } from '../services/cloudStockPriceService';
 
 interface StockSearchResult {
   symbol: string;
@@ -39,66 +41,57 @@ const StockSearch: React.FC<StockSearchProps> = ({
     console.log(`🔍 [StockSearch] 開始搜尋: "${searchQuery}"`);
     
     try {
-      // 檢查是否為 GitHub Pages 環境
-      const isGitHubPages = window.location.hostname.includes('github.io') || 
-                           window.location.hostname.includes('github.com');
+      // 🔧 使用統一的環境檢測
+      const envInfo = stockListService.getEnvironmentInfo();
+      console.log(`🌐 [StockSearch] 環境檢查:`, envInfo);
       
-      console.log(`🌐 [StockSearch] 環境檢查: ${isGitHubPages ? 'GitHub Pages' : '本機環境'}`);
-      
-      if (isGitHubPages) {
-        // GitHub Pages 環境：使用直接 API 調用
-        console.log(`📡 [StockSearch] 使用前端直接搜尋: "${searchQuery}"`);
-        return await searchStocksDirectly(searchQuery);
-      } else {
-        // 其他環境：使用後端代理
-        console.log(`🖥️ [StockSearch] 使用後端搜尋: "${searchQuery}"`);
-        const response = await fetch(API_ENDPOINTS.searchStock(searchQuery));
-        if (response.ok) {
-          const stockDataArray = await response.json();
-          
-          console.log(`✅ [StockSearch] 後端搜尋成功: ${Array.isArray(stockDataArray) ? stockDataArray.length : 1} 筆結果`);
-          console.log(`📊 [StockSearch] 後端返回資料:`, stockDataArray);
-          
-          // 後端返回的是陣列，直接使用
-          if (Array.isArray(stockDataArray)) {
-            return stockDataArray.map(stockData => ({
-              symbol: stockData.symbol,
-              name: stockData.name,
-              market: stockData.market || '台灣',
-              price: stockData.price || 0,
-              change: stockData.change || 0,
-              changePercent: stockData.changePercent || 0
-            }));
+      if (envInfo.isDevelopment) {
+        // 本機環境：優先使用後端代理
+        console.log(`🖥️ [StockSearch] 本機環境，使用後端搜尋: "${searchQuery}"`);
+        try {
+          const response = await fetch(API_ENDPOINTS.searchStock(searchQuery));
+          if (response.ok) {
+            const stockDataArray = await response.json();
+            
+            console.log(`✅ [StockSearch] 後端搜尋成功: ${Array.isArray(stockDataArray) ? stockDataArray.length : 1} 筆結果`);
+            
+            // 後端返回的是陣列，直接使用
+            if (Array.isArray(stockDataArray)) {
+              return stockDataArray.map(stockData => ({
+                symbol: stockData.symbol,
+                name: stockData.name,
+                market: stockData.market || '台灣',
+                price: stockData.price || 0,
+                change: stockData.change || 0,
+                changePercent: stockData.changePercent || 0
+              }));
+            } else {
+              // 如果是單一物件（舊格式），包裝成陣列
+              return [{
+                symbol: stockDataArray.symbol,
+                name: stockDataArray.name,
+                market: stockDataArray.market || '台灣',
+                price: stockDataArray.price || 0,
+                change: stockDataArray.change || 0,
+                changePercent: stockDataArray.changePercent || 0
+              }];
+            }
           } else {
-            // 如果是單一物件（舊格式），包裝成陣列
-            return [{
-              symbol: stockDataArray.symbol,
-              name: stockDataArray.name,
-              market: stockDataArray.market || '台灣',
-              price: stockDataArray.price || 0,
-              change: stockDataArray.change || 0,
-              changePercent: stockDataArray.changePercent || 0
-            }];
+            console.log(`❌ [StockSearch] 後端搜尋失敗: HTTP ${response.status}`);
           }
-        } else {
-          console.log(`❌ [StockSearch] 後端搜尋失敗: HTTP ${response.status}`);
+        } catch (backendError) {
+          console.log(`❌ [StockSearch] 後端搜尋錯誤，使用前端搜尋:`, backendError);
         }
       }
+      
+      // 雲端環境或後端失敗：使用前端直接搜尋
+      console.log(`📡 [StockSearch] 使用前端直接搜尋: "${searchQuery}"`);
+      return await searchStocksDirectly(searchQuery);
+      
     } catch (error) {
       console.error('🚨 [StockSearch] 搜尋API錯誤:', error);
-      // 🔧 修復：不再自動調用備用搜尋，避免雙重搜尋
-      // 只有在 GitHub Pages 環境下才使用直接搜尋
-      if (window.location.hostname.includes('github.io') || 
-          window.location.hostname.includes('github.com')) {
-        console.log('🌐 [StockSearch] GitHub Pages 環境，使用直接搜尋作為備用');
-        return await searchStocksDirectly(searchQuery);
-      } else {
-        console.log('🖥️ [StockSearch] 本機環境，後端搜尋失敗，返回空結果');
-        return []; // 本機環境下，後端失敗就返回空結果
-      }
+      return [];
     }
-    
-    return [];
   };
 
   // 直接搜尋股票（不依賴後端）
@@ -106,120 +99,96 @@ const StockSearch: React.FC<StockSearchProps> = ({
     console.log(`🔍 [searchStocksDirectly] 開始前端直接搜尋: "${query}"`);
     
     try {
-      // 🔧 遵循 api-standards.md：Yahoo Finance 優先，FinMind 備用
-      // 🔧 保留原有的模糊匹配功能
+      // 🔧 使用統一的股票清單服務
+      const stockListData = await stockListService.loadStockList();
       
-      console.log(`🔍 [searchStocksDirectly] FinMind 搜尋股票列表: ${query}`);
-      try {
-        const finmindUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockInfo&token=`;
-        const response = await fetch(finmindUrl);
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.data && Array.isArray(data.data)) {
-            console.log(`📊 [searchStocksDirectly] FinMind 返回 ${data.data.length} 筆股票資料`);
-            
-            // 🔧 改善搜尋邏輯：精確匹配優先，大小寫不敏感
-            const filtered = data.data.filter((stock: any) => {
-              const symbol = stock.stock_id || '';
-              const name = stock.stock_name || '';
-              const queryUpper = query.toUpperCase().trim();
-              const symbolUpper = symbol.toUpperCase();
-              const queryLower = query.toLowerCase().trim();
-              const nameLower = name.toLowerCase();
-              
-              // 1. 精確匹配股票代碼（最高優先級，大小寫不敏感）
-              if (symbolUpper === queryUpper) {
-                console.log(`✅ [searchStocksDirectly] 精確匹配: ${symbol}`);
-                return true;
-              }
-              
-              // 2. 股票代碼開頭匹配（高優先級，大小寫不敏感）
-              if (symbolUpper.startsWith(queryUpper)) {
-                console.log(`📝 [searchStocksDirectly] 開頭匹配: ${symbol}`);
-                return true;
-              }
-              
-              // 3. 中文名稱包含查詢字串（中優先級，大小寫不敏感）
-              if (nameLower.includes(queryLower) || name.includes(query)) {
-                console.log(`🏷️ [searchStocksDirectly] 名稱匹配: ${symbol} - ${name}`);
-                return true;
-              }
-              
-              // 4. 股票代碼包含查詢字串（低優先級，但排除過短的查詢）
-              if (query.length >= 3 && symbolUpper.includes(queryUpper)) {
-                console.log(`🔤 [searchStocksDirectly] 代碼包含匹配: ${symbol}`);
-                return true;
-              }
-              
-              return false;
-            });
-            
-            console.log(`🎯 [searchStocksDirectly] 過濾後找到 ${filtered.length} 筆匹配結果`);
-            
-            // 🔧 按匹配優先級排序（大小寫不敏感）
-            const sortedFiltered = filtered.sort((a: any, b: any) => {
-              const aSymbol = (a.stock_id || '').toUpperCase();
-              const bSymbol = (b.stock_id || '').toUpperCase();
-              const queryUpper = query.toUpperCase().trim();
-              
-              // 精確匹配排在最前面
-              if (aSymbol === queryUpper && bSymbol !== queryUpper) return -1;
-              if (bSymbol === queryUpper && aSymbol !== queryUpper) return 1;
-              
-              // 開頭匹配排在前面
-              const aStarts = aSymbol.startsWith(queryUpper);
-              const bStarts = bSymbol.startsWith(queryUpper);
-              if (aStarts && !bStarts) return -1;
-              if (bStarts && !aStarts) return 1;
-              
-              // 其他按字母順序
-              return aSymbol.localeCompare(bSymbol);
-            }).slice(0, 10); // 限制結果數量
-            
-            console.log(`📋 [searchStocksDirectly] 排序後結果:`, sortedFiltered.map((s: any) => s.stock_id));
-            
-            // 🔧 去重：使用 Map 確保每個股票代碼只出現一次
-            const uniqueStocks = new Map();
-            sortedFiltered.forEach((stock: any) => {
-              if (!uniqueStocks.has(stock.stock_id)) {
-                uniqueStocks.set(stock.stock_id, stock);
-              }
-            });
-            
-            console.log(`🔄 [searchStocksDirectly] 去重後剩餘 ${uniqueStocks.size} 筆結果`);
-            
-            // 🔧 為每個股票獲取即時價格（Yahoo Finance 優先）
-            const stocksWithPrice = await Promise.all(
-              Array.from(uniqueStocks.values()).map(async (stock: any) => {
-                console.log(`💰 [searchStocksDirectly] 獲取 ${stock.stock_id} 股價...`);
-                const priceData = await getStockPriceDirectly(stock.stock_id);
-                return {
-                  symbol: stock.stock_id,
-                  name: stock.stock_name,
-                  price: priceData?.price || 0,
-                  market: '台灣',
-                  change: priceData?.change || 0,
-                  changePercent: priceData?.changePercent || 0
-                };
-              })
-            );
-            
-            console.log(`✅ [searchStocksDirectly] 最終返回 ${stocksWithPrice.length} 筆結果`);
-            return stocksWithPrice;
-          }
-        }
-      } catch (finmindError) {
-        console.error('❌ [searchStocksDirectly] FinMind 搜尋失敗:', finmindError);
-        // 如果是 402 錯誤，記錄但不影響功能
-        if (finmindError instanceof Error && finmindError.message.includes('402')) {
-          console.log(`💡 [searchStocksDirectly] FinMind API 需要付費，已跳過`);
-        }
+      if (!stockListData || !stockListData.stocks) {
+        console.log(`❌ [searchStocksDirectly] 無法載入股票清單`);
+        return [];
       }
       
-      // 如果所有方法都失敗，返回空陣列
-      console.log(`❌ [searchStocksDirectly] 搜尋失敗: ${query}`);
-      return [];
+      console.log(`📊 [searchStocksDirectly] 股票清單載入成功: ${stockListData.count} 支股票`);
+      
+      // 🔧 改善搜尋邏輯：精確匹配優先，大小寫不敏感
+      const stocks = Object.entries(stockListData.stocks);
+      const filtered = stocks.filter(([symbol, info]) => {
+        const queryUpper = query.toUpperCase().trim();
+        const symbolUpper = symbol.toUpperCase();
+        const queryLower = query.toLowerCase().trim();
+        const nameLower = info.name.toLowerCase();
+        
+        // 1. 精確匹配股票代碼（最高優先級，大小寫不敏感）
+        if (symbolUpper === queryUpper) {
+          console.log(`✅ [searchStocksDirectly] 精確匹配: ${symbol}`);
+          return true;
+        }
+        
+        // 2. 股票代碼開頭匹配（高優先級，大小寫不敏感）
+        if (symbolUpper.startsWith(queryUpper)) {
+          console.log(`📝 [searchStocksDirectly] 開頭匹配: ${symbol}`);
+          return true;
+        }
+        
+        // 3. 中文名稱包含查詢字串（中優先級，大小寫不敏感）
+        if (nameLower.includes(queryLower) || info.name.includes(query)) {
+          console.log(`🏷️ [searchStocksDirectly] 名稱匹配: ${symbol} - ${info.name}`);
+          return true;
+        }
+        
+        // 4. 股票代碼包含查詢字串（低優先級，但排除過短的查詢）
+        if (query.length >= 3 && symbolUpper.includes(queryUpper)) {
+          console.log(`🔤 [searchStocksDirectly] 代碼包含匹配: ${symbol}`);
+          return true;
+        }
+        
+        return false;
+      });
+      
+      console.log(`🎯 [searchStocksDirectly] 過濾後找到 ${filtered.length} 筆匹配結果`);
+      
+      // 🔧 按匹配優先級排序（大小寫不敏感）
+      const sortedFiltered = filtered.sort(([aSymbol], [bSymbol]) => {
+        const aSymbolUpper = aSymbol.toUpperCase();
+        const bSymbolUpper = bSymbol.toUpperCase();
+        const queryUpper = query.toUpperCase().trim();
+        
+        // 精確匹配排在最前面
+        if (aSymbolUpper === queryUpper && bSymbolUpper !== queryUpper) return -1;
+        if (bSymbolUpper === queryUpper && aSymbolUpper !== queryUpper) return 1;
+        
+        // 開頭匹配排在前面
+        const aStarts = aSymbolUpper.startsWith(queryUpper);
+        const bStarts = bSymbolUpper.startsWith(queryUpper);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
+        
+        // 其他按字母順序
+        return aSymbolUpper.localeCompare(bSymbolUpper);
+      }).slice(0, 10); // 限制結果數量
+      
+      console.log(`📋 [searchStocksDirectly] 排序後結果:`, sortedFiltered.map(([symbol]) => symbol));
+      
+      // 🔧 為每個股票獲取即時價格（使用優化的雲端股價服務）
+      const stocksWithPrice = await Promise.all(
+        sortedFiltered.map(async ([symbol, info]) => {
+          console.log(`💰 [searchStocksDirectly] 獲取 ${symbol} 股價...`);
+          
+          // 使用優化的雲端股價服務
+          const priceData = await cloudStockPriceService.getStockPrice(symbol);
+          
+          return {
+            symbol: symbol,
+            name: info.name,
+            price: priceData?.price || 0,
+            market: info.market || '台灣',
+            change: priceData?.change || 0,
+            changePercent: priceData?.changePercent || 0
+          };
+        })
+      );
+      
+      console.log(`✅ [searchStocksDirectly] 最終返回 ${stocksWithPrice.length} 筆結果`);
+      return stocksWithPrice;
       
     } catch (error) {
       console.error('❌ [searchStocksDirectly] 直接搜尋失敗:', error);

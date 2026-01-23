@@ -35,7 +35,7 @@ export class StaticStockSearchService {
       logger.info('stock', '載入靜態股票清單...');
       
       // 從 public 目錄載入股票清單
-      const response = await fetch('/stock_list.json');
+      const response = await fetch('./stock_list.json');
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 267, // 【雲端搜尋修復】修復 GitHub Pages 環境個股搜尋功能，添加本地股票清單搜尋，解決雲端無後端問題
+  PATCH: 270, // 【雲端股價優化】建立專門的雲端股價獲取服務，優化 GitHub Pages 環境下的股價獲取穩定性和性能
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

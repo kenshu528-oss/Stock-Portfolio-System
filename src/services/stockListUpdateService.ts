@@ -2,6 +2,7 @@
 // 在應用啟動時檢查股票清單是否為當天日期，不是則觸發更新
 
 import { logger } from '../utils/logger';
+import { stockListService } from './stockListService';
 
 interface UpdateStatus {
   isUpdating: boolean;
@@ -66,30 +67,31 @@ class StockListUpdateService {
    */
   private async checkBackendStockList(): Promise<{ isToday: boolean; date?: string }> {
     try {
-      // 檢查是否為本機環境
-      const isDevelopment = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1';
-
-      if (!isDevelopment) {
-        // 雲端環境：檢查本地股票清單檔案
-        logger.debug('stock', '雲端環境，檢查本地股票清單檔案');
+      const envInfo = stockListService.getEnvironmentInfo();
+      
+      if (!envInfo.isDevelopment) {
+        // 雲端環境：使用統一的股票清單服務檢查
+        logger.debug('stock', '雲端環境，使用統一股票清單服務檢查');
         
         try {
-          const response = await fetch('/public/stock_list.json');
-          if (response.ok) {
-            const data = await response.json();
+          const stockListData = await stockListService.loadStockList();
+          if (stockListData) {
             const today = new Date().toISOString().split('T')[0];
-            const fileDate = data.date;
+            const isToday = stockListData.date === today;
             
-            logger.debug('stock', '本地股票清單檔案檢查', { fileDate, today });
+            logger.debug('stock', '統一服務檢查結果', { 
+              fileDate: stockListData.date, 
+              today,
+              isToday 
+            });
             
             return {
-              isToday: fileDate === today,
-              date: fileDate
+              isToday,
+              date: stockListData.date
             };
           }
         } catch (error) {
-          logger.debug('stock', '無法載入本地股票清單檔案', error);
+          logger.debug('stock', '統一服務檢查失敗', error);
         }
         
         return { isToday: false };
@@ -113,7 +115,7 @@ class StockListUpdateService {
       };
 
     } catch (error) {
-      logger.debug('stock', '檢查後端股票清單失敗', error);
+      logger.debug('stock', '檢查股票清單狀態失敗', error);
       return { isToday: false };
     }
   }
@@ -170,11 +172,9 @@ class StockListUpdateService {
    */
   private async triggerBackendUpdate(): Promise<boolean> {
     try {
-      // 檢查是否為本機環境
-      const isDevelopment = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1';
+      const envInfo = stockListService.getEnvironmentInfo();
 
-      if (!isDevelopment) {
+      if (!envInfo.isDevelopment) {
         logger.debug('stock', '雲端環境，股票清單由 GitHub Actions 自動更新，跳過前端觸發');
         return true; // 雲端環境下認為更新成功，因為有 GitHub Actions 負責
       }
