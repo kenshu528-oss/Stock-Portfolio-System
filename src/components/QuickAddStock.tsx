@@ -5,6 +5,7 @@ import { SearchIcon, CheckIcon, XIcon } from './ui/Icons';
 import type { StockFormData, StockSearchResult } from '../types';
 import { API_ENDPOINTS, shouldUseBackendProxy } from '../config/api';
 import { stockListService } from '../services/stockListService';
+import { cloudStockPriceService } from '../services/cloudStockPriceService';
 
 // 使用內建圖示替代 lucide-react
 const PlusIcon = () => (
@@ -301,15 +302,18 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             
             console.log(`📋 [QuickAddStock] 排序後結果:`, sortedFiltered.map((s: any) => s.stock_id));
             
-            // 🔧 為每個股票獲取即時價格（Yahoo Finance 優先）
+            // 🔧 使用優化的雲端股價服務獲取即時價格
             const stocksWithPrice = await Promise.all(
               sortedFiltered.map(async (stock: any) => {
                 console.log(`💰 [QuickAddStock] 獲取 ${stock.stock_id} 股價...`);
-                const price = await getStockPriceDirectly(stock.stock_id);
+                
+                // 使用統一的雲端股價服務
+                const priceData = await cloudStockPriceService.getStockPrice(stock.stock_id);
+                
                 return {
                   symbol: stock.stock_id,
                   name: stock.stock_name,
-                  price: price || 0,
+                  price: priceData?.price || 0,
                   market: '台灣'
                 };
               })
@@ -334,118 +338,6 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     } catch (error) {
       console.error('❌ [QuickAddStock] 直接搜尋失敗:', error);
       return [];
-    }
-  };
-
-  // 直接獲取股價（不依賴後端）- Yahoo Finance 優先
-  const getStockPriceDirectly = async (symbol: string): Promise<number | null> => {
-    try {
-      // 🔧 遵循 api-standards.md：Yahoo Finance 優先，FinMind 備用
-      
-      // 1. 優先嘗試 Yahoo Finance API
-      console.log(`📊 優先嘗試 Yahoo Finance: ${symbol}`);
-      const yahooPrice = await tryYahooFinanceAPI(symbol);
-      if (yahooPrice && yahooPrice > 0) {
-        console.log(`✅ Yahoo Finance 成功: ${symbol} = ${yahooPrice}`);
-        return yahooPrice;
-      }
-      
-      // 2. Yahoo Finance 失敗，嘗試 FinMind 備用
-      console.log(`📊 Yahoo Finance 失敗，嘗試 FinMind 備用: ${symbol}`);
-      const finmindPrice = await tryFinMindAPI(symbol);
-      if (finmindPrice && finmindPrice > 0) {
-        console.log(`✅ FinMind 備用成功: ${symbol} = ${finmindPrice}`);
-        return finmindPrice;
-      }
-      
-      console.log(`❌ 所有 API 都失敗: ${symbol}`);
-      return null;
-      
-    } catch (error) {
-      console.error(`獲取 ${symbol} 股價失敗:`, error);
-      return null;
-    }
-  };
-
-  // Yahoo Finance API 調用函數
-  const tryYahooFinanceAPI = async (symbol: string): Promise<number | null> => {
-    try {
-      // 智能判斷股票代碼後綴
-      const getCorrectSymbol = (stockSymbol: string) => {
-        if (stockSymbol.includes('.')) return stockSymbol; // 已有後綴
-        
-        const code = parseInt(stockSymbol.substring(0, 4));
-        const isBondETF = /^00\d{2,3}B$/i.test(stockSymbol);
-        
-        if (isBondETF) {
-          // 債券 ETF：優先 .TWO
-          return `${stockSymbol}.TWO`;
-        } else if (code >= 3000 && code <= 8999) {
-          // 上櫃股票（3000-8999）：使用 .TWO
-          return `${stockSymbol}.TWO`;
-        } else {
-          // 上市股票（1000-2999）：使用 .TW
-          return `${stockSymbol}.TW`;
-        }
-      };
-
-      const correctSymbol = getCorrectSymbol(symbol);
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${correctSymbol}`;
-      
-      const response = await fetch(yahooUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        },
-        signal: AbortSignal.timeout(8000) // 8秒超時
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const result = data?.chart?.result?.[0];
-        
-        if (result?.meta) {
-          const meta = result.meta;
-          const currentPrice = meta.regularMarketPrice || meta.previousClose || 0;
-          return currentPrice;
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      console.error(`Yahoo Finance API 失敗 ${symbol}:`, error);
-      return null;
-    }
-  };
-
-  // FinMind API 調用函數（備用）
-  const tryFinMindAPI = async (symbol: string): Promise<number | null> => {
-    try {
-      const today = new Date();
-      const startDate = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000); // 14天前
-      const finmindPriceUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${today.toISOString().split('T')[0]}&token=`;
-      
-      const finmindResponse = await fetch(finmindPriceUrl, {
-        signal: AbortSignal.timeout(8000) // 8秒超時
-      });
-      
-      if (finmindResponse.ok) {
-        const finmindData = await finmindResponse.json();
-        if (finmindData.data && finmindData.data.length > 0) {
-          // 取最新的收盤價
-          const latestData = finmindData.data[finmindData.data.length - 1];
-          const price = parseFloat(latestData.close);
-          return price > 0 ? price : null;
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      console.error(`FinMind API 失敗 ${symbol}:`, error);
-      // 如果是 402 錯誤，記錄但不影響功能
-      if (error instanceof Error && error.message.includes('402')) {
-        console.log(`💡 FinMind API 需要付費，已跳過`);
-      }
-      return null;
     }
   };
 

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 270, // 【雲端股價優化】建立專門的雲端股價獲取服務，優化 GitHub Pages 環境下的股價獲取穩定性和性能
+  PATCH: 271, // 【股價獲取修復】修復 QuickAddStock 組件未使用統一雲端股價服務的問題，確保雲端環境下能正常獲取股價
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

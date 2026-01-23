@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0271',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【股價獲取修復】修復 QuickAddStock 組件未使用統一雲端股價服務的問題',
+    description: '發現 QuickAddStock 組件有自己的股價獲取邏輯，但沒有使用新建的 cloudStockPriceService，導致雲端環境下股價顯示為 $0。修復：整合統一的雲端股價服務，移除重複的股價獲取代碼，確保所有組件都使用相同的優化股價獲取策略。',
+    changes: [
+      '修復 QuickAddStock.tsx：整合 cloudStockPriceService 統一股價服務',
+      '移除重複的股價獲取函數：getStockPriceDirectly, tryYahooFinanceAPI, tryFinMindAPI',
+      '統一股價獲取邏輯：所有組件都使用相同的優化策略',
+      '確保雲端環境下股價正常顯示：不再顯示 $0',
+      '代碼簡化：減少重複代碼，提高維護性'
+    ],
+    fixes: [
+      '修復雲端環境下 QuickAddStock 股價顯示為 $0 的問題',
+      '修復股價獲取邏輯不一致的問題',
+      '修復重複 API 調用的性能問題'
+    ]
+  },
+  {
     version: '1.0.2.0270',
     date: '2026-01-23',
     type: 'patch',
