@@ -176,46 +176,56 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             const basicResults = searchLocalStockList(query, stockListData.stocks);
             console.log(`🔍 [QuickAddStock] 本地搜尋結果: ${basicResults.length} 筆`);
             
-            // 🔧 為搜尋結果獲取股價
-            console.log(`🔧 [QuickAddStock] 開始獲取 ${basicResults.length} 支股票的價格...`);
-            
-            const resultsWithPrice = await Promise.all(
-              basicResults.map(async (stock) => {
-                console.log(`💰 [QuickAddStock] 獲取 ${stock.symbol} 股價...`);
-                
-                try {
-                  // 檢查 cloudStockPriceService 是否可用
-                  if (!cloudStockPriceService) {
-                    console.error(`❌ [QuickAddStock] cloudStockPriceService 未定義`);
+            // 🔧 雲端環境優化：先顯示載入狀態，等股價獲取完成後再顯示結果
+            if (basicResults.length > 0) {
+              // 先設置載入狀態
+              setSearchResults([]);
+              setShowResults(false);
+              setIsSearching(true);
+              
+              console.log(`🔧 [QuickAddStock] 開始獲取 ${basicResults.length} 支股票的價格...`);
+              
+              const resultsWithPrice = await Promise.all(
+                basicResults.map(async (stock) => {
+                  console.log(`💰 [QuickAddStock] 獲取 ${stock.symbol} 股價...`);
+                  
+                  try {
+                    // 檢查 cloudStockPriceService 是否可用
+                    if (!cloudStockPriceService) {
+                      console.error(`❌ [QuickAddStock] cloudStockPriceService 未定義`);
+                      return {
+                        ...stock,
+                        price: 0
+                      };
+                    }
+                    
+                    console.log(`🔍 [QuickAddStock] 調用 cloudStockPriceService.getStockPrice(${stock.symbol})`);
+                    
+                    // 使用統一的雲端股價服務
+                    const priceData = await cloudStockPriceService.getStockPrice(stock.symbol);
+                    
+                    console.log(`📊 [QuickAddStock] ${stock.symbol} 價格結果:`, priceData);
+                    
+                    return {
+                      ...stock,
+                      price: priceData?.price || 0
+                    };
+                  } catch (error) {
+                    console.error(`❌ [QuickAddStock] 獲取 ${stock.symbol} 股價失敗:`, error);
                     return {
                       ...stock,
                       price: 0
                     };
                   }
-                  
-                  console.log(`🔍 [QuickAddStock] 調用 cloudStockPriceService.getStockPrice(${stock.symbol})`);
-                  
-                  // 使用統一的雲端股價服務
-                  const priceData = await cloudStockPriceService.getStockPrice(stock.symbol);
-                  
-                  console.log(`📊 [QuickAddStock] ${stock.symbol} 價格結果:`, priceData);
-                  
-                  return {
-                    ...stock,
-                    price: priceData?.price || 0
-                  };
-                } catch (error) {
-                  console.error(`❌ [QuickAddStock] 獲取 ${stock.symbol} 股價失敗:`, error);
-                  return {
-                    ...stock,
-                    price: 0
-                  };
-                }
-              })
-            );
-            
-            console.log(`✅ [QuickAddStock] 股價獲取完成，結果:`, resultsWithPrice);
-            return resultsWithPrice;
+                })
+              );
+              
+              console.log(`✅ [QuickAddStock] 股價獲取完成，結果:`, resultsWithPrice);
+              setIsSearching(false);
+              return resultsWithPrice;
+            } else {
+              return basicResults;
+            }
           } else {
             console.log(`❌ [QuickAddStock] 無法載入股票清單，返回空結果`);
             return [];
@@ -410,8 +420,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     }
   };
 
-  // 防抖搜尋
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  // 防抖搜尋 - 使用 ref 避免狀態更新導致重新渲染
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // 實際的搜尋函數
   const performSearch = useCallback(async (query: string) => {
@@ -445,68 +455,12 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
       const results = await searchStocks(query);
       console.log(`✅ [QuickAddStock] performSearch 完成: ${results.length} 筆結果`);
       setSearchResults(results);
+      setShowResults(true);
       
-      // 🎯 智能自動選擇邏輯
-      const shouldAutoSelect = (query: string, results: StockSearchResult[]): StockSearchResult | null => {
-        if (results.length === 0) return null;
-        
-        const queryUpper = query.trim().toUpperCase();
-        
-        // 1. 精確匹配：查詢字串完全等於股票代碼
-        const exactMatch = results.find(stock => stock.symbol.toUpperCase() === queryUpper);
-        if (exactMatch) {
-          console.log(`🎯 [QuickAddStock] 精確匹配自動選擇: ${exactMatch.symbol}`);
-          return exactMatch;
-        }
-        
-        // 2. 完整股票代碼：4-6位數字可能加字母（如 2330, 00937B）
-        const isCompleteStockCode = /^(\d{4}|\d{5}[A-Z]?|\d{6}[A-Z]?)$/i.test(queryUpper);
-        if (isCompleteStockCode && results.length === 1) {
-          console.log(`🎯 [QuickAddStock] 完整代碼單一結果自動選擇: ${results[0].symbol}`);
-          return results[0];
-        }
-        
-        // 3. 如果第一個結果是開頭完全匹配且查詢長度 >= 4
-        if (queryUpper.length >= 4) {
-          const firstResult = results[0];
-          if (firstResult.symbol.toUpperCase().startsWith(queryUpper)) {
-            console.log(`🎯 [QuickAddStock] 開頭匹配自動選擇: ${firstResult.symbol}`);
-            return firstResult;
-          }
-        }
-        
-        return null;
-      };
-      
-      // 檢查是否應該自動選擇
-      const autoSelectedStock = shouldAutoSelect(query, results);
-      
-      if (autoSelectedStock) {
-        // 自動選擇股票
-        console.log(`✨ [QuickAddStock] 自動選擇股票: ${autoSelectedStock.symbol} - ${autoSelectedStock.name}`);
-        setSelectedStock(autoSelectedStock);
-        
-        // 🔧 修復：使用 ref 直接更新輸入框，避免觸發 onChange 事件
-        const displayText = `${autoSelectedStock.symbol} - ${autoSelectedStock.name}`;
-        if (searchInputRef.current) {
-          searchInputRef.current.value = displayText;
-        }
-        // 同步更新狀態，但不觸發搜尋
-        setSearchQuery(displayText);
-        
-        setCostPrice(autoSelectedStock.price.toString());
-        setShowResults(false); // 隱藏搜尋結果
-        setError('');
+      if (results.length === 0) {
+        setError('找不到相關股票，請檢查輸入是否正確');
       } else {
-        // 顯示搜尋結果供用戶選擇
-        console.log(`📋 [QuickAddStock] 顯示 ${results.length} 筆搜尋結果供選擇`);
-        setShowResults(true);
-        
-        if (results.length === 0) {
-          setError('找不到相關股票，請檢查輸入是否正確');
-        } else {
-          setError('');
-        }
+        setError('');
       }
     } catch (err) {
       console.error('🚨 [QuickAddStock] performSearch 搜尋錯誤:', err);
@@ -521,19 +475,12 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // 處理搜尋（帶防抖）
   const handleSearch = useCallback((query: string) => {
     console.log(`🎯 [QuickAddStock] handleSearch 被調用: "${query}"`);
-    
-    // 🔧 修復：如果查詢包含 " - "，說明是已選擇的股票，不進行搜尋
-    if (query.includes(' - ')) {
-      console.log(`⏭️ [QuickAddStock] 跳過已選擇股票的搜尋: "${query}"`);
-      return;
-    }
-    
     setSearchQuery(query);
     
     // 清除之前的定時器
-    if (searchTimeout) {
+    if (searchTimeoutRef.current) {
       console.log(`⏰ [QuickAddStock] 清除之前的搜尋計時器`);
-      clearTimeout(searchTimeout);
+      clearTimeout(searchTimeoutRef.current);
     }
     
     // 設置新的定時器（300ms 防抖）
@@ -542,17 +489,17 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
       performSearch(query);
     }, 300);
     
-    setSearchTimeout(newTimeout);
+    searchTimeoutRef.current = newTimeout;
   }, []); // 🔧 修復：移除 performSearch 依賴，避免循環依賴
 
   // 清理定時器
   useEffect(() => {
     return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchTimeout]);
+  }, []); // 🔧 修復：使用 ref，不需要依賴項
 
   // 選擇股票
   const handleSelectStock = (stock: StockSearchResult) => {
