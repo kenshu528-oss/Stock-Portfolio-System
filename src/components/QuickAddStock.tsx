@@ -173,9 +173,49 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             console.log(`📋 [QuickAddStock] 載入股票清單成功: ${stockListData.count} 支股票`);
             
             // 搜尋匹配的股票
-            const results = searchLocalStockList(query, stockListData.stocks);
-            console.log(`🔍 [QuickAddStock] 本地搜尋結果: ${results.length} 筆`);
-            return results;
+            const basicResults = searchLocalStockList(query, stockListData.stocks);
+            console.log(`🔍 [QuickAddStock] 本地搜尋結果: ${basicResults.length} 筆`);
+            
+            // 🔧 為搜尋結果獲取股價
+            console.log(`🔧 [QuickAddStock] 開始獲取 ${basicResults.length} 支股票的價格...`);
+            
+            const resultsWithPrice = await Promise.all(
+              basicResults.map(async (stock) => {
+                console.log(`💰 [QuickAddStock] 獲取 ${stock.symbol} 股價...`);
+                
+                try {
+                  // 檢查 cloudStockPriceService 是否可用
+                  if (!cloudStockPriceService) {
+                    console.error(`❌ [QuickAddStock] cloudStockPriceService 未定義`);
+                    return {
+                      ...stock,
+                      price: 0
+                    };
+                  }
+                  
+                  console.log(`🔍 [QuickAddStock] 調用 cloudStockPriceService.getStockPrice(${stock.symbol})`);
+                  
+                  // 使用統一的雲端股價服務
+                  const priceData = await cloudStockPriceService.getStockPrice(stock.symbol);
+                  
+                  console.log(`📊 [QuickAddStock] ${stock.symbol} 價格結果:`, priceData);
+                  
+                  return {
+                    ...stock,
+                    price: priceData?.price || 0
+                  };
+                } catch (error) {
+                  console.error(`❌ [QuickAddStock] 獲取 ${stock.symbol} 股價失敗:`, error);
+                  return {
+                    ...stock,
+                    price: 0
+                  };
+                }
+              })
+            );
+            
+            console.log(`✅ [QuickAddStock] 股價獲取完成，結果:`, resultsWithPrice);
+            return resultsWithPrice;
           } else {
             console.log(`❌ [QuickAddStock] 無法載入股票清單，返回空結果`);
             return [];

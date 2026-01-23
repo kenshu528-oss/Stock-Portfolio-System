@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 272, // 【調試版本】新增詳細的股價獲取調試日誌，用於診斷雲端環境下股價顯示問題
+  PATCH: 274, // 【股價獲取修復】修復本地搜尋分支直接返回結果，跳過股價獲取邏輯的問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

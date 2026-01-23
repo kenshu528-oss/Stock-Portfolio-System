@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0274',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【股價獲取修復】修復本地搜尋分支直接返回結果的問題',
+    description: '發現真正問題：在 searchStocks 函數的本地搜尋分支中，代碼直接返回 searchLocalStockList 結果，完全跳過了股價獲取邏輯。修復：在本地搜尋分支中正確調用股價獲取服務，確保所有搜尋路徑都能獲取股價。',
+    changes: [
+      '修復本地搜尋分支直接返回基本結果的問題',
+      '在正確的位置添加股價獲取邏輯',
+      '確保 cloudStockPriceService 在本地搜尋中被調用',
+      '統一所有搜尋分支的股價處理邏輯',
+      '保留完整的調試日誌追蹤'
+    ],
+    fixes: [
+      '修復雲端環境下股價顯示 $0 的根本問題',
+      '修復本地搜尋跳過股價獲取的邏輯錯誤',
+      '確保所有搜尋路徑都有股價獲取功能'
+    ]
+  },
+  {
     version: '1.0.2.0272',
     date: '2026-01-23',
     type: 'patch',
