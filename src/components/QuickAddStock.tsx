@@ -303,21 +303,50 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             console.log(`📋 [QuickAddStock] 排序後結果:`, sortedFiltered.map((s: any) => s.stock_id));
             
             // 🔧 使用優化的雲端股價服務獲取即時價格
+            console.log(`🔧 [QuickAddStock] 開始獲取 ${sortedFiltered.length} 支股票的價格...`);
+            
             const stocksWithPrice = await Promise.all(
               sortedFiltered.map(async (stock: any) => {
                 console.log(`💰 [QuickAddStock] 獲取 ${stock.stock_id} 股價...`);
                 
-                // 使用統一的雲端股價服務
-                const priceData = await cloudStockPriceService.getStockPrice(stock.stock_id);
-                
-                return {
-                  symbol: stock.stock_id,
-                  name: stock.stock_name,
-                  price: priceData?.price || 0,
-                  market: '台灣'
-                };
+                try {
+                  // 檢查 cloudStockPriceService 是否可用
+                  if (!cloudStockPriceService) {
+                    console.error(`❌ [QuickAddStock] cloudStockPriceService 未定義`);
+                    return {
+                      symbol: stock.stock_id,
+                      name: stock.stock_name,
+                      price: 0,
+                      market: '台灣'
+                    };
+                  }
+                  
+                  console.log(`🔍 [QuickAddStock] 調用 cloudStockPriceService.getStockPrice(${stock.stock_id})`);
+                  
+                  // 使用統一的雲端股價服務
+                  const priceData = await cloudStockPriceService.getStockPrice(stock.stock_id);
+                  
+                  console.log(`📊 [QuickAddStock] ${stock.stock_id} 價格結果:`, priceData);
+                  
+                  return {
+                    symbol: stock.stock_id,
+                    name: stock.stock_name,
+                    price: priceData?.price || 0,
+                    market: '台灣'
+                  };
+                } catch (error) {
+                  console.error(`❌ [QuickAddStock] 獲取 ${stock.stock_id} 股價失敗:`, error);
+                  return {
+                    symbol: stock.stock_id,
+                    name: stock.stock_name,
+                    price: 0,
+                    market: '台灣'
+                  };
+                }
               })
             );
+            
+            console.log(`✅ [QuickAddStock] 股價獲取完成，結果:`, stocksWithPrice);
             
             console.log(`✅ [QuickAddStock] 最終返回 ${stocksWithPrice.length} 筆結果`);
             return stocksWithPrice;

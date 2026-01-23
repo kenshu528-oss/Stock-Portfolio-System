@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0272',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【調試版本】新增詳細的股價獲取調試日誌，診斷雲端環境股價顯示問題',
+    description: '發現雲端環境下股價仍顯示 $0，新增詳細的調試日誌來診斷問題。包含 cloudStockPriceService 可用性檢查、API 調用過程追蹤、錯誤處理等，幫助找出股價獲取失敗的根本原因。',
+    changes: [
+      '新增詳細的股價獲取調試日誌',
+      '添加 cloudStockPriceService 可用性檢查',
+      '增強錯誤處理和異常捕獲',
+      '添加 API 調用過程追蹤',
+      '提供完整的股價獲取結果日誌'
+    ],
+    debug: [
+      '檢查 cloudStockPriceService 是否正確導入',
+      '追蹤股價獲取的每個步驟',
+      '捕獲並記錄所有可能的錯誤',
+      '驗證 API 調用和響應'
+    ]
+  },
+  {
     version: '1.0.2.0271',
     date: '2026-01-23',
     type: 'patch',

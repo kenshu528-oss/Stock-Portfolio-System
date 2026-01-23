@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 271, // 【股價獲取修復】修復 QuickAddStock 組件未使用統一雲端股價服務的問題，確保雲端環境下能正常獲取股價
+  PATCH: 272, // 【調試版本】新增詳細的股價獲取調試日誌，用於診斷雲端環境下股價顯示問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
