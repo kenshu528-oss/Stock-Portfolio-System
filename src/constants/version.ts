@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 274, // 【股價獲取修復】修復本地搜尋分支直接返回結果，跳過股價獲取邏輯的問題
+  PATCH: 276, // 【無限循環修復】修復自動選擇股票時觸發 onChange 導致的重複搜尋和跳閃問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

@@ -445,12 +445,68 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
       const results = await searchStocks(query);
       console.log(`✅ [QuickAddStock] performSearch 完成: ${results.length} 筆結果`);
       setSearchResults(results);
-      setShowResults(true);
       
-      if (results.length === 0) {
-        setError('找不到相關股票，請檢查輸入是否正確');
-      } else {
+      // 🎯 智能自動選擇邏輯
+      const shouldAutoSelect = (query: string, results: StockSearchResult[]): StockSearchResult | null => {
+        if (results.length === 0) return null;
+        
+        const queryUpper = query.trim().toUpperCase();
+        
+        // 1. 精確匹配：查詢字串完全等於股票代碼
+        const exactMatch = results.find(stock => stock.symbol.toUpperCase() === queryUpper);
+        if (exactMatch) {
+          console.log(`🎯 [QuickAddStock] 精確匹配自動選擇: ${exactMatch.symbol}`);
+          return exactMatch;
+        }
+        
+        // 2. 完整股票代碼：4-6位數字可能加字母（如 2330, 00937B）
+        const isCompleteStockCode = /^(\d{4}|\d{5}[A-Z]?|\d{6}[A-Z]?)$/i.test(queryUpper);
+        if (isCompleteStockCode && results.length === 1) {
+          console.log(`🎯 [QuickAddStock] 完整代碼單一結果自動選擇: ${results[0].symbol}`);
+          return results[0];
+        }
+        
+        // 3. 如果第一個結果是開頭完全匹配且查詢長度 >= 4
+        if (queryUpper.length >= 4) {
+          const firstResult = results[0];
+          if (firstResult.symbol.toUpperCase().startsWith(queryUpper)) {
+            console.log(`🎯 [QuickAddStock] 開頭匹配自動選擇: ${firstResult.symbol}`);
+            return firstResult;
+          }
+        }
+        
+        return null;
+      };
+      
+      // 檢查是否應該自動選擇
+      const autoSelectedStock = shouldAutoSelect(query, results);
+      
+      if (autoSelectedStock) {
+        // 自動選擇股票
+        console.log(`✨ [QuickAddStock] 自動選擇股票: ${autoSelectedStock.symbol} - ${autoSelectedStock.name}`);
+        setSelectedStock(autoSelectedStock);
+        
+        // 🔧 修復：使用 ref 直接更新輸入框，避免觸發 onChange 事件
+        const displayText = `${autoSelectedStock.symbol} - ${autoSelectedStock.name}`;
+        if (searchInputRef.current) {
+          searchInputRef.current.value = displayText;
+        }
+        // 同步更新狀態，但不觸發搜尋
+        setSearchQuery(displayText);
+        
+        setCostPrice(autoSelectedStock.price.toString());
+        setShowResults(false); // 隱藏搜尋結果
         setError('');
+      } else {
+        // 顯示搜尋結果供用戶選擇
+        console.log(`📋 [QuickAddStock] 顯示 ${results.length} 筆搜尋結果供選擇`);
+        setShowResults(true);
+        
+        if (results.length === 0) {
+          setError('找不到相關股票，請檢查輸入是否正確');
+        } else {
+          setError('');
+        }
       }
     } catch (err) {
       console.error('🚨 [QuickAddStock] performSearch 搜尋錯誤:', err);
@@ -465,6 +521,13 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   // 處理搜尋（帶防抖）
   const handleSearch = useCallback((query: string) => {
     console.log(`🎯 [QuickAddStock] handleSearch 被調用: "${query}"`);
+    
+    // 🔧 修復：如果查詢包含 " - "，說明是已選擇的股票，不進行搜尋
+    if (query.includes(' - ')) {
+      console.log(`⏭️ [QuickAddStock] 跳過已選擇股票的搜尋: "${query}"`);
+      return;
+    }
+    
     setSearchQuery(query);
     
     // 清除之前的定時器
