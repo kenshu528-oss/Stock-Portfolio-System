@@ -138,19 +138,23 @@ export class FinMindAPIProvider implements APIProvider {
    */
   async getStockInfo(symbol: string): Promise<string | null> {
     try {
-      const url = new URL(FINMIND_CONFIG.baseUrl);
-      url.searchParams.set('dataset', FINMIND_CONFIG.datasets.stockInfo);
-      url.searchParams.set('data_id', symbol);
+      // 構建 FinMind API URL
+      const finmindUrl = new URL(FINMIND_CONFIG.baseUrl);
+      finmindUrl.searchParams.set('dataset', FINMIND_CONFIG.datasets.stockInfo);
+      finmindUrl.searchParams.set('data_id', symbol);
       
       // 添加 Token 參數
       const token = FINMIND_CONFIG.getToken();
       if (token) {
-        url.searchParams.set('token', token);
+        finmindUrl.searchParams.set('token', token);
       }
       
-      logger.trace('api', `FinMind 股票資訊請求: ${symbol}`);
+      // 使用代理服務調用 FinMind API
+      const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(finmindUrl.toString())}`;
       
-      const response = await fetch(url.toString(), {
+      logger.trace('api', `FinMind 股票資訊請求 (代理): ${symbol}`);
+      
+      const response = await fetch(proxyUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -223,21 +227,25 @@ export class FinMindAPIProvider implements APIProvider {
       const startDate = new Date();
       startDate.setDate(endDate.getDate() - 5);
       
-      const url = new URL(FINMIND_CONFIG.baseUrl);
-      url.searchParams.set('dataset', FINMIND_CONFIG.datasets.stockPrice);
-      url.searchParams.set('data_id', symbol);
-      url.searchParams.set('start_date', this.formatDate(startDate));
-      url.searchParams.set('end_date', this.formatDate(endDate));
+      // 構建 FinMind API URL
+      const finmindUrl = new URL(FINMIND_CONFIG.baseUrl);
+      finmindUrl.searchParams.set('dataset', FINMIND_CONFIG.datasets.stockPrice);
+      finmindUrl.searchParams.set('data_id', symbol);
+      finmindUrl.searchParams.set('start_date', this.formatDate(startDate));
+      finmindUrl.searchParams.set('end_date', this.formatDate(endDate));
       
       // 添加 Token 參數
       const token = FINMIND_CONFIG.getToken();
       if (token) {
-        url.searchParams.set('token', token);
+        finmindUrl.searchParams.set('token', token);
       }
       
-      logger.trace('api', `FinMind 股價請求: ${symbol}`);
+      // 使用代理服務調用 FinMind API
+      const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(finmindUrl.toString())}`;
       
-      const response = await fetch(url.toString(), {
+      logger.trace('api', `FinMind 股價請求 (代理): ${symbol}`);
+      
+      const response = await fetch(proxyUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -301,26 +309,30 @@ export class FinMindAPIProvider implements APIProvider {
   }
 
   /**
-   * 獲取股息數據
+   * 獲取股息數據（通過代理服務）
    * 
    * @param symbol 股票代碼
    * @returns 股息記錄陣列或 null
    */
   async getDividendData(symbol: string): Promise<any[] | null> {
     try {
-      const url = new URL(FINMIND_CONFIG.baseUrl);
-      url.searchParams.set('dataset', 'TaiwanStockDividend');
-      url.searchParams.set('data_id', symbol);
+      // 構建 FinMind API URL
+      const finmindUrl = new URL(FINMIND_CONFIG.baseUrl);
+      finmindUrl.searchParams.set('dataset', 'TaiwanStockDividend');
+      finmindUrl.searchParams.set('data_id', symbol);
       
       // 添加 Token 參數
       const token = FINMIND_CONFIG.getToken();
       if (token) {
-        url.searchParams.set('token', token);
+        finmindUrl.searchParams.set('token', token);
       }
       
-      logger.trace('api', `FinMind 股息請求: ${symbol}`);
+      // 使用代理服務調用 FinMind API
+      const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(finmindUrl.toString())}`;
       
-      const response = await fetch(url.toString(), {
+      logger.trace('api', `FinMind 股息請求 (代理): ${symbol}`);
+      
+      const response = await fetch(proxyUrl, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

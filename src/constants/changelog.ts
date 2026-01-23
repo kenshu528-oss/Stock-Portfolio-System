@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0288',
+    date: '2026-01-23',
+    type: 'patch',
+    title: '【FinMind CORS 修復】所有 FinMind API 調用改用代理服務',
+    description: 'Console 顯示 FinMind API CORS 錯誤，原因是在雲端環境（GitHub Pages）中直接調用 FinMind API 被 CORS 政策阻擋。修復方案：所有 FinMind API 調用都改用代理服務。',
+    changes: [
+      '修復 getDividendData 方法使用代理服務',
+      '修復 getStockInfo 方法使用代理服務',
+      '修復 getLatestStockPrice 方法使用代理服務',
+      '統一使用 Codetabs Proxy API 代理 FinMind 調用',
+      '保持 Token 參數支援（通過代理傳遞）'
+    ],
+    fixes: [
+      '修復 FinMind API CORS 錯誤',
+      '修復股息數據獲取 CORS 阻擋問題',
+      '修復股票資訊獲取 CORS 阻擋問題',
+      '修復股價獲取 CORS 阻擋問題',
+      '確保雲端環境能正常調用 FinMind API'
+    ]
+  },
+  {
     version: '1.0.2.0287',
     date: '2026-01-23',
     type: 'patch',
