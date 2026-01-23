@@ -2,8 +2,10 @@ name: Update Stock List
 
 on:
   schedule:
-    # 每日台灣時間 9:00 執行（UTC 1:00）
-    - cron: '0 1 * * *'
+    # 每日台灣時間 8:30 執行（UTC 0:30）- 避開整點高峰
+    - cron: '30 0 * * *'
+    # 備用時間：台灣時間 10:15 執行（UTC 2:15）
+    - cron: '15 2 * * *'
   workflow_dispatch: # 允許手動觸發
 
 jobs:
@@ -23,7 +25,27 @@ jobs:
       run: |
         pip install FinMind tqdm pandas
         
+    - name: Check if already updated today
+      run: |
+        TODAY=$(date +%Y-%m-%d)
+        if [ -f "public/stock_list_$TODAY.json" ]; then
+          echo "📝 今日股票清單已存在，檢查是否需要更新"
+          # 檢查檔案是否是今天創建的
+          FILE_DATE=$(jq -r '.date' "public/stock_list_$TODAY.json" 2>/dev/null || echo "")
+          if [ "$FILE_DATE" = "$TODAY" ]; then
+            echo "✅ 今日股票清單已是最新，跳過更新"
+            echo "SKIP_UPDATE=true" >> $GITHUB_ENV
+          else
+            echo "⚠️ 檔案存在但日期不符，需要更新"
+            echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+          fi
+        else
+          echo "📋 今日股票清單不存在，需要更新"
+          echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+        fi
+        
     - name: Fetch stock list
+      if: env.SKIP_UPDATE != 'true'
       env:
         FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
       run: |
@@ -39,6 +61,7 @@ jobs:
         python backend/fetch_stock_list.py --force
         
     - name: Check and copy stock list
+      if: env.SKIP_UPDATE != 'true'
       run: |
         mkdir -p public
         TODAY=$(date +%Y-%m-%d)
@@ -63,6 +86,7 @@ jobs:
         fi
         
     - name: Commit and push changes
+      if: env.SKIP_UPDATE != 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
