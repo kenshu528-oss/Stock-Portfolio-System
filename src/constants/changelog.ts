@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0320',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '邏輯修正 - 8112 按上市公司規則使用 .TW',
+    description: '修正智能後綴判斷邏輯，8112 不是特殊案例，而是遵循上市公司規則',
+    changes: [
+      '修正上櫃股票範圍：3000-7999（原 3000-8999）',
+      '8000-8999 範圍歸類為上市股票，使用 .TW 後綴',
+      '移除 8112 特殊案例處理，遵循正常分類規則',
+      '更新 cloudStockPriceService.ts 的後綴判斷邏輯',
+      '更新 stockSymbolAnalyzer.ts 的市場分類邏輯',
+      '8112 至上：上市公司，正常使用 .TW 後綴'
+    ],
+    fixes: [
+      '修復錯誤的特殊案例邏輯',
+      '修正上櫃股票範圍定義',
+      '確保 8000-8999 範圍股票正確分類為上市',
+      '簡化邏輯，移除不必要的特殊案例處理'
+    ]
+  },
+  {
     version: '1.0.2.0319',
     date: '2026-01-26',
     type: 'patch',

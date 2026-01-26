@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 319, // 【特殊案例】8112 至上使用 .TW 後綴，修正智能後綴判斷
+  PATCH: 320, // 【邏輯修正】8112 按上市公司規則使用 .TW，修正上櫃範圍為 3000-7999
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

@@ -365,21 +365,12 @@ class CloudStockPriceService {
     const code = parseInt(symbol.substring(0, 4));
     const isBondETF = /^00\d{2,3}B$/i.test(symbol);
 
-    // 特殊案例處理 - v1.0.2.0319
-    const specialCases: Record<string, string> = {
-      '8112': '.TW', // 至上：雖在 8000 範圍但需使用 .TW
-    };
-    
-    if (specialCases[symbol]) {
-      return `${symbol}${specialCases[symbol]}`;
-    }
-
     if (isBondETF) {
       return `${symbol}.TWO`; // 債券 ETF 優先櫃買中心
-    } else if (code >= 3000 && code <= 8999) {
+    } else if (code >= 3000 && code <= 7999) { // 修正：上櫃股票範圍改為 3000-7999
       return `${symbol}.TWO`; // 上櫃股票優先櫃買中心
     } else {
-      return `${symbol}.TW`; // 上市股票優先證交所
+      return `${symbol}.TW`; // 上市股票（包含 8000-8999）優先證交所
     }
   }
 
