@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0315',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '股價專精 - 專注股價獲取，明確標示來源',
+    description: '簡化股價獲取邏輯，移除對 FinMind 名稱的依賴，專注於穩定的股價獲取',
+    changes: [
+      '完成 Vercel Edge Functions 股價 API 實作',
+      '移除 FinMind 名稱獲取邏輯（使用 Stock List）',
+      '明確標示每個股價的來源（Yahoo Finance (Vercel)）',
+      '簡化股價服務，專注於價格獲取',
+      'Vercel 作為第一優先級，最穩定的解決方案',
+      '支援智能股票代碼後綴判斷（.TW/.TWO）'
+    ],
+    fixes: [
+      '修復雲端股價獲取不穩定問題',
+      '移除不必要的 FinMind 名稱依賴',
+      '提供清楚的股價來源標示',
+      '簡化代碼邏輯，提高維護性'
+    ]
+  },
+  {
     version: '1.0.2.0313',
     date: '2026-01-26',
     type: 'patch',

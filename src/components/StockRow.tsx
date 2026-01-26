@@ -457,6 +457,7 @@ const StockRow: React.FC<StockRowProps> = ({
                  stock.priceSource === 'FinMind' ? 'FinMind' : 
                  stock.priceSource === 'Yahoo+FinMind' ? 'Yahoo+FinMind' :
                  stock.priceSource === 'FinMind+TWSE' ? 'FinMind+證交所' :
+                 stock.priceSource.includes('Vercel') ? 'Yahoo (Vercel)' :
                  stock.priceSource.includes('Yahoo') ? 'Yahoo' :
                  stock.priceSource.includes('FinMind') ? 'FinMind' :
                  stock.priceSource}

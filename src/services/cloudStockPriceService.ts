@@ -70,35 +70,92 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0312 - 添加更多代理服務，提高成功率
+   * v1.0.2.0315 - 使用 Vercel Edge Functions，最穩定的解決方案
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Yahoo Finance (AllOrigins)',
+        name: 'Vercel Edge Functions',
         priority: 1,
+        timeout: 8000,
+        fetcher: this.fetchFromVercel.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (AllOrigins)',
+        priority: 2,
         timeout: 6000,
         fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
         name: 'Yahoo Finance (CodeTabs)',
-        priority: 2,
+        priority: 3,
         timeout: 6000,
         fetcher: this.fetchFromYahooCodeTabs.bind(this)
       },
       {
         name: 'Yahoo Finance (ThingProxy)',
-        priority: 3,
-        timeout: 6000,
-        fetcher: this.fetchFromYahooThingProxy.bind(this)
-      },
-      {
-        name: 'Yahoo Finance (CORS Anywhere)',
         priority: 4,
         timeout: 6000,
-        fetcher: this.fetchFromYahooCORSAnywhere.bind(this)
+        fetcher: this.fetchFromYahooThingProxy.bind(this)
       }
     ];
+  }
+
+  /**
+   * Vercel Edge Functions 股價獲取 - v1.0.2.0315
+   * 最穩定的解決方案，無 CORS 問題，直接調用 Yahoo Finance
+   */
+  private async fetchFromVercel(symbol: string): Promise<StockPrice | null> {
+    try {
+      // 檢測環境，決定使用哪個 Vercel 端點
+      const isGitHubPages = window.location.hostname.includes('github.io');
+      const baseUrl = isGitHubPages 
+        ? 'https://stock-portfolio-system.vercel.app'  // GitHub Pages 使用 Vercel 代理
+        : '';  // 本地開發使用相對路徑
+
+      const vercelUrl = `${baseUrl}/api/stock?symbol=${encodeURIComponent(symbol)}`;
+      
+      logger.debug('stock', `調用 Vercel Edge Functions: ${symbol}`, { url: vercelUrl });
+      
+      const response = await fetch(vercelUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`股票代碼 ${symbol} 不存在`);
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data || typeof data.price !== 'number' || data.price <= 0) {
+        throw new Error('無效的股價資料');
+      }
+
+      logger.info('stock', `Vercel Edge Functions 獲取成功`, { 
+        symbol, 
+        price: data.price,
+        source: data.source || 'Vercel Edge Functions'
+      });
+
+      return {
+        price: Math.round(data.price * 100) / 100,
+        change: Math.round((data.change || 0) * 100) / 100,
+        changePercent: Math.round((data.changePercent || 0) * 100) / 100,
+        source: data.source || 'Yahoo Finance (Vercel)',
+        timestamp: data.timestamp || new Date().toISOString()
+      };
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      logger.warn('stock', `Vercel Edge Functions 失敗: ${symbol}`, { error: message });
+      throw new Error(`Vercel 代理失敗: ${message}`);
+    }
   }
 
   /**

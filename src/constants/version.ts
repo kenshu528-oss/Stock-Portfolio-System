@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 313, // 【UI 改善】明確顯示股價來源，支援混合來源顯示
+  PATCH: 315, // 【股價專精】專注股價獲取，明確標示來源，移除 FinMind 名稱依賴
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
