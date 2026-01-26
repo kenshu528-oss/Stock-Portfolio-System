@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 312, // 【代理增強】添加更多 Yahoo Finance 代理服務，提高股價獲取成功率
+  PATCH: 313, // 【UI 改善】明確顯示股價來源，支援混合來源顯示
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

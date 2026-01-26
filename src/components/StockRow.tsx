@@ -209,7 +209,7 @@ const StockRow: React.FC<StockRowProps> = ({
             onUpdateStock(record.id, {
               currentPrice: data.price,
               lastUpdated: new Date(),
-              priceSource: data.source === 'Yahoo Finance' ? 'Yahoo' : 'TWSE'
+              priceSource: data.source || 'Unknown'
             });
           });
         } else {
@@ -217,7 +217,7 @@ const StockRow: React.FC<StockRowProps> = ({
           onUpdateStock(stock.id, {
             currentPrice: data.price,
             lastUpdated: new Date(),
-            priceSource: data.source === 'Yahoo Finance' ? 'Yahoo' : 'TWSE'
+            priceSource: data.source || 'Unknown'
           });
         }
         
@@ -455,6 +455,10 @@ const StockRow: React.FC<StockRowProps> = ({
                 {stock.priceSource === 'Yahoo' ? 'Yahoo' : 
                  stock.priceSource === 'TWSE' ? '證交所' : 
                  stock.priceSource === 'FinMind' ? 'FinMind' : 
+                 stock.priceSource === 'Yahoo+FinMind' ? 'Yahoo+FinMind' :
+                 stock.priceSource === 'FinMind+TWSE' ? 'FinMind+證交所' :
+                 stock.priceSource.includes('Yahoo') ? 'Yahoo' :
+                 stock.priceSource.includes('FinMind') ? 'FinMind' :
                  stock.priceSource}
               </div>
             )}

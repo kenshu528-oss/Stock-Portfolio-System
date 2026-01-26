@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0313',
+    date: '2026-01-26',
+    type: 'patch',
+    title: 'UI 改善 - 明確顯示股價來源，支援混合來源',
+    description: '改善股價來源顯示，支援 Yahoo+FinMind 等混合來源的正確顯示',
+    changes: [
+      '修復 StockRow 股價來源顯示邏輯，支援混合來源',
+      '添加 Yahoo+FinMind、FinMind+證交所 等混合來源顯示',
+      '修復股價更新時 priceSource 設定，使用完整來源名稱',
+      '改善本機端股價來源標示的清晰度',
+      '確保用戶能清楚看到股價是從哪個 API 獲取'
+    ],
+    fixes: [
+      '修復混合來源顯示為 Unknown 的問題',
+      '修復股價來源只顯示 Yahoo 或 TWSE 的限制',
+      '改善股價來源的用戶體驗'
+    ]
+  },
+  {
     version: '1.0.2.0312',
     date: '2026-01-26',
     type: 'patch',
