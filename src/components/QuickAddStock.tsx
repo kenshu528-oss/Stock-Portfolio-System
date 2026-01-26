@@ -40,6 +40,7 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
   const [searchResults, setSearchResults] = useState<StockSearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState('');
+  const [loadingStatus, setLoadingStatus] = useState(''); // 新增：詳細載入狀態
   
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -183,6 +184,7 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
               setSearchResults([]);
               setShowResults(false);
               setIsSearching(true);
+              setLoadingStatus(`正在獲取 ${basicResults.length} 支股票的價格...`);
               
               logger.info('stock', `開始獲取 ${basicResults.length} 支股票的價格`);
               
@@ -191,8 +193,9 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                   logger.debug('stock', `獲取股價: ${stock.symbol}`);
                   
                   try {
-                    // 使用統一的雲端股價服務
-                    const priceData = await cloudStockPriceService.getStockPrice(stock.symbol);
+                    // 使用統一的雲端股價服務，帶重試機制
+                    setLoadingStatus(`正在獲取 ${stock.symbol} 股價...`);
+                    const priceData = await cloudStockPriceService.getStockPrice(stock.symbol, 2);
                     
                     logger.debug('stock', `${stock.symbol} 價格結果`, { 
                       price: priceData?.price || 0,
@@ -201,13 +204,15 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                     
                     return {
                       ...stock,
-                      price: priceData?.price || 0
+                      price: priceData?.price || 0,
+                      source: priceData?.source || '無資料'
                     };
                   } catch (error) {
                     logger.error('stock', `獲取 ${stock.symbol} 股價失敗`, error);
                     return {
                       ...stock,
-                      price: 0
+                      price: 0,
+                      source: '獲取失敗'
                     };
                   }
                 })
@@ -215,6 +220,7 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
               
               console.log(`✅ [QuickAddStock] 股價獲取完成，結果:`, resultsWithPrice);
               setIsSearching(false);
+              setLoadingStatus('');
               return resultsWithPrice;
             } else {
               return basicResults;
@@ -381,57 +387,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                 console.log(`💰 [QuickAddStock] 獲取 ${stock.stock_id} 股價...`);
                 
                 try {
-                  // 🎯 只使用 Yahoo Finance，如 Python yfinance 般獲取即時股價
-                  let priceData = null;
-                  
-                  const yahooSymbol = getYahooSymbol(stock.stock_id);
-                  console.log(`🎯 [QuickAddStock] 嘗試 Yahoo Finance: ${stock.stock_id} -> ${yahooSymbol}`);
-                  
-                  // 嘗試多個代理服務獲取 Yahoo Finance 資料
-                  const proxyUrls = [
-                    `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`,
-                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`
-                  ];
-                  
-                  for (const proxyUrl of proxyUrls) {
-                    try {
-                      const response = await fetch(proxyUrl);
-                      if (!response.ok) continue;
-                      
-                      let yahooData;
-                      if (proxyUrl.includes('allorigins')) {
-                        const proxyData = await response.json();
-                        yahooData = JSON.parse(proxyData.contents);
-                      } else {
-                        yahooData = await response.json();
-                      }
-                      
-                      const result = yahooData?.chart?.result?.[0];
-                      if (result?.meta?.regularMarketPrice > 0) {
-                        const currentPrice = result.meta.regularMarketPrice;
-                        const previousClose = result.meta.previousClose || currentPrice;
-                        
-                        priceData = {
-                          price: Math.round(currentPrice * 100) / 100,
-                          change: Math.round((currentPrice - previousClose) * 100) / 100,
-                          changePercent: previousClose > 0 ? 
-                            Math.round(((currentPrice - previousClose) / previousClose) * 100 * 100) / 100 : 0,
-                          source: 'Yahoo Finance',
-                          timestamp: new Date().toISOString()
-                        };
-                        
-                        console.log(`✅ [QuickAddStock] Yahoo Finance 成功: ${stock.stock_id} = ${priceData.price} (即時股價)`);
-                        break; // 成功獲取，跳出循環
-                      }
-                    } catch (proxyError) {
-                      console.log(`⚠️ [QuickAddStock] 代理失敗，嘗試下一個: ${stock.stock_id}`);
-                      continue;
-                    }
-                  }
-                  
-                  if (!priceData) {
-                    console.log(`❌ [QuickAddStock] 所有 Yahoo Finance 代理都失敗: ${stock.stock_id}`);
-                  }
+                  // ✅ 使用統一的雲端股價服務 - v1.0.2.0323
+                  const priceData = await cloudStockPriceService.getStockPrice(stock.stock_id);
                   
                   console.log(`📊 [QuickAddStock] ${stock.stock_id} 最終價格結果:`, priceData);
                   
@@ -439,7 +396,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                     symbol: stock.stock_id,
                     name: stock.stock_name,
                     price: priceData?.price || 0,
-                    market: '台灣'
+                    market: '台灣',
+                    source: priceData?.source || '無資料'
                   };
                 } catch (error) {
                   console.error(`❌ [QuickAddStock] 獲取 ${stock.stock_id} 股價失敗:`, error);
@@ -447,7 +405,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                     symbol: stock.stock_id,
                     name: stock.stock_name,
                     price: 0,
-                    market: '台灣'
+                    market: '台灣',
+                    source: '獲取失敗'
                   };
                 }
               })
@@ -655,7 +614,14 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             {/* 搜尋圖示、清除按鈕或載入指示器 */}
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
               {isSearching ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400"></div>
+                  {loadingStatus && (
+                    <span className="text-xs text-blue-400 max-w-32 truncate">
+                      {loadingStatus}
+                    </span>
+                  )}
+                </div>
               ) : selectedStock ? (
                 <>
                   <div className="p-1.5 bg-green-600 hover:bg-green-700 rounded-full shadow-lg transition-colors">

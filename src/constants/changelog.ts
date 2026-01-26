@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0323',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '股價獲取優化 - 統一服務與重試機制',
+    description: '統一使用 cloudStockPriceService，添加重試機制，改善用戶體驗',
+    changes: [
+      '🔧 統一股價獲取邏輯：QuickAddStock 使用 cloudStockPriceService',
+      '🔄 添加自動重試機制：每個來源失敗時自動重試 2 次',
+      '⏱️ 智能重試延遲：重試間隔遞增，避免頻繁請求',
+      '📊 改善載入狀態：顯示詳細的股價獲取進度',
+      '🎯 優化用戶體驗：更清楚的載入提示和錯誤處理',
+      '✅ 確保股價獲取穩定性：多層備援 + 重試機制'
+    ]
+  },
+  {
     version: '1.0.2.0322',
     date: '2026-01-26',
     type: 'hotfix',

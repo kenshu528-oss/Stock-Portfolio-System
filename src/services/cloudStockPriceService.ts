@@ -25,9 +25,9 @@ class CloudStockPriceService {
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5分鐘快取
 
   /**
-   * 獲取股價 - 雲端環境優化版本
+   * 獲取股價 - 雲端環境優化版本 (v1.0.2.0323 - 添加重試機制)
    */
-  async getStockPrice(symbol: string): Promise<StockPrice | null> {
+  async getStockPrice(symbol: string, maxRetries: number = 2): Promise<StockPrice | null> {
     // 檢查快取
     const cached = this.getCachedPrice(symbol);
     if (cached) {
@@ -35,36 +35,62 @@ class CloudStockPriceService {
       return cached;
     }
 
-    // 按優先順序嘗試各種資料源
+    // 按優先順序嘗試各種資料源，帶重試機制
     const sources = this.getPriceSources();
     
     for (const source of sources) {
-      try {
-        logger.debug('stock', `嘗試 ${source.name}: ${symbol}`);
-        
-        const result = await Promise.race([
-          source.fetcher(symbol),
-          this.createTimeoutPromise(source.timeout)
-        ]);
-
-        if (result && result.price > 0) {
-          logger.info('stock', `${source.name} 獲取成功`, { 
-            symbol, 
-            price: result.price,
-            source: result.source 
+      let lastError: Error | null = null;
+      
+      // 對每個來源進行重試
+      for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+        try {
+          logger.debug('stock', `嘗試 ${source.name}: ${symbol} (第${attempt}次)`, { 
+            attempt, 
+            maxRetries: maxRetries + 1 
           });
           
-          // 快取結果
-          this.setCachedPrice(symbol, result);
-          return result;
+          const result = await Promise.race([
+            source.fetcher(symbol),
+            this.createTimeoutPromise(source.timeout)
+          ]);
+
+          if (result && result.price > 0) {
+            logger.info('stock', `${source.name} 獲取成功`, { 
+              symbol, 
+              price: result.price,
+              source: result.source,
+              attempt
+            });
+            
+            // 快取結果
+            this.setCachedPrice(symbol, result);
+            return result;
+          }
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error('未知錯誤');
+          
+          if (attempt <= maxRetries) {
+            logger.debug('stock', `${source.name} 第${attempt}次失敗，準備重試: ${symbol}`, { 
+              error: lastError.message,
+              nextAttempt: attempt + 1
+            });
+            
+            // 重試前等待一小段時間
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          } else {
+            logger.debug('stock', `${source.name} 所有重試都失敗: ${symbol}`, { 
+              error: lastError.message,
+              totalAttempts: attempt
+            });
+          }
         }
-      } catch (error) {
-        logger.debug('stock', `${source.name} 失敗: ${symbol}`, error);
-        continue;
       }
     }
 
-    logger.warn('stock', `所有股價源都失敗: ${symbol}`);
+    logger.warn('stock', `所有股價源都失敗: ${symbol}`, { 
+      sourcesAttempted: sources.length,
+      retriesPerSource: maxRetries + 1
+    });
     return null;
   }
 
