@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0318',
+    date: '2026-01-26',
+    type: 'patch',
+    title: 'STEERING 檢查 - 移除證交所股價獲取，完全遵循 API 簡化規範',
+    description: '遵循 STEERING 規則進行全面檢查，移除殘留的證交所股價獲取代碼',
+    changes: [
+      '移除 stockPriceService.ts 中的 getTWSEPrice 方法',
+      '移除 parseTWSEResponse 方法',
+      '移除證交所 API 配置中的股價獲取功能',
+      '完全遵循 API 簡化規範：本機 Yahoo+FinMind，雲端 Vercel+Yahoo',
+      '確保代碼與 STEERING 規則完全一致'
+    ],
+    fixes: [
+      '修復 API 簡化不徹底的問題',
+      '移除違反 API 簡化規範的證交所股價代碼',
+      '確保股價獲取完全遵循雙 API 策略',
+      '提高代碼一致性和維護性'
+    ]
+  },
+  {
     version: '1.0.2.0317',
     date: '2026-01-26',
     type: 'patch',

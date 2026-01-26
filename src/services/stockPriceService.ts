@@ -209,29 +209,9 @@ export class StockPriceService {
     }
   }
 
-  // 台灣證交所API（備用方法）
-  private async getTWSEPrice(symbol: string): Promise<StockPrice | null> {
-    try {
-      // 使用證交所即時股價API
-      const response = await fetch(`${API_CONFIG.TWSE.baseUrl}?ex_ch=tse_${symbol}.tw&json=1&delay=0`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-        signal: AbortSignal.timeout(API_CONFIG.TWSE.timeout)
-      });
-
-      if (!response.ok) {
-        throw new Error(`TWSE API錯誤: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return this.parseTWSEResponse(symbol, data);
-    } catch (error) {
-      logger.error('stock', `TWSE API請求失敗 ${symbol}`, error);
-      throw error;
-    }
-  }
+  // v1.0.2.0317: 移除證交所股價獲取，遵循 API 簡化規範
+  // 證交所 API 不穩定，CORS 問題多，已從股價獲取中移除
+  // 僅保留 Yahoo Finance + FinMind 雙 API 策略
 
   // Yahoo Finance API
   private async getYahooPrice(symbol: string): Promise<StockPrice | null> {
@@ -307,30 +287,7 @@ export class StockPriceService {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // 解析TWSE回應
-  private parseTWSEResponse(symbol: string, data: any): StockPrice | null {
-    try {
-      if (data && data.msgArray && data.msgArray.length > 0) {
-        const stockData = data.msgArray[0];
-        const price = parseFloat(stockData.z) || parseFloat(stockData.y); // z是成交價，y是昨收價
-        const previousClose = parseFloat(stockData.y);
-        const change = price - previousClose;
-        
-        return {
-          symbol,
-          price,
-          change,
-          changePercent: previousClose > 0 ? (change / previousClose) * 100 : 0,
-          timestamp: new Date(),
-          source: 'TWSE'
-        };
-      }
-      return null;
-    } catch (error) {
-      logger.error('stock', '解析TWSE回應失敗', error);
-      return null;
-    }
-  }
+  // v1.0.2.0317: 移除 parseTWSEResponse，遵循 API 簡化規範
 
   // 解析Yahoo回應
   private parseYahooResponse(symbol: string, data: any): StockPrice | null {
