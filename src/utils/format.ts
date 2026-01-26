@@ -9,7 +9,7 @@
  */
 export const formatCurrency = (value: number | string, decimals: number = 0): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(num)) return '--';
+  if (typeof num !== 'number' || isNaN(num)) return '--';
   
   // 使用絕對值格式化
   const absNum = Math.abs(num);
@@ -28,6 +28,9 @@ export const formatCurrency = (value: number | string, decimals: number = 0): st
  * @returns 格式化後的字串（如：+12.34%）
  */
 export const formatPercent = (value: number): string => {
+  if (typeof value !== 'number' || isNaN(value)) {
+    return '0.00%';
+  }
   return `${value > 0 ? '+' : ''}${value.toFixed(2)}%`;
 };
 

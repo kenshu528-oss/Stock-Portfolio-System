@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0304',
+    date: '2026-01-26',
+    type: 'critical',
+    title: '【核心修復】修復 format.ts 中 formatPercent 函數的 undefined.toFixed() 崩潰問題',
+    description: '深度分析發現真正的崩潰根源：src/utils/format.ts 中的 formatPercent 函數直接對參數調用 toFixed(2)，但沒有檢查參數是否為 undefined 或 NaN。這個函數被 StockRow 組件大量使用，當損益率計算出現異常值時就會導致整個 UI 崩潰。這是一個核心工具函數的問題，影響範圍很廣。',
+    changes: [
+      '修復 format.ts formatPercent 函數：添加 undefined 和 NaN 檢查',
+      '修復 format.ts formatCurrency 函數：加強類型檢查',
+      '確保所有格式化函數都有適當的防禦性檢查',
+      '修復核心工具函數，解決大範圍的 UI 崩潰問題'
+    ],
+    fixes: [
+      '修復 StockRow 組件中損益率顯示導致的 UI 崩潰',
+      '修復所有使用 formatPercent 的地方的潛在崩潰',
+      '修復格式化函數的類型安全問題',
+      '解決核心工具函數的穩定性問題'
+    ]
+  },
+  {
     version: '1.0.2.0303',
     date: '2026-01-26',
     type: 'hotfix',

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 303, // 【全面 UI 修復】修復所有組件中的 undefined.toFixed() 崩潰問題
+  PATCH: 304, // 【核心修復】修復 format.ts 中 formatPercent 函數的 undefined.toFixed() 崩潰問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
