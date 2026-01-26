@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0316',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '混合來源清理 - 徹底移除混合來源邏輯',
+    description: '遵循股價專精原則，徹底清理所有混合來源邏輯，確保股價來源標示清晰',
+    changes: [
+      '移除 Netlify Functions 中的 FinMind 名稱獲取邏輯',
+      '更新 DataSourcePriority 枚舉，移除 Yahoo+FinMind',
+      '修復 StockRow 股價來源顯示，移除混合來源選項',
+      '專注股價獲取，明確標示來源（Yahoo Finance (Vercel)）',
+      '簡化股價來源邏輯，提高代碼可維護性'
+    ],
+    fixes: [
+      '修復股價來源顯示混合標記問題',
+      '移除違反股價專精原則的混合邏輯',
+      '確保股價來源標示清晰一致',
+      '提高股價獲取邏輯的簡潔性'
+    ]
+  },
+  {
     version: '1.0.2.0315',
     date: '2026-01-26',
     type: 'patch',

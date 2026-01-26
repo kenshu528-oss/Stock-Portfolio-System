@@ -9,29 +9,146 @@
 - ✅ **API 失敗返回 null**：不提供預設值或虛假資料
 - ✅ **誠實的錯誤訊息**：明確告知用戶問題
 
-### API 優先順序策略
+### 股價專精原則 (v1.0.2.0315)
+- ✅ **專注股價獲取**：不依賴 FinMind 名稱，使用 Stock List
+- ✅ **明確標示來源**：每個股價都要清楚標示來源
+- ✅ **Vercel 優先**：使用 Vercel Edge Functions 作為主要股價來源
+- ✅ **簡化邏輯**：移除不必要的混合來源複雜性
 
-#### 一般股票（如 2330、2886、0050）
+### API 優先順序策略 (v1.0.2.0315 更新)
+
+#### 股價獲取（專精版）
 ```
-1. Yahoo Finance API（首選）- 即時股價，穩定性佳
+1. Vercel Edge Functions（首選）- 最穩定，無 CORS 限制
    ↓ 失敗
-2. FinMind API（備用）- 台股專用，中文名稱
+2. Yahoo Finance (AllOrigins)（備用）- 第三方代理
    ↓ 失敗
-3. 證交所 OpenAPI（最後備用）- 官方資料
+3. Yahoo Finance (CodeTabs)（備用）- 第三方代理
+   ↓ 失敗
+4. Yahoo Finance (ThingProxy)（備用）- 第三方代理
 ```
 
-#### 債券 ETF（如 00679B、00687B）
+#### 除權息查詢（保持不變）
 ```
-1. Yahoo Finance API（首選）- 配息資料最完整
+1. FinMind API（首選）- 歷史資料最完整
    ↓ 失敗
-2. FinMind API（備用）- 部分資料可能不完整
+2. 證交所 OpenAPI（備用）- 官方資料
 ```
 
 ---
 
-## 📊 股價查詢規範 (v1.0.2.0197 標準)
+## 📊 股價查詢規範 (v1.0.2.0315 專精版)
 
-### ⭐ 智能股票代碼後綴判斷（核心標準）
+### ⭐ Vercel Edge Functions 優先策略
+
+**基於 v1.0.2.0315 股價專精原則制定**
+
+```typescript
+async function getStockPrice(symbol: string) {
+  // 1. Vercel Edge Functions（首選）- 最穩定，無 CORS 限制
+  try {
+    const data = await VercelService.getStockPrice(symbol);
+    if (data?.price > 0) {
+      return {
+        ...data,
+        source: 'Yahoo Finance (Vercel)' // 明確標示來源
+      };
+    }
+  } catch (error) {
+    logger.warn('api', `Vercel失敗: ${symbol}`);
+  }
+  
+  // 2-4. 其他 Yahoo Finance 代理作為備援
+  const proxies = ['AllOrigins', 'CodeTabs', 'ThingProxy'];
+  for (const proxy of proxies) {
+    try {
+      const data = await getYahooStockPriceViaProxy(symbol, proxy);
+      if (data?.price > 0) {
+        return {
+          ...data,
+          source: `Yahoo Finance (${proxy})` // 明確標示來源
+        };
+      }
+    } catch (error) {
+      logger.warn('api', `${proxy}失敗: ${symbol}`);
+    }
+  }
+  
+  return null; // ⚠️ 不提供虛假資料
+}
+```
+
+### 🚫 股價專精禁止事項 (v1.0.2.0315)
+
+#### 絕對禁止
+- ❌ **依賴 FinMind 名稱**：已有 Stock List，不需要 FinMind 名稱
+- ❌ **混合來源複雜性**：不需要 Yahoo+FinMind 等複雜標記
+- ❌ **不明確的來源**：每個股價都要清楚標示來源
+- ❌ **過度複雜的邏輯**：專注股價獲取，簡化代碼
+
+#### 正確做法
+```typescript
+// ✅ 正確：專注股價，明確來源
+return {
+  price: 111.5,
+  change: 3.0,
+  changePercent: 2.76,
+  source: 'Yahoo Finance (Vercel)', // 明確標示
+  timestamp: new Date().toISOString()
+};
+
+// ❌ 錯誤：混合來源，增加複雜性
+return {
+  price: 111.5,
+  name: finmindName, // 不需要，有 Stock List
+  source: 'Yahoo+FinMind', // 過度複雜
+  timestamp: new Date().toISOString()
+};
+```
+
+### 🎯 股價來源顯示規範 (v1.0.2.0315)
+
+#### UI 顯示標準
+```typescript
+// StockRow.tsx 中的來源顯示邏輯
+{stock.priceSource && (
+  <div className="text-xs text-slate-500 mt-0.5">
+    {stock.priceSource === 'Yahoo' ? 'Yahoo' : 
+     stock.priceSource === 'TWSE' ? '證交所' : 
+     stock.priceSource === 'FinMind' ? 'FinMind' : 
+     stock.priceSource.includes('Vercel') ? 'Yahoo (Vercel)' :
+     stock.priceSource.includes('Yahoo') ? 'Yahoo' :
+     stock.priceSource.includes('FinMind') ? 'FinMind' :
+     stock.priceSource}
+  </div>
+)}
+```
+
+#### 支援的來源標記
+- ✅ `Yahoo Finance (Vercel)` → 顯示為 `Yahoo (Vercel)`
+- ✅ `Yahoo Finance (AllOrigins)` → 顯示為 `Yahoo`
+- ✅ `Yahoo Finance (CodeTabs)` → 顯示為 `Yahoo`
+- ✅ `Yahoo Finance (ThingProxy)` → 顯示為 `Yahoo`
+- ✅ `FinMind` → 顯示為 `FinMind`
+- ✅ `TWSE` → 顯示為 `證交所`
+
+### 📋 股價專精開發檢查清單 (v1.0.2.0315)
+
+#### 每次修改股價獲取邏輯時必須確認
+- [ ] 是否使用 Vercel Edge Functions 作為第一優先級？
+- [ ] 是否移除了對 FinMind 名稱的依賴？
+- [ ] 是否明確標示了股價來源？
+- [ ] 是否簡化了邏輯，避免過度複雜？
+- [ ] UI 是否能正確顯示 Vercel 來源？
+- [ ] 是否遵循智能後綴判斷邏輯？
+- [ ] 是否添加了適當的錯誤處理和日誌？
+
+#### 測試檢查
+- [ ] Vercel API 是否正常工作？
+- [ ] 備援代理是否按順序嘗試？
+- [ ] 股價來源是否正確顯示在 UI 上？
+- [ ] 上櫃股票（如 4585、6188）是否使用 .TWO 後綴？
+- [ ] 債券 ETF（如 00679B）是否使用 .TWO 後綴？
 
 **基於 v1.0.2.0197 成功修復經驗制定**
 

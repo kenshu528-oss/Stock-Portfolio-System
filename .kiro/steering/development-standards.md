@@ -29,7 +29,38 @@
 - ❌ **刪除現有功能**：只能添加，不能移除
 - ❌ **修改關鍵介面**：不能改變已穩定的 API 或組件介面
 
-### 推薦的開發方式
+### 股價專精開發規範 (v1.0.2.0315)
+
+#### 絕對要求的原則
+- ✅ **專注股價獲取**：不依賴 FinMind 名稱，使用 Stock List
+- ✅ **明確標示來源**：每個股價都要清楚標示來源
+- ✅ **Vercel 優先**：使用 Vercel Edge Functions 作為主要來源
+- ✅ **簡化邏輯**：移除不必要的複雜性
+
+#### 禁止的做法
+- ❌ **混合名稱獲取**：不要在股價 API 中獲取股票名稱
+- ❌ **複雜來源標記**：避免 Yahoo+FinMind 等複雜標記
+- ❌ **依賴 FinMind 名稱**：已有 Stock List，不需要額外獲取
+- ❌ **不明確的來源**：每個股價都要清楚標示來源
+
+#### 正確的實作方式
+```typescript
+// ✅ 正確：專注股價，明確來源
+async function getStockPrice(symbol: string) {
+  try {
+    const data = await VercelService.getStockPrice(symbol);
+    return {
+      price: data.price,
+      change: data.change,
+      changePercent: data.changePercent,
+      source: 'Yahoo Finance (Vercel)', // 明確標示
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    // 嘗試備援...
+  }
+}
+```
 
 #### 1. 疊加式功能添加
 ```typescript

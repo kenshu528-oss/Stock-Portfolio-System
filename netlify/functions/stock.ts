@@ -55,16 +55,9 @@ export const handler: Handler = async (event: HandlerEvent) => {
       if (stockData && stockData.price > 0) {
         console.log(`✅ Yahoo Finance 成功: ${stockData.price}`);
         
-        // 嘗試從 FinMind 獲取中文名稱
-        try {
-          const finmindData = await getFinMindStockInfo(upperSymbol);
-          if (finmindData && finmindData.name && finmindData.name !== upperSymbol) {
-            stockData.name = finmindData.name;
-            stockData.source = 'Yahoo+FinMind';
-          }
-        } catch (e) {
-          // 中文名稱獲取失敗不影響股價
-        }
+        // v1.0.2.0315: 股價專精 - 不再獲取 FinMind 名稱，使用 Stock List
+        // 專注股價獲取，明確標示來源
+        stockData.source = 'Yahoo Finance (Netlify)';
         
         return {
           statusCode: 200,

@@ -40,15 +40,15 @@ Stock-Portfolio-System 倉庫: v1.0.2.XXXX
 
 ```bash
 # 1. 更新 package.json
-"version": "1.0.2.0147"
+"version": "1.0.2.0315"
 
 # 2. 更新 src/constants/version.ts
-export const PATCH = 147;
+export const PATCH = 315;
 
 # 3. 更新 src/constants/changelog.ts
 {
-  version: '1.0.2.0147',
-  date: '2026-01-15',
+  version: '1.0.2.0315',
+  date: '2026-01-26',
   changes: [
     '功能描述'
   ]
@@ -60,6 +60,20 @@ npm run check:version
 # 5. 重新建置
 npm run build
 ```
+
+### 股價專精版本更新要求 (v1.0.2.0315)
+
+#### 股價相關修改必須更新版本號
+- ✅ **修改股價獲取邏輯**：更新 PATCH 版本號
+- ✅ **添加新的股價來源**：更新 PATCH 版本號
+- ✅ **修改股價來源顯示**：更新 PATCH 版本號
+- ✅ **優化股價獲取性能**：更新 PATCH 版本號
+
+#### Changelog 必須記錄的內容
+- 股價來源的變更（如新增 Vercel）
+- 股價獲取邏輯的簡化
+- UI 顯示的改善
+- 性能優化的細節
 
 ---
 

@@ -15,12 +15,12 @@ import { StockSymbolAnalyzer } from './stockSymbolAnalyzer';
 import { yahooFinanceAPI } from './yahooFinanceAPI';
 import { finMindAPI } from './finMindAPI';
 
-// 資料來源優先級
+// 資料來源優先級 - v1.0.2.0315 股價專精版
 export enum DataSourcePriority {
-  YAHOO_FINMIND = 'Yahoo+FinMind',  // 混合來源（推薦）
-  YAHOO_ONLY = 'Yahoo Finance',     // 僅 Yahoo Finance
-  FINMIND_ONLY = 'FinMind',        // 僅 FinMind
-  TWSE_ONLY = 'TWSE'               // 僅證交所
+  VERCEL_EDGE = 'Yahoo Finance (Vercel)',  // Vercel Edge Functions（推薦）
+  YAHOO_ONLY = 'Yahoo Finance',            // 僅 Yahoo Finance
+  FINMIND_ONLY = 'FinMind',               // 僅 FinMind
+  TWSE_ONLY = 'TWSE'                      // 僅證交所
 }
 
 // 資料合併選項
