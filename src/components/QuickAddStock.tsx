@@ -191,15 +191,6 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                   logger.debug('stock', `獲取股價: ${stock.symbol}`);
                   
                   try {
-                    // 檢查 cloudStockPriceService 是否可用
-                    if (!cloudStockPriceService) {
-                      logger.error('stock', 'cloudStockPriceService 未定義');
-                      return {
-                        ...stock,
-                        price: 0
-                      };
-                    }
-                    
                     // 使用統一的雲端股價服務
                     const priceData = await cloudStockPriceService.getStockPrice(stock.symbol);
                     
@@ -362,19 +353,6 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                 console.log(`💰 [QuickAddStock] 獲取 ${stock.stock_id} 股價...`);
                 
                 try {
-                  // 檢查 cloudStockPriceService 是否可用
-                  if (!cloudStockPriceService) {
-                    console.error(`❌ [QuickAddStock] cloudStockPriceService 未定義`);
-                    return {
-                      symbol: stock.stock_id,
-                      name: stock.stock_name,
-                      price: 0,
-                      market: '台灣'
-                    };
-                  }
-                  
-                  console.log(`🔍 [QuickAddStock] 調用 cloudStockPriceService.getStockPrice(${stock.stock_id})`);
-                  
                   // 使用統一的雲端股價服務
                   const priceData = await cloudStockPriceService.getStockPrice(stock.stock_id);
                   

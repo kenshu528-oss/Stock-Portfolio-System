@@ -74,22 +74,22 @@ class CloudStockPriceService {
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Yahoo Finance (AllOrigins)',
-        priority: 1,
-        timeout: 5000,
-        fetcher: this.fetchFromYahooAllOrigins.bind(this)
-      },
-      {
         name: 'Yahoo Finance (Proxy API)',
-        priority: 2,
-        timeout: 5000,
+        priority: 1,
+        timeout: 8000,
         fetcher: this.fetchFromYahooProxyAPI.bind(this)
       },
       {
         name: 'FinMind Direct',
-        priority: 3,
+        priority: 2,
         timeout: 8000,
         fetcher: this.fetchFromFinMindDirect.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (AllOrigins)',
+        priority: 3,
+        timeout: 5000,
+        fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
         name: 'Yahoo Finance (Heroku Proxy)',
@@ -180,28 +180,59 @@ class CloudStockPriceService {
   private async fetchFromYahooProxyAPI(symbol: string): Promise<StockPrice | null> {
     const yahooSymbol = this.getYahooSymbol(symbol);
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
-    const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`;
-
-    const response = await fetch(proxyUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const yahooData = await response.json();
     
-    const result = yahooData?.chart?.result?.[0];
-    if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+    // 嘗試多個代理服務
+    const proxyServices = [
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`,
+      `https://cors-anywhere.herokuapp.com/${yahooUrl}`,
+      `https://thingproxy.freeboard.io/fetch/${yahooUrl}`,
+      `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`
+    ];
 
-    const currentPrice = result.meta.regularMarketPrice || 0;
-    const previousClose = result.meta.previousClose || 0;
-    const change = currentPrice - previousClose;
-    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+    let lastError: Error | null = null;
+    
+    for (const proxyUrl of proxyServices) {
+      try {
+        const response = await fetch(proxyUrl, {
+          headers: proxyUrl.includes('cors-anywhere') ? {
+            'X-Requested-With': 'XMLHttpRequest'
+          } : {}
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    return {
-      price: currentPrice,
-      change,
-      changePercent,
-      source: 'Yahoo Finance (Proxy API)',
-      timestamp: new Date().toISOString()
-    };
+        let yahooData;
+        if (proxyUrl.includes('allorigins')) {
+          const proxyData = await response.json();
+          yahooData = JSON.parse(proxyData.contents);
+        } else if (proxyUrl.includes('thingproxy')) {
+          yahooData = await response.json();
+        } else {
+          yahooData = await response.json();
+        }
+        
+        const result = yahooData?.chart?.result?.[0];
+        if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+
+        const currentPrice = result.meta.regularMarketPrice || 0;
+        const previousClose = result.meta.previousClose || 0;
+        const change = currentPrice - previousClose;
+        const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+        return {
+          price: currentPrice,
+          change,
+          changePercent,
+          source: 'Yahoo Finance (Proxy API)',
+          timestamp: new Date().toISOString()
+        };
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        continue; // 嘗試下一個代理
+      }
+    }
+    
+    throw lastError || new Error('所有代理服務都失敗');
   }
 
   /**

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 306, // 【API 修復】修復右上角更新功能 CORS 錯誤，統一使用 FinMind API
+  PATCH: 307, // 【代理修復】修復 Yahoo Finance 代理服務失效，添加多重代理備援
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

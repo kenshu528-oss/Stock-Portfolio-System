@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0307',
+    date: '2026-01-26',
+    type: 'hotfix',
+    title: '【代理修復】修復 Yahoo Finance 代理服務失效，添加多重代理備援',
+    description: '分析發現 Yahoo Finance 在 v1.0.2.0296 時期很穩定，但現在不穩定的根本原因：代理服務失效。api.codetabs.com 已失效，api.allorigins.win 返回 500 錯誤，cors-proxy.htmldriven.com 返回 404 錯誤。修復方案：在 Proxy API 方法中添加多重代理備援，依序嘗試 4 個不同的代理服務，提高 Yahoo Finance API 成功率。',
+    changes: [
+      '修復 cloudStockPriceService：Proxy API 方法添加多重代理備援',
+      '代理服務列表：codetabs.com, cors-anywhere.herokuapp.com, thingproxy.freeboard.io, allorigins.win',
+      '調整優先順序：Proxy API 優先，FinMind 作為備用',
+      '保持 Yahoo Finance 優先策略：符合用戶期望的穩定性'
+    ],
+    fixes: [
+      '修復 api.codetabs.com 代理服務失效問題',
+      '修復 api.allorigins.win 500 錯誤問題',
+      '修復 cors-proxy.htmldriven.com 404 錯誤問題',
+      '恢復 Yahoo Finance API 的穩定性和成功率'
+    ]
+  },
+  {
     version: '1.0.2.0306',
     date: '2026-01-26',
     type: 'hotfix',
