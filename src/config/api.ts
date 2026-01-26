@@ -3,7 +3,7 @@
 /**
  * 獲取 API 基礎 URL
  * 開發環境：使用 localhost:3001
- * GitHub Pages：不使用後端代理，直接調用外部 API
+ * GitHub Pages：使用 Netlify Functions 作為代理
  * Netlify：使用 Netlify Functions
  */
 export const getApiBaseUrl = (): string | null => {
@@ -15,12 +15,12 @@ export const getApiBaseUrl = (): string | null => {
     return import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
   }
   
-  // 生產環境：檢查是否為 GitHub Pages
+  // 生產環境：GitHub Pages 也使用 Netlify Functions
   const isGitHubPages = window.location.hostname.includes('github.io');
   
   if (isGitHubPages) {
-    // GitHub Pages 環境：無後端支援，返回 null
-    return null;
+    // 🔧 修復：GitHub Pages 使用 Netlify Functions 作為代理
+    return 'https://stock-portfolio-system.netlify.app/.netlify/functions';
   }
   
   // 其他生產環境（如 Netlify）使用 Netlify Functions

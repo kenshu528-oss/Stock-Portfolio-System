@@ -70,24 +70,19 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
+   * v1.0.2.0310 - 使用 Netlify Functions 代理，如 Python yfinance 般穩定
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Yahoo Finance (AllOrigins)',
+        name: 'Netlify Functions (Yahoo Finance)',
         priority: 1,
-        timeout: 4000,
-        fetcher: this.fetchFromYahooAllOrigins.bind(this)
-      },
-      {
-        name: 'Yahoo Finance (Proxy API)',
-        priority: 2,
-        timeout: 6000,
-        fetcher: this.fetchFromYahooProxyAPI.bind(this)
+        timeout: 8000,
+        fetcher: this.fetchFromNetlifyFunctions.bind(this)
       },
       {
         name: 'FinMind Direct',
-        priority: 3,
+        priority: 2,
         timeout: 8000,
         fetcher: this.fetchFromFinMindDirect.bind(this)
       }
@@ -95,34 +90,60 @@ class CloudStockPriceService {
   }
 
   /**
-   * Yahoo Finance 通過 AllOrigins 代理
+   * Netlify Functions 股價獲取 - v1.0.2.0310
+   * 使用自己的後端代理，如 Python yfinance 般穩定
    */
-  private async fetchFromYahooAllOrigins(symbol: string): Promise<StockPrice | null> {
-    const yahooSymbol = this.getYahooSymbol(symbol);
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+  private async fetchFromNetlifyFunctions(symbol: string): Promise<StockPrice | null> {
+    try {
+      // 檢測當前環境，決定使用哪個 Netlify Functions 端點
+      const isGitHubPages = window.location.hostname.includes('github.io');
+      const baseUrl = isGitHubPages 
+        ? 'https://stock-portfolio-system.netlify.app'  // GitHub Pages 使用 Netlify 代理
+        : '';  // 本地開發使用相對路徑
 
-    const response = await fetch(proxyUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const functionUrl = `${baseUrl}/.netlify/functions/stock?symbol=${encodeURIComponent(symbol)}`;
+      
+      logger.debug('stock', `調用 Netlify Functions: ${symbol}`, { url: functionUrl });
+      
+      const response = await fetch(functionUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
 
-    const proxyData = await response.json();
-    const yahooData = JSON.parse(proxyData.contents);
-    
-    const result = yahooData?.chart?.result?.[0];
-    if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error(`股票代碼 ${symbol} 不存在`);
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
-    const currentPrice = result.meta.regularMarketPrice || 0;
-    const previousClose = result.meta.previousClose || 0;
-    const change = currentPrice - previousClose;
-    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+      const data = await response.json();
+      
+      if (!data || typeof data.price !== 'number' || data.price <= 0) {
+        throw new Error('無效的股價資料');
+      }
 
-    return {
-      price: currentPrice,
-      change,
-      changePercent,
-      source: 'Yahoo Finance (AllOrigins)',
-      timestamp: new Date().toISOString()
-    };
+      logger.info('stock', `Netlify Functions 獲取成功`, { 
+        symbol, 
+        price: data.price,
+        source: data.source || 'Netlify Functions'
+      });
+
+      return {
+        price: Math.round(data.price * 100) / 100,
+        change: Math.round((data.change || 0) * 100) / 100,
+        changePercent: Math.round((data.changePercent || 0) * 100) / 100,
+        source: data.source || 'Netlify Functions',
+        timestamp: data.timestamp || new Date().toISOString()
+      };
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      logger.warn('stock', `Netlify Functions 失敗: ${symbol}`, { error: message });
+      throw error;
+    }
   }
 
   /**
@@ -168,106 +189,9 @@ class CloudStockPriceService {
     };
   }
 
-  /**
-   * Yahoo Finance 通過 Proxy API 代理
-   */
-  private async fetchFromYahooProxyAPI(symbol: string): Promise<StockPrice | null> {
-    const yahooSymbol = this.getYahooSymbol(symbol);
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
-    
-    // 只使用相對穩定的代理服務
-    const proxyServices = [
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`,
-      `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`
-    ];
 
-    let lastError: Error | null = null;
-    
-    for (const proxyUrl of proxyServices) {
-      try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        let yahooData;
-        if (proxyUrl.includes('allorigins')) {
-          const proxyData = await response.json();
-          yahooData = JSON.parse(proxyData.contents);
-        } else {
-          yahooData = await response.json();
-        }
-        
-        const result = yahooData?.chart?.result?.[0];
-        if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
 
-        const currentPrice = result.meta.regularMarketPrice || 0;
-        const previousClose = result.meta.previousClose || 0;
-        const change = currentPrice - previousClose;
-        const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
-
-        return {
-          price: currentPrice,
-          change,
-          changePercent,
-          source: 'Yahoo Finance (Proxy API)',
-          timestamp: new Date().toISOString()
-        };
-      } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        continue; // 嘗試下一個代理
-      }
-    }
-    
-    throw lastError || new Error('所有代理服務都失敗');
-  }
-
-  /**
-   * Yahoo Finance 通過 Heroku Proxy 代理
-   */
-  private async fetchFromYahooHerokuProxy(symbol: string): Promise<StockPrice | null> {
-    const yahooSymbol = this.getYahooSymbol(symbol);
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
-    const proxyUrl = `https://cors-proxy.htmldriven.com/?url=${encodeURIComponent(yahooUrl)}`;
-
-    const response = await fetch(proxyUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-    const proxyData = await response.json();
-    const yahooData = proxyData.body ? JSON.parse(proxyData.body) : proxyData;
-    
-    const result = yahooData?.chart?.result?.[0];
-    if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
-
-    const currentPrice = result.meta.regularMarketPrice || 0;
-    const previousClose = result.meta.previousClose || 0;
-    const change = currentPrice - previousClose;
-    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
-
-    return {
-      price: currentPrice,
-      change,
-      changePercent,
-      source: 'Yahoo Finance (Heroku Proxy)',
-      timestamp: new Date().toISOString()
-    };
-  }
-
-  /**
-   * 智能判斷 Yahoo Finance 股票代碼後綴
-   */
-  private getYahooSymbol(symbol: string): string {
-    if (symbol.includes('.')) return symbol; // 已有後綴
-
-    const code = parseInt(symbol.substring(0, 4));
-    const isBondETF = /^00\d{2,3}B$/i.test(symbol);
-
-    if (isBondETF) {
-      return `${symbol}.TWO`; // 債券 ETF 優先櫃買中心
-    } else if (code >= 3000 && code <= 8999) {
-      return `${symbol}.TWO`; // 上櫃股票優先櫃買中心
-    } else {
-      return `${symbol}.TW`; // 上市股票優先證交所
-    }
-  }
 
   /**
    * 創建超時 Promise

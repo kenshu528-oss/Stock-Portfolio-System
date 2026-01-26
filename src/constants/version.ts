@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 308, // 【股價修復】優化代理服務優先順序，提升 Yahoo Finance 即時性和速度
+  PATCH: 310, // 【雲端股價修復】使用 Netlify Functions 代理，如 Python yfinance 般穩定
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

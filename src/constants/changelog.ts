@@ -12,6 +12,44 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0310',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '雲端股價修復 - 使用 Netlify Functions 代理',
+    description: '修改雲端股價服務使用 Netlify Functions，如 Python yfinance 般穩定',
+    changes: [
+      '修改 cloudStockPriceService 使用 Netlify Functions 代理',
+      '移除不穩定的第三方 CORS 代理服務',
+      '智能檢測環境，GitHub Pages 使用 Netlify 代理',
+      '本地開發使用相對路徑調用',
+      '如 Python yfinance 般穩定的股價獲取'
+    ],
+    fixes: [
+      '修復第三方代理服務失效問題',
+      '修復股價獲取不準確問題',
+      '修復股價更新速度慢問題'
+    ]
+  },
+  {
+    version: '1.0.2.0309',
+    date: '2026-01-26',
+    type: 'critical',
+    title: '【根本修復】GitHub Pages 使用 Netlify Functions 代理，解決 CORS 問題',
+    description: '徹底解決 Yahoo Finance CORS 問題的根本方案。所有第三方 CORS 代理服務都不穩定：AllOrigins 500錯誤，CORS Anywhere 403錯誤，導致股價不準確（顯示337應該是366.5）且速度慢。根本修復：讓 GitHub Pages 也使用 Netlify Functions 作為穩定的後端代理，這樣就能直接調用 Yahoo Finance API 獲取準確的即時股價。',
+    changes: [
+      '修復 api.ts：GitHub Pages 使用 Netlify Functions 代理',
+      '代理 URL：https://stock-portfolio-system.netlify.app/.netlify/functions',
+      '徹底解決 CORS 問題：使用自己的後端代理而非第三方服務',
+      '確保股價準確性：直接調用 Yahoo Finance API 獲取即時價格'
+    ],
+    fixes: [
+      '修復所有第三方 CORS 代理服務失效問題',
+      '修復股價不準確問題（337 → 366.5）',
+      '修復響應速度慢問題',
+      '提供穩定可靠的 Yahoo Finance API 調用方案'
+    ]
+  },
+  {
     version: '1.0.2.0308',
     date: '2026-01-26',
     type: 'hotfix',
