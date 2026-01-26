@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 321, // 【Stock List 增強】基於 FinMind 邏輯添加市場類別和 Yahoo 後綴
+  PATCH: 322, // 【緊急修復】GitHub Pages 環境股價獲取失敗，添加 FinMind API 支援
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

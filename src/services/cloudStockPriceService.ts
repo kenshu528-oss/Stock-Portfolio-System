@@ -70,54 +70,48 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0315 - 使用 Vercel Edge Functions，最穩定的解決方案
+   * v1.0.2.0321 - 修復 GitHub Pages 環境股價獲取問題
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Vercel Edge Functions',
+        name: 'FinMind API',
         priority: 1,
         timeout: 8000,
-        fetcher: this.fetchFromVercel.bind(this)
+        fetcher: this.fetchFromFinMind.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (Direct)',
+        priority: 2,
+        timeout: 6000,
+        fetcher: this.fetchFromYahooDirect.bind(this)
       },
       {
         name: 'Yahoo Finance (AllOrigins)',
-        priority: 2,
+        priority: 3,
         timeout: 6000,
         fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
         name: 'Yahoo Finance (CodeTabs)',
-        priority: 3,
-        timeout: 6000,
-        fetcher: this.fetchFromYahooCodeTabs.bind(this)
-      },
-      {
-        name: 'Yahoo Finance (ThingProxy)',
         priority: 4,
         timeout: 6000,
-        fetcher: this.fetchFromYahooThingProxy.bind(this)
+        fetcher: this.fetchFromYahooCodeTabs.bind(this)
       }
     ];
   }
 
   /**
-   * Vercel Edge Functions 股價獲取 - v1.0.2.0315
-   * 最穩定的解決方案，無 CORS 問題，直接調用 Yahoo Finance
+   * FinMind API 股價獲取 - v1.0.2.0321
+   * GitHub Pages 環境下最穩定的解決方案
    */
-  private async fetchFromVercel(symbol: string): Promise<StockPrice | null> {
+  private async fetchFromFinMind(symbol: string): Promise<StockPrice | null> {
     try {
-      // 檢測環境，決定使用哪個 Vercel 端點
-      const isGitHubPages = window.location.hostname.includes('github.io');
-      const baseUrl = isGitHubPages 
-        ? 'https://stock-portfolio-system.vercel.app'  // GitHub Pages 使用 Vercel 代理
-        : '';  // 本地開發使用相對路徑
-
-      const vercelUrl = `${baseUrl}/api/stock?symbol=${encodeURIComponent(symbol)}`;
+      const finmindUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${this.getDateString(-7)}&end_date=${this.getDateString(0)}`;
       
-      logger.debug('stock', `調用 Vercel Edge Functions: ${symbol}`, { url: vercelUrl });
+      logger.debug('stock', `調用 FinMind API: ${symbol}`, { url: finmindUrl });
       
-      const response = await fetch(vercelUrl, {
+      const response = await fetch(finmindUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -125,36 +119,104 @@ class CloudStockPriceService {
       });
 
       if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(`股票代碼 ${symbol} 不存在`);
-        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
       
-      if (!data || typeof data.price !== 'number' || data.price <= 0) {
+      if (!data?.data || !Array.isArray(data.data) || data.data.length === 0) {
+        throw new Error('無股價資料');
+      }
+
+      // 取最新一筆資料
+      const latestData = data.data[data.data.length - 1];
+      const currentPrice = parseFloat(latestData.close);
+      const previousPrice = data.data.length > 1 ? parseFloat(data.data[data.data.length - 2].close) : currentPrice;
+      const change = currentPrice - previousPrice;
+      const changePercent = previousPrice > 0 ? (change / previousPrice) * 100 : 0;
+
+      if (!currentPrice || currentPrice <= 0) {
         throw new Error('無效的股價資料');
       }
 
-      logger.info('stock', `Vercel Edge Functions 獲取成功`, { 
+      logger.info('stock', `FinMind API 獲取成功`, { 
         symbol, 
-        price: data.price,
-        source: data.source || 'Vercel Edge Functions'
+        price: currentPrice,
+        source: 'FinMind'
       });
 
       return {
-        price: Math.round(data.price * 100) / 100,
-        change: Math.round((data.change || 0) * 100) / 100,
-        changePercent: Math.round((data.changePercent || 0) * 100) / 100,
-        source: data.source || 'Yahoo Finance (Vercel)',
-        timestamp: data.timestamp || new Date().toISOString()
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'FinMind',
+        timestamp: new Date().toISOString()
       };
 
     } catch (error) {
       const message = error instanceof Error ? error.message : '未知錯誤';
-      logger.warn('stock', `Vercel Edge Functions 失敗: ${symbol}`, { error: message });
-      throw new Error(`Vercel 代理失敗: ${message}`);
+      logger.warn('stock', `FinMind API 失敗: ${symbol}`, { error: message });
+      throw new Error(`FinMind 失敗: ${message}`);
+    }
+  }
+
+  /**
+   * Yahoo Finance 直接調用 - v1.0.2.0321
+   * 嘗試直接調用，某些環境可能可行
+   */
+  private async fetchFromYahooDirect(symbol: string): Promise<StockPrice | null> {
+    try {
+      const yahooSymbol = this.getYahooSymbol(symbol);
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+      
+      logger.debug('stock', `直接調用 Yahoo Finance: ${symbol}`, { url: yahooUrl });
+      
+      const response = await fetch(yahooUrl, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const result = data?.chart?.result?.[0];
+      
+      if (!result?.meta) {
+        throw new Error('無效的 Yahoo Finance 資料');
+      }
+
+      const currentPrice = result.meta.regularMarketPrice || 0;
+      const previousClose = result.meta.previousClose || 0;
+      const change = currentPrice - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+      if (!currentPrice || currentPrice <= 0) {
+        throw new Error('無效的股價資料');
+      }
+
+      logger.info('stock', `Yahoo Finance 直接調用成功`, { 
+        symbol, 
+        price: currentPrice,
+        source: 'Yahoo Finance'
+      });
+
+      return {
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'Yahoo Finance',
+        timestamp: new Date().toISOString()
+      };
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      logger.warn('stock', `Yahoo Finance 直接調用失敗: ${symbol}`, { error: message });
+      throw new Error(`Yahoo Finance 直接調用失敗: ${message}`);
     }
   }
 
@@ -383,6 +445,15 @@ class CloudStockPriceService {
 
 
 
+
+  /**
+   * 獲取日期字串（YYYY-MM-DD 格式）
+   */
+  private getDateString(daysOffset: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + daysOffset);
+    return date.toISOString().split('T')[0];
+  }
 
   /**
    * 創建超時 Promise

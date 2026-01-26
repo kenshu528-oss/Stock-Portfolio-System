@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0322',
+    date: '2026-01-26',
+    type: 'hotfix',
+    title: '緊急修復 - GitHub Pages 環境股價獲取失敗',
+    description: '修復 GitHub Pages 環境下所有股價 API 失敗的問題，添加 FinMind API 支援',
+    changes: [
+      '🚨 緊急修復 GitHub Pages 環境股價獲取失敗問題',
+      '✅ 添加 FinMind API 作為主要股價來源',
+      '✅ 添加 Yahoo Finance 直接調用備援',
+      '✅ 優化股價獲取優先順序：FinMind → Yahoo Direct → 代理服務',
+      '🔧 修復 CORS 和代理服務不穩定問題',
+      '📊 確保 GitHub Pages 環境下股價正常顯示'
+    ]
+  },
+  {
     version: '1.0.2.0321',
     date: '2026-01-26',
     type: 'patch',
