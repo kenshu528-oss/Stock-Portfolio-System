@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0317',
+    date: '2026-01-26',
+    type: 'patch',
+    title: 'API 簡化 - 本機 Yahoo+FinMind，雲端移除證交所',
+    description: '遵循股價專精原則，簡化 API 架構，提高穩定性和維護性',
+    changes: [
+      '本機端：Yahoo Finance 優先 + FinMind 備援',
+      '雲端：移除證交所 API，專注 Vercel + Yahoo Finance',
+      '移除 DataSourcePriority 中的 TWSE_ONLY 選項',
+      '簡化 StockRow 股價來源顯示邏輯',
+      '更新 UnifiedStockPriceService 預設策略為 Yahoo Finance',
+      '移除不必要的證交所相關顯示邏輯'
+    ],
+    fixes: [
+      '修復 API 選項過多導致的複雜性',
+      '提高股價獲取的穩定性',
+      '簡化用戶介面的來源顯示',
+      '減少維護成本和錯誤機率'
+    ]
+  },
+  {
     version: '1.0.2.0316',
     date: '2026-01-26',
     type: 'patch',

@@ -42,12 +42,10 @@ export interface UnifiedServiceConfig {
   enableDetailedLogging: boolean;
 }
 
-// 預設配置
+// 預設配置 - v1.0.2.0317 簡化版
 const DEFAULT_CONFIG: UnifiedServiceConfig = {
   enableCache: true,
-  defaultStrategy: process.env.NODE_ENV === 'development' 
-    ? DataSourcePriority.YAHOO_FINMIND  // 開發環境：混合策略
-    : DataSourcePriority.FINMIND_ONLY,  // 🔧 生產環境：只用 FinMind（避免代理問題）
+  defaultStrategy: DataSourcePriority.YAHOO_ONLY,  // 本機端：Yahoo Finance 優先
   includeChineseName: true,
   batchSize: 5,
   requestInterval: 300,

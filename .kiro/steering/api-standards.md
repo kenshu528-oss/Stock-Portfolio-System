@@ -15,24 +15,31 @@
 - ✅ **Vercel 優先**：使用 Vercel Edge Functions 作為主要股價來源
 - ✅ **簡化邏輯**：移除不必要的混合來源複雜性
 
-### API 優先順序策略 (v1.0.2.0315 更新)
+### API 優先順序策略 (v1.0.2.0317 簡化版)
 
-#### 股價獲取（專精版）
+#### 本機端股價獲取
+```
+1. Yahoo Finance API（首選）- 即時股價，穩定性佳
+   ↓ 失敗
+2. FinMind API（備援）- 台股專用，歷史資料完整
+```
+
+#### 雲端股價獲取
 ```
 1. Vercel Edge Functions（首選）- 最穩定，無 CORS 限制
    ↓ 失敗
-2. Yahoo Finance (AllOrigins)（備用）- 第三方代理
+2. Yahoo Finance (AllOrigins)（備援）- 第三方代理
    ↓ 失敗
-3. Yahoo Finance (CodeTabs)（備用）- 第三方代理
+3. Yahoo Finance (CodeTabs)（備援）- 第三方代理
    ↓ 失敗
-4. Yahoo Finance (ThingProxy)（備用）- 第三方代理
+4. Yahoo Finance (ThingProxy)（備援）- 第三方代理
 ```
 
 #### 除權息查詢（保持不變）
 ```
 1. FinMind API（首選）- 歷史資料最完整
    ↓ 失敗
-2. 證交所 OpenAPI（備用）- 官方資料
+2. 證交所 OpenAPI（備援）- 官方資料（僅除權息）
 ```
 
 ---
@@ -106,15 +113,83 @@ return {
 };
 ```
 
-### 🎯 股價來源顯示規範 (v1.0.2.0315)
+### 🎯 API 簡化規範 (v1.0.2.0317)
+
+#### 絕對禁止的 API
+- ❌ **證交所 API 用於股價獲取**：不穩定，CORS 問題多
+- ❌ **過多的 API 選項**：增加複雜性，降低維護性
+- ❌ **混合多個 API 的複雜邏輯**：難以調試和維護
+
+#### 推薦的 API 架構
+```typescript
+// ✅ 本機端：簡潔的雙 API 策略
+async function getLocalStockPrice(symbol: string) {
+  // 1. Yahoo Finance（首選）
+  try {
+    const data = await YahooFinanceService.getStockPrice(symbol);
+    if (data?.price > 0) return { ...data, source: 'Yahoo Finance' };
+  } catch (error) {
+    logger.warn('api', `Yahoo Finance失敗: ${symbol}`);
+  }
+  
+  // 2. FinMind（備援）
+  try {
+    const data = await FinMindService.getStockPrice(symbol);
+    if (data?.price > 0) return { ...data, source: 'FinMind' };
+  } catch (error) {
+    logger.error('api', `所有API失敗: ${symbol}`);
+  }
+  
+  return null;
+}
+
+// ✅ 雲端：Vercel 優先，Yahoo Finance 代理備援
+async function getCloudStockPrice(symbol: string) {
+  // 1. Vercel Edge Functions（首選）
+  try {
+    const data = await VercelService.getStockPrice(symbol);
+    if (data?.price > 0) return { ...data, source: 'Yahoo Finance (Vercel)' };
+  } catch (error) {
+    logger.warn('api', `Vercel失敗: ${symbol}`);
+  }
+  
+  // 2-4. Yahoo Finance 代理備援
+  const proxies = ['AllOrigins', 'CodeTabs', 'ThingProxy'];
+  for (const proxy of proxies) {
+    try {
+      const data = await getYahooViaProxy(symbol, proxy);
+      if (data?.price > 0) return { ...data, source: `Yahoo Finance (${proxy})` };
+    } catch (error) {
+      continue;
+    }
+  }
+  
+  return null;
+}
+```
+
+#### DataSourcePriority 簡化
+```typescript
+// ✅ v1.0.2.0317 簡化版
+export enum DataSourcePriority {
+  VERCEL_EDGE = 'Yahoo Finance (Vercel)',  // 雲端首選
+  YAHOO_ONLY = 'Yahoo Finance',            // 本機首選
+  FINMIND_ONLY = 'FinMind'                 // 本機備援
+}
+
+// ❌ 已移除的複雜選項
+// TWSE_ONLY = 'TWSE'                      // 證交所（已移除）
+// YAHOO_FINMIND = 'Yahoo+FinMind'         // 混合來源（已移除）
+```
+
+### 🎯 股價來源顯示規範 (v1.0.2.0317 簡化版)
 
 #### UI 顯示標準
 ```typescript
-// StockRow.tsx 中的來源顯示邏輯
+// StockRow.tsx 中的來源顯示邏輯（簡化版）
 {stock.priceSource && (
   <div className="text-xs text-slate-500 mt-0.5">
     {stock.priceSource === 'Yahoo' ? 'Yahoo' : 
-     stock.priceSource === 'TWSE' ? '證交所' : 
      stock.priceSource === 'FinMind' ? 'FinMind' : 
      stock.priceSource.includes('Vercel') ? 'Yahoo (Vercel)' :
      stock.priceSource.includes('Yahoo') ? 'Yahoo' :
@@ -124,13 +199,15 @@ return {
 )}
 ```
 
-#### 支援的來源標記
+#### 支援的來源標記（簡化版）
 - ✅ `Yahoo Finance (Vercel)` → 顯示為 `Yahoo (Vercel)`
-- ✅ `Yahoo Finance (AllOrigins)` → 顯示為 `Yahoo`
-- ✅ `Yahoo Finance (CodeTabs)` → 顯示為 `Yahoo`
-- ✅ `Yahoo Finance (ThingProxy)` → 顯示為 `Yahoo`
+- ✅ `Yahoo Finance` → 顯示為 `Yahoo`
 - ✅ `FinMind` → 顯示為 `FinMind`
-- ✅ `TWSE` → 顯示為 `證交所`
+
+#### 已移除的來源標記
+- ❌ `TWSE` / `證交所` - 不再用於股價獲取
+- ❌ `Yahoo+FinMind` - 混合來源已移除
+- ❌ `FinMind+TWSE` - 混合來源已移除
 
 ### 📋 股價專精開發檢查清單 (v1.0.2.0315)
 

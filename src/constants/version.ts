@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 316, // 【混合來源清理】徹底移除混合來源邏輯，遵循股價專精原則
+  PATCH: 317, // 【API 簡化】本機 Yahoo+FinMind，雲端移除證交所，遵循股價專精
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

@@ -453,12 +453,10 @@ const StockRow: React.FC<StockRowProps> = ({
             {stock.priceSource && (
               <div className="text-xs text-slate-500 mt-0.5">
                 {stock.priceSource === 'Yahoo' ? 'Yahoo' : 
-                 stock.priceSource === 'TWSE' ? '證交所' : 
                  stock.priceSource === 'FinMind' ? 'FinMind' : 
                  stock.priceSource.includes('Vercel') ? 'Yahoo (Vercel)' :
                  stock.priceSource.includes('Yahoo') ? 'Yahoo' :
                  stock.priceSource.includes('FinMind') ? 'FinMind' :
-                 stock.priceSource.includes('TWSE') ? '證交所' :
                  stock.priceSource}
               </div>
             )}
