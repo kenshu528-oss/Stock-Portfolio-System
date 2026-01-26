@@ -12,6 +12,34 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0328',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '股價優化 - TWSE API 優先策略',
+    description: '基於成功倉庫 v1.2.2.0035 的 console 日誌分析，將 TWSE API 設為最高優先級',
+    changes: [
+      '將 TWSE (台灣證交所) API 提升為最高優先級',
+      '完整複製成功倉庫的 TWSE API 實作邏輯',
+      '使用相同的 API 端點和參數格式',
+      '保持 Yahoo Finance 代理作為備援',
+      '優化錯誤處理和日誌記錄'
+    ]
+  },
+  {
+    version: '1.0.2.0327',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '股價優化 - AllOrigins 代理優先策略',
+    description: '基於成功倉庫 v1.2.2.0035 的實作經驗，優化雲端股價獲取邏輯',
+    changes: [
+      '將 AllOrigins 代理提升為最高優先級',
+      '優化 Yahoo Finance 符號判斷邏輯',
+      '改用 raw API 方式，與成功倉庫保持一致',
+      '增強錯誤處理和日誌記錄',
+      '移除不穩定的 Alpha Vantage 和 IEX Cloud API'
+    ]
+  },
+  {
     version: '1.0.2.0326',
     date: '2026-01-26',
     type: 'patch',

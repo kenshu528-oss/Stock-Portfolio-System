@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 326, // 【價格修正】更新 00940 靜態價格為正確的 9.79 元
+  PATCH: 328, // 【股價優化】基於成功倉庫經驗，TWSE API 優先，完整複製成功邏輯
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

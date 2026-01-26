@@ -96,31 +96,37 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0326 - 尋找真正可用的即時股價 API
+   * v1.0.2.0328 - 基於成功倉庫經驗，TWSE API 優先
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Alpha Vantage API',
+        name: 'TWSE (台灣證交所)',
         priority: 1,
         timeout: 8000,
-        fetcher: this.fetchFromAlphaVantage.bind(this)
+        fetcher: this.fetchFromTWSE.bind(this)
       },
       {
-        name: 'IEX Cloud API',
+        name: 'Yahoo Finance (AllOrigins)',
         priority: 2,
-        timeout: 6000,
-        fetcher: this.fetchFromIEXCloud.bind(this)
+        timeout: 5000,
+        fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
-        name: 'Yahoo Finance (No CORS)',
+        name: 'Yahoo Finance (CodeTabs)',
         priority: 3,
-        timeout: 6000,
-        fetcher: this.fetchFromYahooNoCORS.bind(this)
+        timeout: 5000,
+        fetcher: this.fetchFromYahooCodeTabs.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (ThingProxy)',
+        priority: 4,
+        timeout: 5000,
+        fetcher: this.fetchFromYahooThingProxy.bind(this)
       },
       {
         name: 'Static Price (Fallback)',
-        priority: 4,
+        priority: 5,
         timeout: 1000,
         fetcher: this.fetchStaticPrice.bind(this)
       }
@@ -335,27 +341,123 @@ class CloudStockPriceService {
   }
 
   /**
-   * Yahoo Finance 通過 AllOrigins 代理
+   * TWSE (台灣證交所) API - v1.0.2.0328
+   * 基於成功倉庫 v1.2.2.0035 的實作經驗
+   */
+  private async fetchFromTWSE(symbol: string): Promise<StockPrice | null> {
+    try {
+      logger.debug('stock', `TWSE API 請求: ${symbol}`, { symbol });
+
+      // 基於成功倉庫的 TWSE API 端點
+      const response = await fetch(
+        `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw|otc_${symbol}.tw`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data?.msgArray || data.msgArray.length === 0) {
+        throw new Error('無股價資料');
+      }
+
+      const stockData = data.msgArray[0];
+      if (!stockData || !stockData.z) {
+        throw new Error('股價資料格式錯誤');
+      }
+
+      const currentPrice = parseFloat(stockData.z) || 0;
+      const previousClose = parseFloat(stockData.y) || 0;
+      const change = currentPrice - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+      if (currentPrice <= 0) {
+        throw new Error(`無效股價: ${currentPrice}`);
+      }
+
+      logger.info('stock', `TWSE 獲取成功: ${symbol}`, { 
+        price: currentPrice,
+        change,
+        changePercent: changePercent.toFixed(2) + '%',
+        market: stockData.ex === 'tse' ? '上市' : '上櫃'
+      });
+
+      return {
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'TWSE (台灣證交所)',
+        timestamp: new Date().toISOString()
+      };
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      logger.debug('stock', `TWSE 失敗: ${symbol}`, { error: message });
+      throw new Error(`TWSE API 失敗: ${message}`);
+    }
+  }
+
+  /**
+   * Yahoo Finance 通過 AllOrigins 代理 - v1.0.2.0327 優化版
+   * 基於成功倉庫 v1.2.2.0035 的實作經驗
    */
   private async fetchFromYahooAllOrigins(symbol: string): Promise<StockPrice | null> {
     const yahooSymbol = this.getYahooSymbol(symbol);
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
+    
+    // 使用與成功倉庫相同的 AllOrigins 代理方式
+    const corsProxy = 'https://api.allorigins.win/raw?url=';
+    const proxyUrl = corsProxy + encodeURIComponent(yahooUrl);
 
     try {
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      logger.debug('stock', `AllOrigins 代理請求: ${symbol}`, { 
+        yahooSymbol, 
+        proxyUrl: proxyUrl.substring(0, 100) + '...' 
+      });
 
-      const proxyData = await response.json();
-      const yahooData = JSON.parse(proxyData.contents);
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const yahooData = await response.json();
       
       const result = yahooData?.chart?.result?.[0];
-      if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+      if (!result?.meta) {
+        throw new Error('無效的 Yahoo Finance 資料結構');
+      }
 
-      const currentPrice = result.meta.regularMarketPrice || 0;
+      const currentPrice = result.meta.regularMarketPrice || result.meta.previousClose || 0;
       const previousClose = result.meta.previousClose || 0;
       const change = currentPrice - previousClose;
       const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+      if (currentPrice <= 0) {
+        throw new Error(`無效股價: ${currentPrice}`);
+      }
+
+      logger.info('stock', `AllOrigins 獲取成功: ${symbol}`, { 
+        yahooSymbol,
+        price: currentPrice,
+        change,
+        changePercent: changePercent.toFixed(2) + '%'
+      });
 
       return {
         price: Math.round(currentPrice * 100) / 100,
@@ -364,8 +466,13 @@ class CloudStockPriceService {
         source: 'Yahoo Finance (AllOrigins)',
         timestamp: new Date().toISOString()
       };
+
     } catch (error) {
       const message = error instanceof Error ? error.message : '未知錯誤';
+      logger.debug('stock', `AllOrigins 失敗: ${symbol}`, { 
+        error: message,
+        yahooSymbol 
+      });
       throw new Error(`AllOrigins 代理失敗: ${message}`);
     }
   }
@@ -478,25 +585,50 @@ class CloudStockPriceService {
       throw new Error(`CORS Anywhere 代理失敗: ${message}`);
     }
   }
+  /**
+   * 獲取 Yahoo Finance 符號 - v1.0.2.0327 優化版
+   * 基於成功倉庫的 formatTaiwanSymbol 邏輯
+   */
   private getYahooSymbol(symbol: string): string {
     if (symbol.includes('.')) return symbol; // 已有後綴
 
-    // v1.0.2.0321: 使用智能判斷邏輯（Stock List 整合將在後續版本實作）
-    // TODO: 未來版本將整合 Stock List 的市場類別資訊
-
-    // 智能判斷邏輯：基於 FinMind API 的 industry_category 邏輯
+    // 基於成功倉庫經驗的台股符號格式化邏輯
     const code = parseInt(symbol.substring(0, 4));
     const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+    const isETF = /^00\d{2,3}[A-Z]?$/i.test(symbol);
 
-    if (isBondETF) {
-      return `${symbol}.TWO`; // 債券 ETF 優先櫃買中心
-    } else if (code >= 3000 && code <= 7999) {
-      return `${symbol}.TWO`; // 上櫃股票優先櫃買中心
-    } else if (code >= 8000 && code <= 8999) {
-      return `${symbol}.TW`; // 8000-8999 範圍：上市股票（如 8112 至上）
-    } else {
-      return `${symbol}.TW`; // 其他範圍（1000-2999 等）：上市股票
+    // 特殊案例處理（基於實際測試結果）
+    const specialCases: Record<string, string> = {
+      '8112': '.TW', // 至上：雖在 8000 範圍但需使用 .TW
+      '4585': '.TW', // 達明：興櫃股票，最常用 .TW
+    };
+    
+    if (specialCases[symbol]) {
+      return `${symbol}${specialCases[symbol]}`;
     }
+
+    // 債券 ETF：優先櫃買中心
+    if (isBondETF) {
+      return `${symbol}.TWO`;
+    }
+    
+    // 一般 ETF：優先證交所
+    if (isETF) {
+      return `${symbol}.TW`;
+    }
+    
+    // 上櫃股票（3000-8999）：優先櫃買中心
+    if (code >= 3000 && code <= 8999) {
+      return `${symbol}.TWO`;
+    }
+    
+    // 上市股票（1000-2999）：優先證交所
+    if (code >= 1000 && code <= 2999) {
+      return `${symbol}.TW`;
+    }
+    
+    // 其他情況：預設證交所
+    return `${symbol}.TW`;
   }
 
 
