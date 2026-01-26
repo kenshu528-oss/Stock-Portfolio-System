@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 295, // 【GitHub Pages 修復】添加 FinMind Token 到 GitHub Actions 部署流程
+  PATCH: 296, // 【GitHub Actions 修復】移除 environment 限制並添加調試信息
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

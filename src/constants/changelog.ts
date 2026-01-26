@@ -12,20 +12,19 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.0.2.0295',
+    version: '1.0.2.0296',
     date: '2026-01-23',
     type: 'patch',
-    title: '【GitHub Pages 修復】修復 FinMind Token 缺失問題',
-    description: '修復 GitHub Pages 環境下 FinMind Token 無法讀取的問題。在 GitHub Actions 部署流程中添加環境變數，確保股息功能正常工作。',
+    title: '【GitHub Actions 修復】移除環境限制並添加調試',
+    description: '移除 GitHub Actions 中的 environment 限制，並添加環境變數調試信息，確保 FinMind Token 能正確傳遞到建置過程。',
     changes: [
-      '修復 .github/workflows/deploy.yml：添加 VITE_FINMIND_TOKEN 環境變數',
-      '確保 GitHub Pages 環境下能正確讀取 FinMind Token',
-      '修復股息獲取功能在生產環境下的問題'
+      '移除 GitHub Actions 中的 environment: github-pages 限制',
+      '添加環境變數調試步驟',
+      '確保 VITE_FINMIND_TOKEN 能正確讀取'
     ],
     fixes: [
-      '修復 GitHub Pages 環境下 FinMind Token 長度為 0 的問題',
-      '修復股息自動計算功能在生產環境下失效',
-      '確保 dividendCount 不再是 0'
+      '修復 GitHub Pages 環境下 FinMind Token 無法讀取的問題',
+      '改善 GitHub Actions 部署流程的可調試性'
     ]
   },
   {
