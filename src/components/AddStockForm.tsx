@@ -202,11 +202,11 @@ const AddStockForm: React.FC<AddStockFormProps> = ({
                 </span>
                 {selectedStock.price && (
                   <div className="text-sm text-slate-300 mt-1">
-                    股價: ${selectedStock.price.toFixed(2)}
+                    股價: ${(selectedStock.price || 0).toFixed(2)}
                     {selectedStock.change !== undefined && selectedStock.changePercent !== undefined && (
                       <span className={`ml-2 ${selectedStock.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {selectedStock.change >= 0 ? '+' : ''}{selectedStock.change.toFixed(2)} 
-                        ({selectedStock.change >= 0 ? '+' : ''}{selectedStock.changePercent.toFixed(2)}%)
+                        {selectedStock.change >= 0 ? '+' : ''}{(selectedStock.change || 0).toFixed(2)} 
+                        ({selectedStock.change >= 0 ? '+' : ''}{(selectedStock.changePercent || 0).toFixed(2)}%)
                       </span>
                     )}
                   </div>

@@ -173,7 +173,7 @@ const PurchaseHistoryManager: React.FC<PurchaseHistoryManagerProps> = ({
               <div className="bg-slate-900 p-4 rounded-lg">
                 <h3 className="text-sm font-medium text-slate-400 mb-1">平均成本</h3>
                 <p className="text-lg font-semibold text-white">
-                  ${statistics.avgPrice.toFixed(2)}
+                  ${(statistics.avgPrice || 0).toFixed(2)}
                 </p>
               </div>
               <div className="bg-slate-900 p-4 rounded-lg">
@@ -187,10 +187,10 @@ const PurchaseHistoryManager: React.FC<PurchaseHistoryManagerProps> = ({
                 <p className={`text-lg font-semibold ${
                   statistics.unrealizedGainLoss >= 0 ? 'text-green-400' : 'text-red-400'
                 }`}>
-                  {statistics.unrealizedGainLoss >= 0 ? '+' : ''}
-                  ${statistics.unrealizedGainLoss.toFixed(0)} 
-                  ({statistics.unrealizedGainLoss >= 0 ? '+' : ''}
-                  {statistics.unrealizedGainLossPercent.toFixed(2)}%)
+                  {(statistics.unrealizedGainLoss || 0) >= 0 ? '+' : ''}
+                  ${(statistics.unrealizedGainLoss || 0).toFixed(0)} 
+                  ({(statistics.unrealizedGainLoss || 0) >= 0 ? '+' : ''}
+                  {(statistics.unrealizedGainLossPercent || 0).toFixed(2)}%)
                 </p>
               </div>
             </div>
@@ -369,7 +369,7 @@ const PurchaseHistoryManager: React.FC<PurchaseHistoryManagerProps> = ({
                           {record.shares.toLocaleString()}
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-300">
-                          ${record.price.toFixed(2)}
+                          ${(record.price || 0).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-sm text-slate-300">
                           ${investment.toLocaleString()}
@@ -381,8 +381,8 @@ const PurchaseHistoryManager: React.FC<PurchaseHistoryManagerProps> = ({
                           <span className={`${
                             gainLoss >= 0 ? 'text-green-400' : 'text-red-400'
                           }`}>
-                            {gainLoss >= 0 ? '+' : ''}${gainLoss.toFixed(0)} 
-                            ({gainLoss >= 0 ? '+' : ''}{gainLossPercent.toFixed(2)}%)
+                            {(gainLoss || 0) >= 0 ? '+' : ''}${(gainLoss || 0).toFixed(0)} 
+                            ({(gainLoss || 0) >= 0 ? '+' : ''}{(gainLossPercent || 0).toFixed(2)}%)
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm">

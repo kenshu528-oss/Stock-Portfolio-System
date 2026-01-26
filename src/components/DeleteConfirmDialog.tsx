@@ -108,11 +108,11 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-400">成本價：</span>
-            <span className="text-white">${costBasis.toFixed(2)}</span>
+            <span className="text-white">${(costBasis || 0).toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-400">現價：</span>
-            <span className="text-white">${stock.currentPrice.toFixed(2)}</span>
+            <span className="text-white">${(stock.currentPrice || 0).toFixed(2)}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-slate-400">市值：</span>
@@ -121,7 +121,7 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
           <div className="flex justify-between items-center">
             <span className="text-slate-400">損益：</span>
             <span className={`font-medium ${gainLoss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {gainLoss >= 0 ? '+' : ''}${gainLoss.toFixed(0)}
+              {(gainLoss || 0) >= 0 ? '+' : ''}${(gainLoss || 0).toFixed(0)}
             </span>
           </div>
         </div>

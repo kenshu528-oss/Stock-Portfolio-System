@@ -181,7 +181,7 @@ const TestStockPriceComponent: React.FC = () => {
           <div className="bg-slate-700 p-3 rounded">
             <div className="text-sm text-slate-400">成功率</div>
             <div className="text-lg font-bold text-blue-400">
-              {((results.filter(r => r.success).length / results.length) * 100).toFixed(1)}%
+              {results.length > 0 ? ((results.filter(r => r.success).length / results.length) * 100).toFixed(1) : '0.0'}%
             </div>
           </div>
           <div className="bg-slate-700 p-3 rounded">

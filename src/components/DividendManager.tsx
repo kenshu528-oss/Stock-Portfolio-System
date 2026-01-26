@@ -291,19 +291,19 @@ const DividendManager: React.FC<DividendManagerProps> = ({
             <div className="text-center">
               <p className="text-sm text-slate-400">總股息收入</p>
               <p className="text-xl font-bold text-green-400">
-                +{stats.totalDividend.toFixed(0)}
+                +{(stats.totalDividend || 0).toFixed(0)}
               </p>
             </div>
             <div className="text-center">
               <p className="text-sm text-slate-400">年度股息</p>
               <p className="text-xl font-bold text-green-400">
-                +{stats.yearlyDividend.toFixed(0)}
+                +{(stats.yearlyDividend || 0).toFixed(0)}
               </p>
             </div>
             <div className="text-center">
               <p className="text-sm text-slate-400">平均殖利率</p>
               <p className="text-xl font-bold text-blue-400">
-                {stats.averageYield.toFixed(2)}%
+                {(stats.averageYield || 0).toFixed(2)}%
               </p>
             </div>
             <div className="text-center">
@@ -381,7 +381,7 @@ const DividendManager: React.FC<DividendManagerProps> = ({
                         </div>
                         <div>
                           <p className="text-white font-medium">
-                            ${dividend.dividendPerShare.toFixed(2)}
+                            ${(dividend.dividendPerShare || 0).toFixed(2)}
                           </p>
                           <p className="text-sm text-slate-400">每股股息</p>
                         </div>
@@ -393,7 +393,7 @@ const DividendManager: React.FC<DividendManagerProps> = ({
                         </div>
                         <div>
                           <p className="text-green-400 font-medium">
-                            +${(stock.shares * dividend.dividendPerShare).toFixed(0)}
+                            +${((stock.shares || 0) * (dividend.dividendPerShare || 0)).toFixed(0)}
                           </p>
                           <p className="text-sm text-slate-400">目前股息</p>
                         </div>
@@ -459,7 +459,7 @@ const DividendManager: React.FC<DividendManagerProps> = ({
                 <div className="bg-slate-800 rounded p-3">
                   <p className="text-sm text-slate-400">股息預覽</p>
                   <p className="text-white font-medium">
-                    總股息: ${(parseFloat(newDividend.dividendPerShare || '0') * parseInt(newDividend.shares || '0')).toFixed(0)}
+                    總股息: ${(parseFloat(newDividend.dividendPerShare || '0') * parseInt(newDividend.shares || '0') || 0).toFixed(0)}
                   </p>
                 </div>
               )}
@@ -497,11 +497,11 @@ const DividendManager: React.FC<DividendManagerProps> = ({
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-slate-400">原始成本價</p>
-                <p className="text-white font-medium">${stock.costPrice.toFixed(2)}</p>
+                <p className="text-white font-medium">${(stock.costPrice || 0).toFixed(2)}</p>
               </div>
               <div>
                 <p className="text-slate-400">調整後成本價</p>
-                <p className="text-blue-400 font-medium">${(stock.adjustedCostPrice || stock.costPrice).toFixed(2)}</p>
+                <p className="text-blue-400 font-medium">${(stock.adjustedCostPrice || stock.costPrice || 0).toFixed(2)}</p>
               </div>
             </div>
             <p className="text-xs text-slate-500 mt-2">

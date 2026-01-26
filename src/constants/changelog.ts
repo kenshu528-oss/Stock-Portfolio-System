@@ -12,6 +12,32 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0305',
+    date: '2026-01-26',
+    type: 'critical',
+    title: '【系統性修復】修復所有組件中的 undefined.toFixed() 崩潰問題',
+    description: '系統性搜尋並修復所有組件中可能導致 undefined.toFixed() 崩潰的地方。通過全面搜尋發現多達 20+ 個組件存在類似問題，包括 TestStockPriceComponent、RightsEventManager、PurchaseHistoryManager、PortfolioStats、EditableCell、DividendManager、DeleteConfirmDialog、AddStockForm 等。採用防禦性編程策略，為所有數值顯示添加安全檢查。',
+    changes: [
+      '修復 TestStockPriceComponent.tsx：成功率計算添加除零檢查',
+      '修復 RightsEventManager.tsx：成本價和調整成本價添加預設值',
+      '修復 PurchaseHistoryManager.tsx：所有統計數據添加安全檢查',
+      '修復 PortfolioStats.tsx：百分比計算添加 null 檢查',
+      '修復 EditableCell.tsx：格式化函數添加預設值',
+      '修復 DividendManager.tsx：所有股息相關數值添加安全檢查',
+      '修復 DeleteConfirmDialog.tsx：損益計算添加預設值',
+      '修復 AddStockForm.tsx：股價顯示添加安全檢查',
+      '修復 StockRow.tsx：console.log 中的 toFixed 調用添加安全檢查',
+      '統一數值安全策略：所有 toFixed() 調用都有適當的預設值或 null 檢查'
+    ],
+    fixes: [
+      '修復所有組件中的 undefined.toFixed() 崩潰',
+      '修復 NaN.toFixed() 崩潰',
+      '修復除零運算導致的數值異常',
+      '修復統計數據顯示異常的問題',
+      '大幅提升系統穩定性，避免數值計算異常導致的 UI 崩潰'
+    ]
+  },
+  {
     version: '1.0.2.0304',
     date: '2026-01-26',
     type: 'critical',

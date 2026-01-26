@@ -105,11 +105,11 @@ const RightsEventManager: React.FC<RightsEventManagerProps> = ({
             </div>
             <div>
               <span className="text-slate-400">成本價:</span>
-              <span className="text-white ml-2">${stock.costPrice.toFixed(2)}</span>
+              <span className="text-white ml-2">${(stock.costPrice || 0).toFixed(2)}</span>
             </div>
             <div>
               <span className="text-slate-400">調整成本價:</span>
-              <span className="text-white ml-2">${(stock.adjustedCostPrice || stock.costPrice).toFixed(2)}</span>
+              <span className="text-white ml-2">${(stock.adjustedCostPrice || stock.costPrice || 0).toFixed(2)}</span>
             </div>
             <div>
               <span className="text-slate-400">購買日期:</span>

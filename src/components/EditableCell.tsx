@@ -102,7 +102,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
       return val.toLocaleString();
     }
     
-    return val.toFixed(2);
+    return (val || 0).toFixed(2);
   };
 
   // 獲取對齊樣式

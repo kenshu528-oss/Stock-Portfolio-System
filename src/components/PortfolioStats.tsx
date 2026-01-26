@@ -159,7 +159,7 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
     if (typeof percent !== 'number' || isNaN(percent)) {
       return '0.00%';
     }
-    return `${percent >= 0 ? '+' : ''}${percent.toFixed(2)}%`;
+    return `${(percent || 0) >= 0 ? '+' : ''}${(percent || 0).toFixed(2)}%`;
   };
 
   // 獲取損益顏色
@@ -269,7 +269,7 @@ const PortfolioStats: React.FC<PortfolioStatsProps> = ({
             <div className="flex justify-between">
               <span className="text-slate-400">總報酬率:</span>
               <span className={`font-medium ${getGainLossColor(stats.totalReturn)}`}>
-                {isPrivacyMode ? '**%' : `${stats.totalReturn >= 0 ? '+' : ''}${stats.totalCost > 0 ? ((stats.totalReturn / stats.totalCost) * 100).toFixed(2) : '0.00'}%`}
+                {isPrivacyMode ? '**%' : `${(stats.totalReturn || 0) >= 0 ? '+' : ''}${stats.totalCost > 0 ? (((stats.totalReturn || 0) / stats.totalCost) * 100).toFixed(2) : '0.00'}%`}
               </span>
             </div>
             <div className="flex justify-between">

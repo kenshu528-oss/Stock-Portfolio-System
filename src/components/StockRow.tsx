@@ -307,8 +307,8 @@ const StockRow: React.FC<StockRowProps> = ({
             console.log(`💰 ${stock.symbol} 原始成本價: ${stock.costPrice}`);
             
             const shouldBeAdjustedCostPrice = Math.max(stock.costPrice - totalDividendPerShare, 0);
-            console.log(`💰 ${stock.symbol} 應該的調整後成本價: ${shouldBeAdjustedCostPrice.toFixed(2)}`);
-            console.log(`💰 ${stock.symbol} 實際的調整後成本價: ${stock.adjustedCostPrice}`);
+            console.log(`💰 ${stock.symbol} 應該的調整後成本價: ${shouldBeAdjustedCostPrice?.toFixed(2) || 'N/A'}`);
+            console.log(`💰 ${stock.symbol} 實際的調整後成本價: ${stock.adjustedCostPrice?.toFixed(2) || 'N/A'}`);
             
             // 如果計算結果與實際不符，強制更新
             if (Math.abs(shouldBeAdjustedCostPrice - (stock.adjustedCostPrice || stock.costPrice)) > 0.01) {
