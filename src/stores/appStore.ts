@@ -472,15 +472,26 @@ export const useAppStore = create<AppState & AppActions>()(
                   }
                 }
                 
-                // 2. 如果後端失敗或無後端支援，使用雲端股價服務（與搜尋個股相同）
+                // 2. 如果後端失敗或無後端支援，使用 FinMind API（與個股除權息更新一致）
                 if (!priceData) {
                   try {
-                    // 🔧 修復：使用與搜尋個股相同的 cloudStockPriceService
-                    const { cloudStockPriceService } = await import('../services/cloudStockPriceService');
-                    priceData = await cloudStockPriceService.getStockPrice(stock.symbol);
-                    logger.debug('stock', `${stock.symbol} 使用雲端股價服務獲取`, { price: priceData?.price });
+                    // 🔧 修復：使用 FinMind API 獲取股價，與個股更新保持一致
+                    const { FinMindAPIProvider } = await import('../services/finMindAPI');
+                    const finmindProvider = new FinMindAPIProvider();
+                    
+                    // 獲取最新股價
+                    const stockPriceData = await finmindProvider.getStockPrice(stock.symbol);
+                    if (stockPriceData && stockPriceData.price > 0) {
+                      priceData = {
+                        price: stockPriceData.price,
+                        change: stockPriceData.change || 0,
+                        changePercent: stockPriceData.changePercent || 0,
+                        source: 'FinMind'
+                      };
+                      logger.debug('stock', `${stock.symbol} 使用 FinMind API 獲取`, { price: priceData.price });
+                    }
                   } catch (error) {
-                    logger.warn('stock', `${stock.symbol} 雲端股價服務失敗，跳過`, error.message);
+                    logger.warn('stock', `${stock.symbol} FinMind API 失敗，跳過`, error.message);
                   }
                 }
                 

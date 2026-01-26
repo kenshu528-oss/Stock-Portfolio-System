@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 305, // 【系統性修復】修復所有組件中的 undefined.toFixed() 崩潰問題
+  PATCH: 306, // 【API 修復】修復右上角更新功能 CORS 錯誤，統一使用 FinMind API
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

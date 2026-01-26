@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0306',
+    date: '2026-01-26',
+    type: 'hotfix',
+    title: '【API 修復】修復右上角更新功能 CORS 錯誤，統一使用 FinMind API',
+    description: '修復右上角批量更新功能遇到的 CORS 錯誤問題。問題根源：updateAllStockPrices 使用 cloudStockPriceService 嘗試調用 Yahoo Finance API 但遇到 CORS 限制，而個股更新使用 FinMind API 成功。修復方案：統一 updateAllStockPrices 使用 FinMind API，與個股更新邏輯保持一致，避免 CORS 問題。',
+    changes: [
+      '修復 appStore.ts updateAllStockPrices：移除 cloudStockPriceService，改用 FinMind API',
+      '統一股價獲取策略：右上角更新與個股更新使用相同的 API',
+      '避免 Yahoo Finance CORS 錯誤：使用 FinMind API 作為備用股價源',
+      '保持 API 調用一致性：所有股價更新都遵循相同的優先順序'
+    ],
+    fixes: [
+      '修復右上角更新功能的 CORS 錯誤',
+      '修復 updateAllStockPrices 與個股更新邏輯不一致',
+      '修復 Yahoo Finance API 調用失敗問題',
+      '提升批量更新功能的穩定性和成功率'
+    ]
+  },
+  {
     version: '1.0.2.0305',
     date: '2026-01-26',
     type: 'critical',
