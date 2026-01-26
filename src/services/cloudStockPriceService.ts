@@ -70,21 +70,33 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0311 - 只使用 Yahoo Finance，如 Python yfinance 般獲取即時股價
+   * v1.0.2.0312 - 添加更多代理服務，提高成功率
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
         name: 'Yahoo Finance (AllOrigins)',
         priority: 1,
-        timeout: 8000,
+        timeout: 6000,
         fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
         name: 'Yahoo Finance (CodeTabs)',
         priority: 2,
-        timeout: 8000,
+        timeout: 6000,
         fetcher: this.fetchFromYahooCodeTabs.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (ThingProxy)',
+        priority: 3,
+        timeout: 6000,
+        fetcher: this.fetchFromYahooThingProxy.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (CORS Anywhere)',
+        priority: 4,
+        timeout: 6000,
+        fetcher: this.fetchFromYahooCORSAnywhere.bind(this)
       }
     ];
   }
@@ -177,7 +189,8 @@ class CloudStockPriceService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      throw error;
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      throw new Error(`AllOrigins 代理失敗: ${message}`);
     }
   }
 
@@ -211,13 +224,84 @@ class CloudStockPriceService {
         timestamp: new Date().toISOString()
       };
     } catch (error) {
-      throw error;
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      throw new Error(`CodeTabs 代理失敗: ${message}`);
     }
   }
 
   /**
-   * 智能判斷 Yahoo Finance 股票代碼後綴
+   * Yahoo Finance 通過 ThingProxy 代理
    */
+  private async fetchFromYahooThingProxy(symbol: string): Promise<StockPrice | null> {
+    const yahooSymbol = this.getYahooSymbol(symbol);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+    const proxyUrl = `https://thingproxy.freeboard.io/fetch/${yahooUrl}`;
+
+    try {
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const yahooData = await response.json();
+      
+      const result = yahooData?.chart?.result?.[0];
+      if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+
+      const currentPrice = result.meta.regularMarketPrice || 0;
+      const previousClose = result.meta.previousClose || 0;
+      const change = currentPrice - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+      return {
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'Yahoo Finance (ThingProxy)',
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      throw new Error(`ThingProxy 代理失敗: ${message}`);
+    }
+  }
+
+  /**
+   * Yahoo Finance 通過 CORS Anywhere 代理
+   */
+  private async fetchFromYahooCORSAnywhere(symbol: string): Promise<StockPrice | null> {
+    const yahooSymbol = this.getYahooSymbol(symbol);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+    const proxyUrl = `https://cors-anywhere.herokuapp.com/${yahooUrl}`;
+
+    try {
+      const response = await fetch(proxyUrl, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const yahooData = await response.json();
+      
+      const result = yahooData?.chart?.result?.[0];
+      if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+
+      const currentPrice = result.meta.regularMarketPrice || 0;
+      const previousClose = result.meta.previousClose || 0;
+      const change = currentPrice - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+      return {
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'Yahoo Finance (CORS Anywhere)',
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      throw new Error(`CORS Anywhere 代理失敗: ${message}`);
+    }
+  }
   private getYahooSymbol(symbol: string): string {
     if (symbol.includes('.')) return symbol; // 已有後綴
 

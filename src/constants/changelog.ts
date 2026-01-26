@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0312',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '代理增強 - 添加更多 Yahoo Finance 代理服務',
+    description: '針對代理服務不穩定問題，添加 ThingProxy 和 CORS Anywhere 代理，提高股價獲取成功率',
+    changes: [
+      '添加 Yahoo Finance ThingProxy 代理服務',
+      '添加 Yahoo Finance CORS Anywhere 代理服務',
+      '調整超時時間為 6 秒，提高穩定性',
+      '四重代理備援：AllOrigins → CodeTabs → ThingProxy → CORS Anywhere',
+      '提高股價獲取成功率，減少返回 null 的情況'
+    ],
+    fixes: [
+      '修復大部分股票返回 null 的問題',
+      '修復 AllOrigins 500 錯誤導致的失敗',
+      '提供更多代理選項，增加容錯能力'
+    ]
+  },
+  {
     version: '1.0.2.0311',
     date: '2026-01-26',
     type: 'patch',
