@@ -288,7 +288,7 @@ const StockRow: React.FC<StockRowProps> = ({
             lastDividendUpdate: new Date()
           });
 
-          console.log(`✅ StockRow: ${stock.symbol} 除權息資料更新完成，總記錄: ${allDividendRecords.length}，調整後成本價: ${adjustedCostPrice.toFixed(2)}`);
+          console.log(`✅ StockRow: ${stock.symbol} 除權息資料更新完成，總記錄: ${allDividendRecords.length}，調整後成本價: ${adjustedCostPrice?.toFixed(2) || 'N/A'}`);
         } else {
           console.log(`ℹ️ StockRow: ${stock.symbol} 除權息資料已是最新`);
           

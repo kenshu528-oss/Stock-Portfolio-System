@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0302',
+    date: '2026-01-26',
+    type: 'hotfix',
+    title: '【UI 崩潰修復】添加防禦性檢查，避免 NaN 和 undefined 調用 toFixed() 導致的崩潰',
+    description: '修復 v1.0.2.0301 版本仍存在的 UI 崩潰問題。根本原因：PortfolioStats 組件中除零運算產生 NaN，StockRow 組件中 adjustedCostPrice 可能為 undefined，對這些值調用 toFixed() 方法導致崩潰。修復方案：添加防禦性檢查，確保所有數值運算都有適當的邊界條件處理。',
+    changes: [
+      '修復 PortfolioStats.tsx：添加除零檢查，避免 totalCost 為 0 時產生 NaN',
+      '修復 PortfolioStats.tsx：formatPercent 函數添加 NaN 和 undefined 檢查',
+      '修復 StockRow.tsx：日誌輸出使用安全的可選鏈操作符',
+      '添加防禦性數值檢查：確保所有 toFixed() 調用都是安全的'
+    ],
+    fixes: [
+      '修復除零運算導致的 NaN.toFixed() 崩潰',
+      '修復 undefined.toFixed() 崩潰',
+      '修復統計數據顯示異常的問題',
+      '提升系統穩定性，避免數值計算異常導致的 UI 崩潰'
+    ]
+  },
+  {
     version: '1.0.2.0301',
     date: '2026-01-26',
     type: 'hotfix',
