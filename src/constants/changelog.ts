@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0303',
+    date: '2026-01-26',
+    type: 'hotfix',
+    title: '【全面 UI 修復】修復所有組件中的 undefined.toFixed() 崩潰問題',
+    description: '系統性修復所有組件中可能導致 undefined.toFixed() 崩潰的問題。通過全面搜尋發現多個組件存在類似問題：DividendManager、StockSearch、EditableCell 等。採用防禦性編程策略，為所有數值顯示添加安全檢查。',
+    changes: [
+      '修復 DividendManager.tsx：adjustedCostPrice 使用安全回退值',
+      '修復 StockSearch.tsx：price、change、changePercent 添加預設值檢查',
+      '修復 EditableCell.tsx：formatDisplayValue 添加 NaN 和 undefined 檢查',
+      '統一數值安全策略：所有 toFixed() 調用都有適當的預設值'
+    ],
+    fixes: [
+      '修復股息管理頁面調整後成本價顯示崩潰',
+      '修復股票搜尋結果價格顯示崩潰',
+      '修復可編輯單元格數值格式化崩潰',
+      '全面提升 UI 穩定性，防止數值異常導致的崩潰'
+    ]
+  },
+  {
     version: '1.0.2.0302',
     date: '2026-01-26',
     type: 'hotfix',

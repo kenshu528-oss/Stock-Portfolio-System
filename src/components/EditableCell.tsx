@@ -94,6 +94,10 @@ const EditableCell: React.FC<EditableCellProps> = ({
       return displayFormat(val);
     }
     
+    if (typeof val !== 'number' || isNaN(val)) {
+      return '0.00';
+    }
+    
     if (type === 'integer') {
       return val.toLocaleString();
     }

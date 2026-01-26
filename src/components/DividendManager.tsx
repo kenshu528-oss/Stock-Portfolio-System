@@ -501,7 +501,7 @@ const DividendManager: React.FC<DividendManagerProps> = ({
               </div>
               <div>
                 <p className="text-slate-400">調整後成本價</p>
-                <p className="text-blue-400 font-medium">${stock.adjustedCostPrice.toFixed(2)}</p>
+                <p className="text-blue-400 font-medium">${(stock.adjustedCostPrice || stock.costPrice).toFixed(2)}</p>
               </div>
             </div>
             <p className="text-xs text-slate-500 mt-2">

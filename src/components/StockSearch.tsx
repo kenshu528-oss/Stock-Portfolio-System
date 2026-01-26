@@ -488,7 +488,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
     
     return (
       <span className={`text-sm ${colorClass}`}>
-        {sign}{change.toFixed(2)} ({sign}{changePercent.toFixed(2)}%)
+        {sign}{(change || 0).toFixed(2)} ({sign}{(changePercent || 0).toFixed(2)}%)
       </span>
     );
   };
@@ -576,7 +576,7 @@ const StockSearch: React.FC<StockSearchProps> = ({
                 {stock.price && (
                   <div className="text-right">
                     <div className="text-white font-medium">
-                      ${stock.price.toFixed(2)}
+                      ${(stock.price || 0).toFixed(2)}
                     </div>
                     {stock.change !== undefined && stock.changePercent !== undefined && (
                       <div>

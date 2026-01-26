@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 302, // 【UI 崩潰修復】添加防禦性檢查，避免 NaN 和 undefined 調用 toFixed() 導致的崩潰
+  PATCH: 303, // 【全面 UI 修復】修復所有組件中的 undefined.toFixed() 崩潰問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
