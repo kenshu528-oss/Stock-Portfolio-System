@@ -96,7 +96,7 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0328 - 基於成功倉庫經驗，TWSE API 優先
+   * v1.0.2.0330 - 移除靜態價格，專注即時 API
    */
   private getPriceSources(): PriceSource[] {
     return [
@@ -123,12 +123,6 @@ class CloudStockPriceService {
         priority: 4,
         timeout: 5000,
         fetcher: this.fetchFromYahooThingProxy.bind(this)
-      },
-      {
-        name: 'Static Price (Fallback)',
-        priority: 5,
-        timeout: 1000,
-        fetcher: this.fetchStaticPrice.bind(this)
       }
     ];
   }
@@ -341,52 +335,59 @@ class CloudStockPriceService {
   }
 
   /**
-   * TWSE (台灣證交所) API - v1.0.2.0329 完整實作
-   * 完全基於成功倉庫 v1.2.2.0035 的多重 API 機制
+   * TWSE (台灣證交所) API - v1.0.2.0330 修正版
+   * 使用與成功倉庫相同的 API 端點，解決 CORS 問題
    */
   private async fetchFromTWSE(symbol: string): Promise<StockPrice | null> {
     try {
       logger.debug('stock', `嘗試從 TWSE (台灣證交所) 獲取 ${symbol} 股價...`);
       
-      // 股票類型判斷
-      const stockType = this.getStockType(symbol);
-      logger.debug('stock', `證交所API查詢: ${symbol}`, { stockType });
-      
-      let result: StockPrice | null = null;
-      
-      // 根據股票類型選擇對應的 API
-      switch (stockType) {
-        case 'listed':
-          result = await this.fetchFromTWSEListed(symbol);
-          break;
-        case 'otc':
-          result = await this.fetchFromTPEx(symbol);
-          break;
-        case 'etf':
-          // ETF 先嘗試上市，再嘗試上櫃
-          try {
-            result = await this.fetchFromTWSEListed(symbol);
-          } catch (error) {
-            result = await this.fetchFromTPEx(symbol);
+      // 使用與成功倉庫相同的即時股價 API
+      const response = await fetch(
+        `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw|otc_${symbol}.tw`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
           }
-          break;
-        default:
-          // 未知類型，嘗試所有 API
-          result = await this.fetchFromAllTWSE(symbol);
-          break;
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const data = await response.json();
       
-      if (result && result.price > 0) {
-        logger.info('stock', `✅ TWSE (台灣證交所) 成功獲取 ${symbol}: $${result.price}`);
-        return {
-          ...result,
-          source: 'TWSE (台灣證交所)',
-          timestamp: new Date().toISOString()
-        };
+      if (!data?.msgArray || data.msgArray.length === 0) {
+        throw new Error('無股價資料');
       }
-      
-      throw new Error('TWSE 無有效股價資料');
-      
+
+      const stockData = data.msgArray[0];
+      if (!stockData || !stockData.z) {
+        throw new Error('股價資料格式錯誤');
+      }
+
+      const currentPrice = parseFloat(stockData.z) || 0;
+      const previousClose = parseFloat(stockData.y) || 0;
+      const change = currentPrice - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+      if (currentPrice <= 0) {
+        throw new Error(`無效股價: ${currentPrice}`);
+      }
+
+      logger.info('stock', `✅ TWSE (台灣證交所) 成功獲取 ${symbol}: $${currentPrice}`);
+
+      return {
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'TWSE (台灣證交所)',
+        timestamp: new Date().toISOString()
+      };
+
     } catch (error) {
       const message = error instanceof Error ? error.message : '未知錯誤';
       logger.debug('stock', `❌ TWSE (台灣證交所) 失敗: ${message}`);

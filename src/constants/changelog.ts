@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0330',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '股價修正 - 雲端直接使用證交所 API',
+    description: '移除靜態價格備援，雲端環境直接使用 TWSE 即時 API，確保獲取真實股價',
+    changes: [
+      '使用與成功倉庫相同的即時 TWSE API 端點',
+      '移除靜態價格備援系統（永不使用靜態價格）',
+      '雲端環境直接調用證交所 API，無 CORS 問題',
+      '簡化 API 優先順序：TWSE → Yahoo Finance 代理',
+      '確保新增股票時獲取真實即時價格'
+    ]
+  },
+  {
     version: '1.0.2.0329',
     date: '2026-01-26',
     type: 'patch',
