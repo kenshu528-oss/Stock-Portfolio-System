@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0324',
+    date: '2026-01-26',
+    type: 'hotfix',
+    title: '緊急修復 - 更換穩定代理服務解決 CORS 問題',
+    description: '發現所有 API 都被 GitHub Pages CORS 阻擋，更換為經過驗證的穩定代理服務',
+    changes: [
+      '🚨 緊急修復：所有股價 API 被 GitHub Pages CORS 阻擋',
+      '🔄 更換代理服務：JSONProxy + Heroku CORS + AllOrigins + CodeTabs',
+      '✅ 使用經過驗證的穩定代理：避免 CORS 限制',
+      '🎯 優化代理順序：優先使用最穩定的服務',
+      '📊 保持重試機制：每個代理失敗時自動重試',
+      '🔧 移除不穩定的 FinMind 和直接調用：專注於可用的代理'
+    ]
+  },
+  {
     version: '1.0.2.0323',
     date: '2026-01-26',
     type: 'patch',

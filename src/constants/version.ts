@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 323, // 【股價獲取優化】統一使用 cloudStockPriceService，添加重試機制和改善 UX
+  PATCH: 324, // 【緊急修復】更換穩定代理服務，解決 GitHub Pages CORS 問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
