@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0308',
+    date: '2026-01-26',
+    type: 'hotfix',
+    title: '【股價修復】優化代理服務優先順序，提升 Yahoo Finance 即時性和速度',
+    description: '修復股價獲取速度慢和價格不準確的問題。用戶反映本機 Yahoo Finance 顯示 112，但系統顯示 108.5。根本原因：優先順序錯誤導致使用 FinMind 非即時價格，且不穩定的代理服務拖慢速度。修復方案：調整優先順序讓 AllOrigins 優先，移除不穩定代理，縮短超時時間。',
+    changes: [
+      '調整優先順序：Yahoo Finance (AllOrigins) 優先，確保即時股價',
+      '移除不穩定代理：cors-anywhere (403), thingproxy (DNS失敗)',
+      '縮短超時時間：AllOrigins 4秒，Proxy API 6秒，提升響應速度',
+      '簡化代理列表：只保留 codetabs.com 和 allorigins.win 兩個相對穩定的'
+    ],
+    fixes: [
+      '修復股價不準確問題：優先使用 Yahoo Finance 即時價格',
+      '修復響應速度慢問題：移除失敗代理，縮短超時時間',
+      '修復 cors-anywhere 403 Forbidden 錯誤',
+      '修復 thingproxy DNS 解析失敗問題'
+    ]
+  },
+  {
     version: '1.0.2.0307',
     date: '2026-01-26',
     type: 'hotfix',

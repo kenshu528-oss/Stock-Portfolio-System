@@ -74,28 +74,22 @@ class CloudStockPriceService {
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Yahoo Finance (Proxy API)',
+        name: 'Yahoo Finance (AllOrigins)',
         priority: 1,
-        timeout: 8000,
+        timeout: 4000,
+        fetcher: this.fetchFromYahooAllOrigins.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (Proxy API)',
+        priority: 2,
+        timeout: 6000,
         fetcher: this.fetchFromYahooProxyAPI.bind(this)
       },
       {
         name: 'FinMind Direct',
-        priority: 2,
+        priority: 3,
         timeout: 8000,
         fetcher: this.fetchFromFinMindDirect.bind(this)
-      },
-      {
-        name: 'Yahoo Finance (AllOrigins)',
-        priority: 3,
-        timeout: 5000,
-        fetcher: this.fetchFromYahooAllOrigins.bind(this)
-      },
-      {
-        name: 'Yahoo Finance (Heroku Proxy)',
-        priority: 4,
-        timeout: 6000,
-        fetcher: this.fetchFromYahooHerokuProxy.bind(this)
       }
     ];
   }
@@ -181,11 +175,9 @@ class CloudStockPriceService {
     const yahooSymbol = this.getYahooSymbol(symbol);
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
     
-    // 嘗試多個代理服務
+    // 只使用相對穩定的代理服務
     const proxyServices = [
       `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`,
-      `https://cors-anywhere.herokuapp.com/${yahooUrl}`,
-      `https://thingproxy.freeboard.io/fetch/${yahooUrl}`,
       `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`
     ];
 
@@ -193,20 +185,13 @@ class CloudStockPriceService {
     
     for (const proxyUrl of proxyServices) {
       try {
-        const response = await fetch(proxyUrl, {
-          headers: proxyUrl.includes('cors-anywhere') ? {
-            'X-Requested-With': 'XMLHttpRequest'
-          } : {}
-        });
-        
+        const response = await fetch(proxyUrl);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         let yahooData;
         if (proxyUrl.includes('allorigins')) {
           const proxyData = await response.json();
           yahooData = JSON.parse(proxyData.contents);
-        } else if (proxyUrl.includes('thingproxy')) {
-          yahooData = await response.json();
         } else {
           yahooData = await response.json();
         }
