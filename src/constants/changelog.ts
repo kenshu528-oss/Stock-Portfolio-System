@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0311',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '遵循規格文檔 - Yahoo Finance 優先，修復股價獲取',
+    description: '遵循 SPECIFICATION.md 規範，Yahoo Finance 優先獲取即時股價，移除 FinMind 歷史價格，修復重複結果',
+    changes: [
+      '遵循規格文檔 API 優先順序：Yahoo Finance 優先',
+      '修復 QuickAddStock 重複結果問題，添加去重邏輯',
+      '移除 FinMind 歷史價格獲取（337），改用 Yahoo Finance 即時價格（364.50）',
+      '修復 cloudStockPriceService：只使用 Yahoo Finance 代理',
+      '添加智能股票代碼後綴判斷（.TW/.TWO）',
+      '如 Python yfinance 般獲取準確即時股價'
+    ],
+    fixes: [
+      '修復搜尋返回重複結果問題',
+      '修復股價顯示歷史價格而非即時價格',
+      '修復違反規格文檔 API 優先順序問題'
+    ]
+  },
+  {
     version: '1.0.2.0310',
     date: '2026-01-26',
     type: 'patch',

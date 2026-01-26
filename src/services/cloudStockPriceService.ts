@@ -70,21 +70,21 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0310 - 使用 Netlify Functions 代理，如 Python yfinance 般穩定
+   * v1.0.2.0311 - 只使用 Yahoo Finance，如 Python yfinance 般獲取即時股價
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Netlify Functions (Yahoo Finance)',
+        name: 'Yahoo Finance (AllOrigins)',
         priority: 1,
         timeout: 8000,
-        fetcher: this.fetchFromNetlifyFunctions.bind(this)
+        fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
-        name: 'FinMind Direct',
+        name: 'Yahoo Finance (CodeTabs)',
         priority: 2,
         timeout: 8000,
-        fetcher: this.fetchFromFinMindDirect.bind(this)
+        fetcher: this.fetchFromYahooCodeTabs.bind(this)
       }
     ];
   }
@@ -147,46 +147,90 @@ class CloudStockPriceService {
   }
 
   /**
-   * FinMind 直接調用
+   * Yahoo Finance 通過 AllOrigins 代理
    */
-  private async fetchFromFinMindDirect(symbol: string): Promise<StockPrice | null> {
-    const today = new Date();
-    const startDate = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
-    
-    const finmindUrl = `https://api.finmindtrade.com/api/v4/data?dataset=TaiwanStockPrice&data_id=${symbol}&start_date=${startDate.toISOString().split('T')[0]}&end_date=${today.toISOString().split('T')[0]}&token=${import.meta.env.VITE_FINMIND_TOKEN || ''}`;
+  private async fetchFromYahooAllOrigins(symbol: string): Promise<StockPrice | null> {
+    const yahooSymbol = this.getYahooSymbol(symbol);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`;
 
-    const response = await fetch(finmindUrl);
-    if (!response.ok) {
-      if (response.status === 402) {
-        throw new Error('FinMind API 需要付費');
-      }
-      throw new Error(`HTTP ${response.status}`);
+    try {
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const proxyData = await response.json();
+      const yahooData = JSON.parse(proxyData.contents);
+      
+      const result = yahooData?.chart?.result?.[0];
+      if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+
+      const currentPrice = result.meta.regularMarketPrice || 0;
+      const previousClose = result.meta.previousClose || 0;
+      const change = currentPrice - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+      return {
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'Yahoo Finance (AllOrigins)',
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      throw error;
     }
+  }
 
-    const data = await response.json();
-    if (!data.data || data.data.length === 0) {
-      throw new Error('FinMind 無資料');
+  /**
+   * Yahoo Finance 通過 CodeTabs 代理
+   */
+  private async fetchFromYahooCodeTabs(symbol: string): Promise<StockPrice | null> {
+    const yahooSymbol = this.getYahooSymbol(symbol);
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+    const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`;
+
+    try {
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const yahooData = await response.json();
+      
+      const result = yahooData?.chart?.result?.[0];
+      if (!result?.meta) throw new Error('無效的 Yahoo Finance 資料');
+
+      const currentPrice = result.meta.regularMarketPrice || 0;
+      const previousClose = result.meta.previousClose || 0;
+      const change = currentPrice - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+
+      return {
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'Yahoo Finance (CodeTabs)',
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      throw error;
     }
+  }
 
-    const prices = data.data.sort((a: any, b: any) => 
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-    
-    const latestPrice = prices[prices.length - 1];
-    const previousPrice = prices.length > 1 ? prices[prices.length - 2] : latestPrice;
-    
-    const currentPrice = latestPrice.close || 0;
-    const prevClose = previousPrice.close || currentPrice;
-    const change = currentPrice - prevClose;
-    const changePercent = prevClose > 0 ? (change / prevClose) * 100 : 0;
+  /**
+   * 智能判斷 Yahoo Finance 股票代碼後綴
+   */
+  private getYahooSymbol(symbol: string): string {
+    if (symbol.includes('.')) return symbol; // 已有後綴
 
-    return {
-      price: currentPrice,
-      change,
-      changePercent,
-      source: 'FinMind Direct',
-      timestamp: new Date().toISOString()
-    };
+    const code = parseInt(symbol.substring(0, 4));
+    const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+
+    if (isBondETF) {
+      return `${symbol}.TWO`; // 債券 ETF 優先櫃買中心
+    } else if (code >= 3000 && code <= 8999) {
+      return `${symbol}.TWO`; // 上櫃股票優先櫃買中心
+    } else {
+      return `${symbol}.TW`; // 上市股票優先證交所
+    }
   }
 
 

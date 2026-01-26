@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 310, // 【雲端股價修復】使用 Netlify Functions 代理，如 Python yfinance 般穩定
+  PATCH: 311, // 【遵循規格】修復股價獲取，Yahoo Finance 優先，移除 FinMind 歷史價格
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

@@ -256,6 +256,22 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     }
   };
 
+  // 智能判斷 Yahoo Finance 股票代碼後綴
+  const getYahooSymbol = (symbol: string): string => {
+    if (symbol.includes('.')) return symbol; // 已有後綴
+
+    const code = parseInt(symbol.substring(0, 4));
+    const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+
+    if (isBondETF) {
+      return `${symbol}.TWO`; // 債券 ETF 優先櫃買中心
+    } else if (code >= 3000 && code <= 8999) {
+      return `${symbol}.TWO`; // 上櫃股票優先櫃買中心
+    } else {
+      return `${symbol}.TW`; // 上市股票優先證交所
+    }
+  };
+
   // 直接搜尋股票（不依賴後端）- 保留模糊匹配，Yahoo Finance 優先獲取股價
   const searchStocksDirectly = async (query: string): Promise<StockSearchResult[]> => {
     console.log(`🔍 [QuickAddStock] 開始前端直接搜尋: "${query}"`);
@@ -325,8 +341,20 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
             
             console.log(`🎯 [QuickAddStock] 過濾後找到 ${filtered.length} 筆匹配結果`);
             
+            // 🔧 修復：去重邏輯，避免重複的股票代碼
+            const uniqueFiltered = filtered.reduce((acc: any[], current: any) => {
+              const symbol = current.stock_id || '';
+              const exists = acc.find(item => item.stock_id === symbol);
+              if (!exists) {
+                acc.push(current);
+              }
+              return acc;
+            }, []);
+            
+            console.log(`🔧 [QuickAddStock] 去重後找到 ${uniqueFiltered.length} 筆唯一結果`);
+            
             // 按匹配優先級排序
-            const sortedFiltered = filtered.sort((a: any, b: any) => {
+            const sortedFiltered = uniqueFiltered.sort((a: any, b: any) => {
               const aSymbol = (a.stock_id || '').toUpperCase();
               const bSymbol = (b.stock_id || '').toUpperCase();
               
@@ -353,10 +381,59 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                 console.log(`💰 [QuickAddStock] 獲取 ${stock.stock_id} 股價...`);
                 
                 try {
-                  // 使用統一的雲端股價服務
-                  const priceData = await cloudStockPriceService.getStockPrice(stock.stock_id);
+                  // 🎯 只使用 Yahoo Finance，如 Python yfinance 般獲取即時股價
+                  let priceData = null;
                   
-                  console.log(`📊 [QuickAddStock] ${stock.stock_id} 價格結果:`, priceData);
+                  const yahooSymbol = getYahooSymbol(stock.stock_id);
+                  console.log(`🎯 [QuickAddStock] 嘗試 Yahoo Finance: ${stock.stock_id} -> ${yahooSymbol}`);
+                  
+                  // 嘗試多個代理服務獲取 Yahoo Finance 資料
+                  const proxyUrls = [
+                    `https://api.allorigins.win/get?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`,
+                    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`
+                  ];
+                  
+                  for (const proxyUrl of proxyUrls) {
+                    try {
+                      const response = await fetch(proxyUrl);
+                      if (!response.ok) continue;
+                      
+                      let yahooData;
+                      if (proxyUrl.includes('allorigins')) {
+                        const proxyData = await response.json();
+                        yahooData = JSON.parse(proxyData.contents);
+                      } else {
+                        yahooData = await response.json();
+                      }
+                      
+                      const result = yahooData?.chart?.result?.[0];
+                      if (result?.meta?.regularMarketPrice > 0) {
+                        const currentPrice = result.meta.regularMarketPrice;
+                        const previousClose = result.meta.previousClose || currentPrice;
+                        
+                        priceData = {
+                          price: Math.round(currentPrice * 100) / 100,
+                          change: Math.round((currentPrice - previousClose) * 100) / 100,
+                          changePercent: previousClose > 0 ? 
+                            Math.round(((currentPrice - previousClose) / previousClose) * 100 * 100) / 100 : 0,
+                          source: 'Yahoo Finance',
+                          timestamp: new Date().toISOString()
+                        };
+                        
+                        console.log(`✅ [QuickAddStock] Yahoo Finance 成功: ${stock.stock_id} = ${priceData.price} (即時股價)`);
+                        break; // 成功獲取，跳出循環
+                      }
+                    } catch (proxyError) {
+                      console.log(`⚠️ [QuickAddStock] 代理失敗，嘗試下一個: ${stock.stock_id}`);
+                      continue;
+                    }
+                  }
+                  
+                  if (!priceData) {
+                    console.log(`❌ [QuickAddStock] 所有 Yahoo Finance 代理都失敗: ${stock.stock_id}`);
+                  }
+                  
+                  console.log(`📊 [QuickAddStock] ${stock.stock_id} 最終價格結果:`, priceData);
                   
                   return {
                     symbol: stock.stock_id,
