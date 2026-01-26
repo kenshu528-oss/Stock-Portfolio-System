@@ -12,6 +12,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0329',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '股價優化 - 完整實作 v1.2.2.0035 多重 TWSE API 機制',
+    description: '完全基於成功倉庫的核心實作，實現智能股票類型判斷和多重備援系統',
+    changes: [
+      '實作智能股票類型判斷：listed/otc/etf/unknown',
+      '完整複製成功倉庫的上市股票 API (TWSE)',
+      '完整複製成功倉庫的上櫃股票 API (TPEx)',
+      '實作 ETF 雙重嘗試機制（先上市後上櫃）',
+      '添加所有證交所 API 的備援邏輯',
+      '實作帶逾時保護的 fetchWithTimeout',
+      '完整的錯誤處理和日誌記錄'
+    ]
+  },
+  {
     version: '1.0.2.0328',
     date: '2026-01-26',
     type: 'patch',

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 328, // 【股價優化】基於成功倉庫經驗，TWSE API 優先，完整複製成功邏輯
+  PATCH: 329, // 【股價優化】完整實作 v1.2.2.0035 多重 TWSE API 機制，智能股票類型判斷
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

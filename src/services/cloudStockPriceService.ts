@@ -341,68 +341,214 @@ class CloudStockPriceService {
   }
 
   /**
-   * TWSE (台灣證交所) API - v1.0.2.0328
-   * 基於成功倉庫 v1.2.2.0035 的實作經驗
+   * TWSE (台灣證交所) API - v1.0.2.0329 完整實作
+   * 完全基於成功倉庫 v1.2.2.0035 的多重 API 機制
    */
   private async fetchFromTWSE(symbol: string): Promise<StockPrice | null> {
     try {
-      logger.debug('stock', `TWSE API 請求: ${symbol}`, { symbol });
-
-      // 基於成功倉庫的 TWSE API 端點
-      const response = await fetch(
-        `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw|otc_${symbol}.tw`,
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      logger.debug('stock', `嘗試從 TWSE (台灣證交所) 獲取 ${symbol} 股價...`);
       
-      if (!data?.msgArray || data.msgArray.length === 0) {
-        throw new Error('無股價資料');
+      // 股票類型判斷
+      const stockType = this.getStockType(symbol);
+      logger.debug('stock', `證交所API查詢: ${symbol}`, { stockType });
+      
+      let result: StockPrice | null = null;
+      
+      // 根據股票類型選擇對應的 API
+      switch (stockType) {
+        case 'listed':
+          result = await this.fetchFromTWSEListed(symbol);
+          break;
+        case 'otc':
+          result = await this.fetchFromTPEx(symbol);
+          break;
+        case 'etf':
+          // ETF 先嘗試上市，再嘗試上櫃
+          try {
+            result = await this.fetchFromTWSEListed(symbol);
+          } catch (error) {
+            result = await this.fetchFromTPEx(symbol);
+          }
+          break;
+        default:
+          // 未知類型，嘗試所有 API
+          result = await this.fetchFromAllTWSE(symbol);
+          break;
       }
-
-      const stockData = data.msgArray[0];
-      if (!stockData || !stockData.z) {
-        throw new Error('股價資料格式錯誤');
+      
+      if (result && result.price > 0) {
+        logger.info('stock', `✅ TWSE (台灣證交所) 成功獲取 ${symbol}: $${result.price}`);
+        return {
+          ...result,
+          source: 'TWSE (台灣證交所)',
+          timestamp: new Date().toISOString()
+        };
       }
-
-      const currentPrice = parseFloat(stockData.z) || 0;
-      const previousClose = parseFloat(stockData.y) || 0;
-      const change = currentPrice - previousClose;
-      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
-
-      if (currentPrice <= 0) {
-        throw new Error(`無效股價: ${currentPrice}`);
-      }
-
-      logger.info('stock', `TWSE 獲取成功: ${symbol}`, { 
-        price: currentPrice,
-        change,
-        changePercent: changePercent.toFixed(2) + '%',
-        market: stockData.ex === 'tse' ? '上市' : '上櫃'
-      });
-
-      return {
-        price: Math.round(currentPrice * 100) / 100,
-        change: Math.round(change * 100) / 100,
-        changePercent: Math.round(changePercent * 100) / 100,
-        source: 'TWSE (台灣證交所)',
-        timestamp: new Date().toISOString()
-      };
-
+      
+      throw new Error('TWSE 無有效股價資料');
+      
     } catch (error) {
       const message = error instanceof Error ? error.message : '未知錯誤';
-      logger.debug('stock', `TWSE 失敗: ${symbol}`, { error: message });
+      logger.debug('stock', `❌ TWSE (台灣證交所) 失敗: ${message}`);
       throw new Error(`TWSE API 失敗: ${message}`);
+    }
+  }
+
+  /**
+   * 股票類型判斷 - 基於成功倉庫邏輯
+   */
+  private getStockType(stockCode: string): 'listed' | 'otc' | 'etf' | 'unknown' {
+    if (stockCode.match(/^00\d+/)) return 'etf'; // ETF
+    if (stockCode.match(/^[1-2]\d{3}$/)) return 'listed'; // 上市股票 (1000-2999)
+    if (stockCode.match(/^[3-8]\d{3}$/)) return 'otc'; // 上櫃股票 (3000-8999)
+    return 'unknown';
+  }
+
+  /**
+   * 上市股票 API - 完全基於成功倉庫實作
+   */
+  private async fetchFromTWSEListed(stockCode: string): Promise<StockPrice | null> {
+    const today = new Date();
+    const dateStr = today.getFullYear() + 
+                   String(today.getMonth() + 1).padStart(2, '0') + 
+                   String(today.getDate()).padStart(2, '0');
+    
+    const twseUrl = `https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=${dateStr}&stockNo=${stockCode}`;
+    
+    try {
+      const response = await this.fetchWithTimeout(twseUrl, { timeout: 5000 });
+      
+      if (!response.ok) {
+        throw new Error(`TWSE API 錯誤: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.stat !== 'OK' || !data.data || data.data.length === 0) {
+        throw new Error('TWSE 無資料或股票代碼錯誤');
+      }
+      
+      const latestData = data.data[data.data.length - 1];
+      const closePrice = parseFloat(latestData[6].replace(/,/g, ''));
+      
+      if (isNaN(closePrice) || closePrice <= 0) {
+        throw new Error('無效的價格資料');
+      }
+      
+      // 計算漲跌
+      const previousClose = data.data.length > 1 ? 
+        parseFloat(data.data[data.data.length - 2][6].replace(/,/g, '')) : closePrice;
+      const change = closePrice - previousClose;
+      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+      
+      return {
+        price: Math.round(closePrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'TWSE',
+        timestamp: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      throw new Error(`上市股票API失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
+    }
+  }
+
+  /**
+   * 上櫃股票 API - 完全基於成功倉庫實作
+   */
+  private async fetchFromTPEx(stockCode: string): Promise<StockPrice | null> {
+    const today = new Date();
+    const dateStr = today.getFullYear() + '/' + 
+                   String(today.getMonth() + 1).padStart(2, '0') + '/' + 
+                   String(today.getDate()).padStart(2, '0');
+    
+    const tpexUrl = `https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&d=${dateStr}&stkno=${stockCode}`;
+    
+    try {
+      const response = await this.fetchWithTimeout(tpexUrl, { timeout: 10000 });
+      
+      if (!response.ok) {
+        throw new Error(`TPEx API 錯誤: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.aaData || data.aaData.length === 0) {
+        throw new Error('TPEx 無資料或股票代碼錯誤');
+      }
+      
+      const stockData = data.aaData[0];
+      const closePrice = parseFloat(stockData[2]);
+      
+      if (isNaN(closePrice) || closePrice <= 0) {
+        throw new Error('無效的價格資料');
+      }
+      
+      // 計算漲跌 (TPEx API 通常有漲跌資料)
+      const change = parseFloat(stockData[3]) || 0;
+      const changePercent = closePrice > 0 && change !== 0 ? (change / (closePrice - change)) * 100 : 0;
+      
+      return {
+        price: Math.round(closePrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'TPEx',
+        timestamp: new Date().toISOString()
+      };
+      
+    } catch (error) {
+      throw new Error(`上櫃股票API失敗: ${error instanceof Error ? error.message : '未知錯誤'}`);
+    }
+  }
+
+  /**
+   * 嘗試所有證交所 API - 基於成功倉庫邏輯
+   */
+  private async fetchFromAllTWSE(stockCode: string): Promise<StockPrice | null> {
+    const apis = [
+      { name: '上市', method: this.fetchFromTWSEListed.bind(this) },
+      { name: '上櫃', method: this.fetchFromTPEx.bind(this) }
+    ];
+    
+    for (const api of apis) {
+      try {
+        logger.debug('stock', `嘗試${api.name}API: ${stockCode}`);
+        const result = await api.method(stockCode);
+        if (result && result.price > 0) {
+          logger.debug('stock', `${api.name}API成功: ${stockCode} - 價格: ${result.price}`);
+          return result;
+        }
+      } catch (error) {
+        logger.debug('stock', `${api.name}API失敗: ${stockCode}`);
+        continue;
+      }
+    }
+    
+    throw new Error('所有證交所API都無法找到此股票');
+  }
+
+  /**
+   * 帶逾時的 fetch - 基於成功倉庫實作
+   */
+  private async fetchWithTimeout(url: string, options: { timeout?: number } = {}): Promise<Response> {
+    const { timeout = 5000, ...fetchOptions } = options;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('請求超時');
+      }
+      throw error;
     }
   }
 
