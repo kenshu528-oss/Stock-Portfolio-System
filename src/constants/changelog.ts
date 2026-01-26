@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0332',
+    date: '2026-01-26',
+    type: 'patch',
+    title: 'CORS 修復 - 使用正確的 TWSE STOCK_DAY API',
+    description: '發現成功倉庫使用的是 STOCK_DAY API 而非即時 API，完全複製成功實作',
+    changes: [
+      '使用與成功倉庫完全相同的 API 端點',
+      'https://www.twse.com.tw/exchangeReport/STOCK_DAY',
+      '解決 CORS 問題，確保雲端環境可正常調用',
+      '使用日線收盤價資料，與成功倉庫邏輯一致',
+      '完整複製成功倉庫的資料解析邏輯'
+    ]
+  },
+  {
     version: '1.0.2.0330',
     date: '2026-01-26',
     type: 'patch',

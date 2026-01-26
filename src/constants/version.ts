@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 330, // 【股價修正】使用與成功倉庫相同的即時 TWSE API，移除靜態價格備援
+  PATCH: 332, // 【CORS 修復】使用與成功倉庫相同的 STOCK_DAY API，解決 CORS 問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

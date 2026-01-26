@@ -335,24 +335,30 @@ class CloudStockPriceService {
   }
 
   /**
-   * TWSE (台灣證交所) API - v1.0.2.0330 修正版
-   * 使用與成功倉庫相同的 API 端點，解決 CORS 問題
+   * TWSE (台灣證交所) API - v1.0.2.0332 正確版本
+   * 使用與成功倉庫完全相同的 STOCK_DAY API
    */
   private async fetchFromTWSE(symbol: string): Promise<StockPrice | null> {
     try {
       logger.debug('stock', `嘗試從 TWSE (台灣證交所) 獲取 ${symbol} 股價...`);
       
-      // 使用與成功倉庫相同的即時股價 API
-      const response = await fetch(
-        `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_${symbol}.tw|otc_${symbol}.tw`,
-        {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
+      // 使用與成功倉庫完全相同的 API 端點
+      const today = new Date();
+      const dateStr = today.getFullYear() + 
+                     String(today.getMonth() + 1).padStart(2, '0') + 
+                     String(today.getDate()).padStart(2, '0');
+      
+      const apiUrl = `https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=${dateStr}&stockNo=${symbol}`;
+      
+      logger.debug('stock', `TWSE API URL: ${apiUrl}`);
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
-      );
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -360,28 +366,28 @@ class CloudStockPriceService {
 
       const data = await response.json();
       
-      if (!data?.msgArray || data.msgArray.length === 0) {
-        throw new Error('無股價資料');
+      if (data.stat !== 'OK' || !data.data || data.data.length === 0) {
+        throw new Error('TWSE 無資料或股票代碼錯誤');
       }
 
-      const stockData = data.msgArray[0];
-      if (!stockData || !stockData.z) {
-        throw new Error('股價資料格式錯誤');
+      // 取最新一天的資料（陣列最後一筆）
+      const latestData = data.data[data.data.length - 1];
+      const closePrice = parseFloat(latestData[6].replace(/,/g, '')) || 0;
+
+      if (closePrice <= 0) {
+        throw new Error(`無效股價: ${closePrice}`);
       }
 
-      const currentPrice = parseFloat(stockData.z) || 0;
-      const previousClose = parseFloat(stockData.y) || 0;
-      const change = currentPrice - previousClose;
+      // 計算漲跌（與前一天比較）
+      const previousClose = data.data.length > 1 ? 
+        parseFloat(data.data[data.data.length - 2][6].replace(/,/g, '')) : closePrice;
+      const change = closePrice - previousClose;
       const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
 
-      if (currentPrice <= 0) {
-        throw new Error(`無效股價: ${currentPrice}`);
-      }
-
-      logger.info('stock', `✅ TWSE (台灣證交所) 成功獲取 ${symbol}: $${currentPrice}`);
+      logger.info('stock', `✅ TWSE (台灣證交所) 成功獲取 ${symbol}: $${closePrice}`);
 
       return {
-        price: Math.round(currentPrice * 100) / 100,
+        price: Math.round(closePrice * 100) / 100,
         change: Math.round(change * 100) / 100,
         changePercent: Math.round(changePercent * 100) / 100,
         source: 'TWSE (台灣證交所)',
