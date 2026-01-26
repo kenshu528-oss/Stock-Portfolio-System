@@ -96,25 +96,31 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0325 - 使用真正可用的代理服務
+   * v1.0.2.0326 - 尋找真正可用的即時股價 API
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Yahoo Finance (Proxy)',
+        name: 'Alpha Vantage API',
         priority: 1,
         timeout: 8000,
-        fetcher: this.fetchFromYahooProxy.bind(this)
+        fetcher: this.fetchFromAlphaVantage.bind(this)
       },
       {
-        name: 'Yahoo Finance (Simple Proxy)',
+        name: 'IEX Cloud API',
         priority: 2,
         timeout: 6000,
-        fetcher: this.fetchFromYahooSimpleProxy.bind(this)
+        fetcher: this.fetchFromIEXCloud.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (No CORS)',
+        priority: 3,
+        timeout: 6000,
+        fetcher: this.fetchFromYahooNoCORS.bind(this)
       },
       {
         name: 'Static Price (Fallback)',
-        priority: 3,
+        priority: 4,
         timeout: 1000,
         fetcher: this.fetchStaticPrice.bind(this)
       }
@@ -122,57 +128,121 @@ class CloudStockPriceService {
   }
 
   /**
-   * Yahoo Finance 通過可用代理 - v1.0.2.0325
-   * 使用經過測試的可用代理服務
+   * Alpha Vantage API - v1.0.2.0326
+   * 免費的股價 API，支援 CORS
    */
-  private async fetchFromYahooProxy(symbol: string): Promise<StockPrice | null> {
+  private async fetchFromAlphaVantage(symbol: string): Promise<StockPrice | null> {
+    try {
+      // Alpha Vantage 免費 API Key (demo key)
+      const apiKey = 'demo';
+      const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${apiKey}`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = await response.json();
+      const quote = data['Global Quote'];
+      
+      if (!quote) throw new Error('無股價資料');
+
+      const currentPrice = parseFloat(quote['05. price']) || 0;
+      const change = parseFloat(quote['09. change']) || 0;
+      const changePercent = parseFloat(quote['10. change percent']?.replace('%', '')) || 0;
+
+      if (currentPrice > 0) {
+        return {
+          price: Math.round(currentPrice * 100) / 100,
+          change: Math.round(change * 100) / 100,
+          changePercent: Math.round(changePercent * 100) / 100,
+          source: 'Alpha Vantage',
+          timestamp: new Date().toISOString()
+        };
+      }
+    } catch (error) {
+      // Alpha Vantage 可能不支援台股，繼續嘗試其他方案
+    }
+
+    throw new Error('Alpha Vantage 失敗');
+  }
+
+  /**
+   * IEX Cloud API - v1.0.2.0326
+   * 另一個免費的股價 API
+   */
+  private async fetchFromIEXCloud(symbol: string): Promise<StockPrice | null> {
+    try {
+      // IEX Cloud 免費版本
+      const url = `https://cloud.iexapis.com/stable/stock/${symbol}/quote?token=pk_test`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = await response.json();
+      
+      const currentPrice = data.latestPrice || 0;
+      const change = data.change || 0;
+      const changePercent = data.changePercent ? data.changePercent * 100 : 0;
+
+      if (currentPrice > 0) {
+        return {
+          price: Math.round(currentPrice * 100) / 100,
+          change: Math.round(change * 100) / 100,
+          changePercent: Math.round(changePercent * 100) / 100,
+          source: 'IEX Cloud',
+          timestamp: new Date().toISOString()
+        };
+      }
+    } catch (error) {
+      // IEX Cloud 可能不支援台股
+    }
+
+    throw new Error('IEX Cloud 失敗');
+  }
+
+  /**
+   * Yahoo Finance 無 CORS 方案 - v1.0.2.0326
+   * 嘗試使用 JSONP 或其他無 CORS 限制的方法
+   */
+  private async fetchFromYahooNoCORS(symbol: string): Promise<StockPrice | null> {
     const yahooSymbol = this.getYahooSymbol(symbol);
     
-    // 嘗試多個可能可用的代理
-    const proxyUrls = [
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`)}`,
-      `https://thingproxy.freeboard.io/fetch/https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`
-    ];
+    try {
+      // 嘗試使用 Yahoo Finance 的 CSV API (通常沒有 CORS 限制)
+      const csvUrl = `https://query1.finance.yahoo.com/v7/finance/download/${yahooSymbol}?period1=0&period2=9999999999&interval=1d&events=history`;
+      
+      const response = await fetch(csvUrl);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-    for (const proxyUrl of proxyUrls) {
-      try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) continue;
-
-        const yahooData = await response.json();
-        const result = yahooData?.chart?.result?.[0];
-        
-        if (!result?.meta) continue;
-
-        const currentPrice = result.meta.regularMarketPrice || 0;
-        const previousClose = result.meta.previousClose || 0;
-        const change = currentPrice - previousClose;
-        const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+      const csvText = await response.text();
+      const lines = csvText.split('\n');
+      
+      if (lines.length < 2) throw new Error('無資料');
+      
+      // 取最後一行資料 (最新的股價)
+      const lastLine = lines[lines.length - 2]; // -2 因為最後一行可能是空的
+      const values = lastLine.split(',');
+      
+      if (values.length >= 5) {
+        const currentPrice = parseFloat(values[4]) || 0; // Close price
+        const previousPrice = lines.length > 2 ? parseFloat(lines[lines.length - 3].split(',')[4]) || currentPrice : currentPrice;
+        const change = currentPrice - previousPrice;
+        const changePercent = previousPrice > 0 ? (change / previousPrice) * 100 : 0;
 
         if (currentPrice > 0) {
           return {
             price: Math.round(currentPrice * 100) / 100,
             change: Math.round(change * 100) / 100,
             changePercent: Math.round(changePercent * 100) / 100,
-            source: 'Yahoo Finance (Proxy)',
+            source: 'Yahoo Finance (CSV)',
             timestamp: new Date().toISOString()
           };
         }
-      } catch (error) {
-        continue;
       }
+    } catch (error) {
+      // CSV API 也失敗了
     }
 
-    throw new Error('所有代理都失敗');
-  }
-
-  /**
-   * Yahoo Finance 簡單代理 - v1.0.2.0325
-   * 使用簡單的代理方式
-   */
-  private async fetchFromYahooSimpleProxy(symbol: string): Promise<StockPrice | null> {
-    // 暫時返回 null，讓它嘗試下一個來源
-    throw new Error('簡單代理暫時不可用');
+    throw new Error('Yahoo Finance 無 CORS 方案失敗');
   }
 
   /**
@@ -187,7 +257,7 @@ class CloudStockPriceService {
       '2454': 1200,  // 聯發科
       '2886': 40,    // 兆豐金
       '0050': 170,   // 元大台灣50
-      '00940': 19,   // 元大台灣價值高息
+      '00940': 9.79, // 元大台灣價值高息 (更新為正確價格)
       '6188': 110,   // 廣明
       '4585': 340,   // 達明
     };

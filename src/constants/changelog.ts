@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0326',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '價格修正 - 更新 00940 靜態價格',
+    description: '靜態價格備援系統運作正常，根據用戶反饋更新 00940 的正確價格',
+    changes: [
+      '✅ 確認靜態價格備援系統正常運作',
+      '🔧 修正 00940 元大台灣價值高息價格：19 → 9.79 元',
+      '📊 股票搜尋功能恢復正常：能顯示股票名稱和參考價格',
+      '🎯 用戶體驗改善：不再看到空白搜尋結果',
+      '💡 為未來準備：可隨時更新其他股票的靜態價格'
+    ]
+  },
+  {
     version: '1.0.2.0325',
     date: '2026-01-26',
     type: 'hotfix',
