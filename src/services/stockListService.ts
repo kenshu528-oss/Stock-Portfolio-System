@@ -13,6 +13,8 @@ interface StockListData {
     name: string;
     industry: string;
     market: string;
+    marketType?: '上市' | '上櫃' | '興櫃';
+    yahooSuffix?: '.TW' | '.TWO';
   }>;
 }
 
@@ -76,13 +78,17 @@ class UnifiedStockListService implements StockListService {
       }
 
       if (data) {
-        this.cachedData = data;
+        // v1.0.2.0321: 增強股票清單，添加市場類別和 Yahoo 後綴
+        const enhancedData = this.enhanceStockList(data);
+        this.cachedData = enhancedData;
         this.lastLoadTime = now;
         logger.success('stock', '股票清單載入成功', {
-          date: data.date,
-          count: data.count,
-          environment: envInfo.environment
+          date: enhancedData.date,
+          count: enhancedData.count,
+          environment: envInfo.environment,
+          enhanced: true
         });
+        return enhancedData;
       } else {
         logger.warn('stock', '股票清單載入失敗', envInfo);
       }
@@ -259,6 +265,68 @@ class UnifiedStockListService implements StockListService {
       isValid,
       expiresIn: isValid ? Math.round((this.CACHE_DURATION - cacheAge) / 1000) : 0
     };
+  }
+
+  /**
+   * 增強股票資訊 - 添加市場類別和 Yahoo 後綴
+   * 基於 FinMind API 的 industry_category 邏輯 (v1.0.2.0321)
+   */
+  private enhanceStockInfo(stockId: string, basicInfo: any): any {
+    const code = parseInt(stockId.substring(0, 4));
+    const isBondETF = /^00\d{2,3}B$/i.test(stockId);
+    
+    let marketType: '上市' | '上櫃' | '興櫃';
+    let yahooSuffix: '.TW' | '.TWO';
+    
+    // 遵循 FinMind API 的 industry_category 邏輯
+    if (isBondETF) {
+      // 債券 ETF 通常在上櫃
+      marketType = '上櫃';
+      yahooSuffix = '.TWO';
+    } else if (code >= 3000 && code <= 7999) {
+      // 上櫃股票範圍：3000-7999
+      marketType = '上櫃';
+      yahooSuffix = '.TWO';
+    } else if (code >= 8000 && code <= 8999) {
+      // 8000-8999 範圍：上市股票（如 8112 至上）
+      marketType = '上市';
+      yahooSuffix = '.TW';
+    } else {
+      // 其他範圍（1000-2999 等）：上市股票
+      marketType = '上市';
+      yahooSuffix = '.TW';
+    }
+    
+    return {
+      ...basicInfo,
+      marketType,
+      yahooSuffix
+    };
+  }
+
+  /**
+   * 增強整個股票清單
+   */
+  private enhanceStockList(data: StockListData): StockListData {
+    const enhancedStocks: Record<string, any> = {};
+    
+    for (const [stockId, stockInfo] of Object.entries(data.stocks)) {
+      enhancedStocks[stockId] = this.enhanceStockInfo(stockId, stockInfo);
+    }
+    
+    return {
+      ...data,
+      stocks: enhancedStocks
+    };
+  }
+
+  /**
+   * 根據股票代碼獲取 Yahoo Finance 後綴
+   * 公開方法，供其他服務使用
+   */
+  getYahooSuffix(stockId: string): '.TW' | '.TWO' {
+    const enhanced = this.enhanceStockInfo(stockId, {});
+    return enhanced.yahooSuffix;
   }
 }
 

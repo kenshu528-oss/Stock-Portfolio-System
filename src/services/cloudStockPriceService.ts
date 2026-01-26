@@ -362,15 +362,21 @@ class CloudStockPriceService {
   private getYahooSymbol(symbol: string): string {
     if (symbol.includes('.')) return symbol; // 已有後綴
 
+    // v1.0.2.0321: 使用智能判斷邏輯（Stock List 整合將在後續版本實作）
+    // TODO: 未來版本將整合 Stock List 的市場類別資訊
+
+    // 智能判斷邏輯：基於 FinMind API 的 industry_category 邏輯
     const code = parseInt(symbol.substring(0, 4));
     const isBondETF = /^00\d{2,3}B$/i.test(symbol);
 
     if (isBondETF) {
       return `${symbol}.TWO`; // 債券 ETF 優先櫃買中心
-    } else if (code >= 3000 && code <= 7999) { // 修正：上櫃股票範圍改為 3000-7999
+    } else if (code >= 3000 && code <= 7999) {
       return `${symbol}.TWO`; // 上櫃股票優先櫃買中心
+    } else if (code >= 8000 && code <= 8999) {
+      return `${symbol}.TW`; // 8000-8999 範圍：上市股票（如 8112 至上）
     } else {
-      return `${symbol}.TW`; // 上市股票（包含 8000-8999）優先證交所
+      return `${symbol}.TW`; // 其他範圍（1000-2999 等）：上市股票
     }
   }
 

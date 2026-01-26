@@ -12,6 +12,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0321',
+    date: '2026-01-26',
+    type: 'patch',
+    title: 'Stock List 增強 - 基於 FinMind 邏輯添加市場類別',
+    description: '基於 FinMind API 的 industry_category 邏輯，為 Stock List 添加市場類別和 Yahoo 後綴支援',
+    changes: [
+      '擴展 StockListData 介面，支援 marketType 和 yahooSuffix',
+      '新增 enhanceStockInfo 方法，智能判斷股票市場類別',
+      '新增 enhanceStockList 方法，批量增強股票清單',
+      '新增 getYahooSuffix 公開方法，供其他服務使用',
+      '修改 cloudStockPriceService 優先使用 Stock List 的市場資訊',
+      '遵循 FinMind API 邏輯：上市(.TW) vs 上櫃(.TWO)',
+      '8112 至上：正確識別為上市股票，使用 .TW 後綴'
+    ],
+    fixes: [
+      '提高股票後綴判斷的準確性',
+      '基於實際市場分類而非代碼範圍判斷',
+      '為未來整合真實 FinMind 資料奠定基礎',
+      '統一股票市場類別的判斷邏輯'
+    ]
+  },
+  {
     version: '1.0.2.0320',
     date: '2026-01-26',
     type: 'patch',
