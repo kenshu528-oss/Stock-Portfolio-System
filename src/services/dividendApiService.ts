@@ -146,7 +146,7 @@ export class DividendApiService {
               return dividendData.map(item => ({
                 symbol: symbol,
                 exDividendDate: item.exDividendDate,
-                cashDividendPerShare: item.cashDividendPerShare,
+                dividendPerShare: item.dividendPerShare,
                 stockDividendRatio: item.stockDividendRatio,
                 source: 'FinMind (備用)'
               }));

@@ -12,6 +12,46 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0301',
+    date: '2026-01-26',
+    type: 'hotfix',
+    title: '【股息欄位修復】修復 FinMind API 股息資料欄位名稱不一致導致的 UI 崩潰問題',
+    description: '修復 v1.0.2.0299 版本引入的嚴重問題：股息資料獲取成功但 UI 崩潰。根本原因：finMindAPI.ts 使用 cashDividendPerShare 欄位，但 dividendApiService.ts 期望 dividendPerShare 欄位，導致現金股利顯示為 undefined，調整後成本價計算為 NaN，UI 渲染時對 undefined 調用 toFixed() 方法崩潰。',
+    changes: [
+      '修復 finMindAPI.ts：股息資料欄位名稱統一為 dividendPerShare',
+      '修復 dividendApiService.ts：確保 FinMind 資料轉換使用正確欄位名',
+      '統一股息資料格式：所有 API 都使用 dividendPerShare 欄位',
+      '修復調整後成本價計算：避免 NaN 值導致的 UI 崩潰'
+    ],
+    fixes: [
+      '修復股息更新後 UI 崩潰：TypeError: Cannot read properties of undefined (reading \'toFixed\')',
+      '修復現金股利顯示為 undefined 的問題',
+      '修復調整後成本價計算為 NaN 的問題',
+      '修復 FinMind API 資料欄位名稱不一致的問題'
+    ]
+  },
+  {
+    version: '1.0.2.0300',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '【股票清單觸發修復】修復本機端股票清單自動更新機制，新增 npm run update:stock-list 腳本',
+    description: '修復本機端 stock list 觸發機制沒有作用的問題。根本原因：1) build_stock_list.js 只複製現有檔案，不會生成新檔案；2) 缺少 update:stock-list npm 腳本；3) stockListUpdateService 無法正確觸發本地更新。修復方案：新增完整的股票清單自動更新腳本，支援檢測缺失檔案並自動生成，整合到 npm 腳本中。',
+    changes: [
+      '新增 scripts/update-stock-list.cjs：完整的股票清單自動更新腳本',
+      '新增 npm run update:stock-list 腳本：一鍵更新股票清單',
+      '修復 stockListUpdateService.ts：改善本地更新觸發邏輯',
+      '自動檢測機制：檢查今日股票清單是否存在，不存在則自動生成',
+      '智能複製邏輯：自動將根目錄檔案複製到 public 目錄',
+      '完整錯誤處理：Python 環境檢查、檔案驗證、詳細日誌'
+    ],
+    fixes: [
+      '修復刪除 stock_list_2026-01-26.json 後重新載入不會重新生成的問題',
+      '修復 stockListUpdateService 無法觸發本地更新的問題',
+      '修復缺少 npm 腳本導致無法手動更新的問題',
+      '修復 build_stock_list.js 只複製不生成的邏輯缺陷'
+    ]
+  },
+  {
     version: '1.0.2.0299',
     date: '2026-01-26',
     type: 'patch',

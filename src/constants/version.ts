@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 299, // 【雲端股息修復】修復 FinMind API 代理服務失效，改為直接調用 API 獲取股息資料
+  PATCH: 301, // 【股息欄位修復】修復 FinMind API 股息資料欄位名稱不一致導致的 UI 崩潰問題
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

@@ -373,7 +373,7 @@ export class FinMindAPIProvider implements APIProvider {
       const dividendRecords = data.data.map((item: any) => {
         const record = {
           exDividendDate: item.CashExDividendTradingDate || item.StockExDividendTradingDate,
-          cashDividendPerShare: (item.CashEarningsDistribution || 0) + (item.CashStatutorySurplus || 0),
+          dividendPerShare: (item.CashEarningsDistribution || 0) + (item.CashStatutorySurplus || 0),
           stockDividendRatio: ((item.StockEarningsDistribution || 0) + (item.StockStatutorySurplus || 0)) / 10 * 1000
         };
         

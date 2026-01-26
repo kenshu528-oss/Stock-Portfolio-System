@@ -1,7 +1,7 @@
 {
   "name": "stock-portfolio-system",
   "private": true,
-  "version": "1.0.2.0299",
+  "version": "1.0.2.0301",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,7 +17,7 @@
     "check:all": "scripts\\pre-commit-check.bat",
     "dev:assistant": "node scripts/dev-assistant.cjs",
     "dev:check": "node scripts/dev-assistant.cjs",
-    "update:stock-list": "node scripts/update-stock-list.js",
+    "update:stock-list": "node scripts/update-stock-list.cjs",
     "build:stock-list": "node scripts/build_stock_list.js",
     "prepare": "husky"
   },
