@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 318, // 【STEERING 檢查】移除證交所股價獲取，完全遵循 API 簡化規範
+  PATCH: 319, // 【特殊案例】8112 至上使用 .TW 後綴，修正智能後綴判斷
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

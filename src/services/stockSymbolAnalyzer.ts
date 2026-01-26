@@ -111,6 +111,35 @@ export class StockSymbolAnalyzer {
       return result;
     }
     
+    // 特殊案例處理 - v1.0.2.0319
+    const specialCases: Record<string, { suffixes: string[], market: string, reasoning: string }> = {
+      '8112': {
+        suffixes: ['.TW', '.TWO'],
+        market: '上市',
+        reasoning: '至上：特殊案例，雖在 8000 範圍但在 Yahoo Finance 使用 .TW'
+      }
+    };
+    
+    if (specialCases[normalizedSymbol]) {
+      const special = specialCases[normalizedSymbol];
+      const result: StockAnalysisResult = {
+        suffixes: special.suffixes,
+        type: 'special',
+        market: special.market,
+        description: '特殊案例股票',
+        reasoning: special.reasoning
+      };
+      
+      logger.info('stock', `${normalizedSymbol} 識別為特殊案例`, {
+        code,
+        suffixes: result.suffixes,
+        market: result.market,
+        reasoning: special.reasoning
+      });
+      
+      return result;
+    }
+    
     // 判斷上櫃股票（3000-8999）
     if (code >= 3000 && code <= 8999) {
       const result: StockAnalysisResult = {

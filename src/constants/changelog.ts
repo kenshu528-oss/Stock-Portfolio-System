@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0319',
+    date: '2026-01-26',
+    type: 'patch',
+    title: '特殊案例 - 8112 至上使用 .TW 後綴',
+    description: '修正智能後綴判斷邏輯，處理 8112 至上股票的特殊案例',
+    changes: [
+      '新增特殊案例處理機制',
+      '8112 至上：雖在 8000 範圍但在 Yahoo Finance 使用 .TW',
+      '更新 cloudStockPriceService.ts 的 getYahooSymbol 方法',
+      '更新 stockSymbolAnalyzer.ts 的後綴判斷邏輯',
+      '確保特殊股票能正確獲取股價'
+    ],
+    fixes: [
+      '修復 8112 至上股票後綴判斷錯誤',
+      '提高智能後綴判斷的準確性',
+      '支援特殊案例股票的正確處理'
+    ]
+  },
+  {
     version: '1.0.2.0318',
     date: '2026-01-26',
     type: 'patch',
