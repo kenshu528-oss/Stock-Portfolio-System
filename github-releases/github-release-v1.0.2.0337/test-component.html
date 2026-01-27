@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股價組件測試</title>
+    <script type="module" crossorigin src="./dist/assets/index-ab5d4f79.js"></script>
+    <link rel="stylesheet" crossorigin href="./dist/assets/index-049e0ae2.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-info {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .console-output {
+            background-color: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 股價組件測試頁面</h1>
+        
+        <div class="test-info">
+            <h2>📋 測試說明</h2>
+            <p>這個頁面用於測試 cloudStockPriceService 的功能，驗證雲端環境下的股價獲取是否正常。</p>
+            <ul>
+                <li><strong>單一測試</strong>：測試指定股票的股價獲取</li>
+                <li><strong>批次測試</strong>：測試多支股票的獲取性能</li>
+                <li><strong>快取測試</strong>：驗證快取機制是否有效</li>
+            </ul>
+            <p><strong>注意</strong>：請打開瀏覽器的開發者工具查看詳細的 Console 日誌。</p>
+        </div>
+
+        <div id="test-component-root"></div>
+
+        <div class="console-output" id="console-output">
+            <div>🔧 Console 輸出將顯示在這裡...</div>
+        </div>
+    </div>
+
+    <script>
+        // 攔截 console.log 並顯示在頁面上
+        const consoleOutput = document.getElementById('console-output');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        function addToConsoleOutput(type, args) {
+            const timestamp = new Date().toLocaleTimeString();
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            const div = document.createElement('div');
+            div.style.color = type === 'error' ? '#ff6b6b' : 
+                             type === 'warn' ? '#ffd93d' : '#4ecdc4';
+            div.textContent = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            
+            consoleOutput.appendChild(div);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            
+            // 限制輸出行數
+            while (consoleOutput.children.length > 100) {
+                consoleOutput.removeChild(consoleOutput.firstChild);
+            }
+        }
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsoleOutput('log', args);
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsoleOutput('error', args);
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToConsoleOutput('warn', args);
+        };
+
+        // 頁面載入完成後的初始化
+        window.addEventListener('load', () => {
+            console.log('🧪 股價組件測試頁面已載入');
+            console.log('📍 當前環境:', window.location.hostname);
+            console.log('🔧 請使用上方的測試組件進行功能驗證');
+        });
+
+        // 錯誤處理
+        window.addEventListener('error', (event) => {
+            console.error('頁面錯誤:', event.error);
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('未處理的 Promise 拒絕:', event.reason);
+        });
+    </script>
+</body>
+</html>
