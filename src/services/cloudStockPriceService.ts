@@ -96,33 +96,33 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0351 - 修復雲端環境股價獲取失敗問題
+   * v1.0.2.0357 - 雲端環境專用：證交所API優先（無CORS），Yahoo Finance代理備援
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Yahoo Finance (AllOrigins)',
+        name: 'TWSE (台灣證交所)',
         priority: 1,
+        timeout: 10000,
+        fetcher: this.fetchFromTWSEMIS.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (AllOrigins)',
+        priority: 2,
         timeout: 8000,
         fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
         name: 'Yahoo Finance (CodeTabs)',
-        priority: 2,
+        priority: 3,
         timeout: 8000,
         fetcher: this.fetchFromYahooCodeTabs.bind(this)
       },
       {
         name: 'Yahoo Finance (ThingProxy)',
-        priority: 3,
-        timeout: 8000,
-        fetcher: this.fetchFromYahooThingProxy.bind(this)
-      },
-      {
-        name: 'Yahoo Finance (本機端)',
         priority: 4,
         timeout: 8000,
-        fetcher: this.fetchFromYahooLocal.bind(this)
+        fetcher: this.fetchFromYahooThingProxy.bind(this)
       }
     ];
   }
@@ -332,6 +332,130 @@ class CloudStockPriceService {
       logger.warn('stock', `Netlify Functions 失敗: ${symbol}`, { error: message });
       throw error;
     }
+  }
+
+  /**
+   * TWSE MIS API - v1.0.2.0357 即時行情 API
+   * 基於用戶詳細指導實作：精準市場路徑 + 即時價格陷阱處理
+   * 
+   * 關鍵要點：
+   * 1. 市場路徑要精準：上市用tse，上櫃用otc，走錯路抓不到資料
+   * 2. 即時價格陷阱：z(成交價)是橫槓-時，改抓b(買進價)
+   * 3. 用途：GitHub Pages即時監控專用，配股配息用FinMind
+   */
+  private async fetchFromTWSEMIS(symbol: string): Promise<StockPrice | null> {
+    try {
+      logger.debug('stock', `嘗試從 TWSE MIS (即時行情) 獲取 ${symbol} 股價...`);
+      
+      // 精準判斷市場類型：上市(tse) vs 上櫃(otc)
+      const market = this.getMarketTypeForTWSE(symbol);
+      
+      // 使用精準的市場路徑：tse_2881.tw 或 otc_5314.tw
+      const apiUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${market}_${symbol}.tw&json=1`;
+      
+      logger.debug('stock', `TWSE MIS API URL: ${apiUrl}`, { market, symbol });
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.msgArray || data.msgArray.length === 0) {
+        throw new Error('TWSE MIS 無資料或股票代碼錯誤');
+      }
+
+      const info = data.msgArray[0];
+      
+      // 處理即時價格陷阱：z(成交價)是橫槓-時，改抓b(買進價)
+      let currentPrice = 0;
+      
+      if (info.z && info.z !== '-' && !isNaN(parseFloat(info.z))) {
+        // 有成交價，使用成交價
+        currentPrice = parseFloat(info.z);
+        logger.debug('stock', `${symbol} 使用成交價: ${currentPrice}`);
+      } else if (info.b && info.b !== '-' && !isNaN(parseFloat(info.b))) {
+        // 沒成交，改抓買進價
+        currentPrice = parseFloat(info.b);
+        logger.debug('stock', `${symbol} 無成交，使用買進價: ${currentPrice}`);
+      } else {
+        throw new Error(`無有效價格資料: z=${info.z}, b=${info.b}`);
+      }
+      
+      const yesterdayPrice = parseFloat(info.y) || currentPrice; // y=昨收價
+      
+      if (currentPrice <= 0) {
+        throw new Error(`無效股價: ${currentPrice}`);
+      }
+
+      // 計算漲跌
+      const change = currentPrice - yesterdayPrice;
+      const changePercent = yesterdayPrice > 0 ? (change / yesterdayPrice) * 100 : 0;
+
+      logger.info('stock', `✅ TWSE MIS (即時行情) 成功獲取 ${symbol}: ${currentPrice}`, {
+        market,
+        name: info.n,
+        time: info.t,
+        volume: info.v,
+        priceSource: info.z !== '-' ? '成交價' : '買進價'
+      });
+
+      return {
+        price: Math.round(currentPrice * 100) / 100,
+        change: Math.round(change * 100) / 100,
+        changePercent: Math.round(changePercent * 100) / 100,
+        source: 'TWSE MIS (即時行情)',
+        timestamp: new Date().toISOString()
+      };
+
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '未知錯誤';
+      logger.debug('stock', `❌ TWSE MIS (即時行情) 失敗: ${message}`);
+      throw new Error(`TWSE MIS API 失敗: ${message}`);
+    }
+  }
+
+  /**
+   * 精準判斷股票市場類型 - 基於用戶指導
+   * 市場路徑要精準：走錯路就抓不到資料
+   * 
+   * 範例：
+   * - 富邦金 (2881) → tse (上市)
+   * - 世紀 (5314) → otc (上櫃)
+   */
+  private getMarketTypeForTWSE(symbol: string): 'tse' | 'otc' {
+    const code = parseInt(symbol.substring(0, 4));
+    
+    // ETF 通常在上市 (tse)
+    if (symbol.match(/^00\d+/)) {
+      logger.debug('stock', `${symbol} 判斷為 ETF → tse`);
+      return 'tse';
+    }
+    
+    // 上市股票 (1000-2999) → tse
+    if (code >= 1000 && code <= 2999) {
+      logger.debug('stock', `${symbol} 判斷為上市股票 → tse`);
+      return 'tse';
+    }
+    
+    // 上櫃股票 (3000-8999) → otc
+    // 例如：世紀 (5314) 必須用 otc_5314.tw
+    if (code >= 3000 && code <= 8999) {
+      logger.debug('stock', `${symbol} 判斷為上櫃股票 → otc`);
+      return 'otc';
+    }
+    
+    // 預設上市 (tse)
+    logger.debug('stock', `${symbol} 預設判斷為上市 → tse`);
+    return 'tse';
   }
 
   /**

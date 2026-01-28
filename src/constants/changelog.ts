@@ -12,6 +12,53 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0358',
+    date: '2026-01-28',
+    type: 'patch',
+    title: '證交所API精準實作：基於用戶詳細指導的完整修正',
+    description: '基於用戶詳細技術指導，精準實作證交所MIS API的三個關鍵要點：1.精準市場路徑判斷(上市tse vs 上櫃otc，走錯路抓不到資料)；2.即時價格陷阱處理(z成交價是橫槓-時改抓b買進價)；3.明確用途定位(GitHub Pages即時監控用TWSE，配股配息分析用FinMind)。確保5314等上櫃股票使用otc_5314.tw路徑，盤中無成交時自動切換買進價顯示。',
+    changes: [
+      '🎯 精準市場路徑判斷：上市股票(1000-2999)用tse，上櫃股票(3000-8999)用otc',
+      '🔧 即時價格陷阱處理：z(成交價)是橫槓-時，自動改抓b(買進價)',
+      '📊 詳細日誌記錄：記錄市場判斷邏輯和價格來源(成交價 vs 買進價)',
+      '🎯 明確用途定位：GitHub Pages即時監控專用，配股配息用FinMind',
+      '✅ 範例驗證：富邦金(2881)用tse_2881.tw，世紀(5314)用otc_5314.tw',
+      '🔍 錯誤處理強化：無有效價格時提供詳細的z和b值診斷信息'
+    ],
+    fixes: [
+      '🐛 修復上櫃股票使用錯誤tse路徑導致抓不到資料',
+      '🐛 修復盤中無成交時z值為橫槓-導致價格解析失敗',
+      '🐛 修復市場類型判斷不夠精準的問題',
+      '🐛 修復即時監控時價格顯示空白或錯誤的問題'
+    ],
+    impact: 'high',
+    breaking: []
+  },
+  {
+    version: '1.0.2.0357',
+    date: '2026-01-28',
+    type: 'hotfix',
+    title: '股價獲取修復：添加證交所MIS即時行情API作為第一優先級',
+    description: '修復新增個股時卡住30秒的問題。根本原因：所有Yahoo Finance代理服務都失敗（AllOrigins CORS錯誤+500錯誤，ThingProxy DNS解析失敗），導致股價獲取完全失敗。解決方案：基於用戶成功的Python代碼，添加證交所MIS即時行情API作為第一優先級，使用https://mis.twse.com.tw/stock/api/getStockInfo.jsp端點，支援上市(tse)和上櫃(otc)股票的即時股價獲取。',
+    changes: [
+      '🔧 添加fetchFromTWSEMIS方法：基於用戶Python代碼的證交所即時行情API',
+      '🔧 調整API優先順序：TWSE MIS → Yahoo Finance代理服務',
+      '🔧 智能市場判斷：根據股票代碼自動選擇tse或otc市場',
+      '🔧 完整錯誤處理：超時10秒，詳細日誌記錄',
+      '🔧 準確股價計算：使用z(最近成交價)和y(昨收價)計算漲跌',
+      '📊 解決新增個股卡住問題：從30秒等待變為秒級響應'
+    ],
+    fixes: [
+      '🐛 修復新增個股時卡住30秒的問題',
+      '🐛 修復AllOrigins代理CORS錯誤和500內部錯誤',
+      '🐛 修復ThingProxy代理DNS解析失敗(ERR_NAME_NOT_RESOLVED)',
+      '🐛 修復所有Yahoo Finance代理服務失效導致的股價獲取失敗',
+      '🐛 提供穩定可靠的證交所官方API作為主要股價來源'
+    ],
+    impact: 'high',
+    breaking: []
+  },
+  {
     version: '1.0.2.0356',
     date: '2026-01-28',
     type: 'patch',

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 356, // 【測試資料夾完善+後綴機制解析】完善tests索引頁面，新增後綴機制測試工具，詳細解析Stock List動態增強機制
+  PATCH: 358, // 【證交所API精準實作】基於用戶詳細指導：精準市場路徑判斷+即時價格陷阱處理+買進價備援機制
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
