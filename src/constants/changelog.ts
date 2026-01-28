@@ -12,6 +12,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0359',
+    date: '2026-01-28',
+    type: 'hotfix',
+    title: '買進價格式修復：基於用戶Python實驗的精準改進',
+    description: '基於用戶成功的Python實驗（5314世紀股票測試），發現證交所API的b欄位格式為"價格_張數_"，需要分割字串取第一部分作為買進價。修復JavaScript實作中的買進價解析邏輯，確保與Python實驗結果一致。用戶實驗顯示5314世紀在13:30:00時成交價103.0000，成交量17001，完美驗證了otc_5314.tw路徑的正確性。',
+    changes: [
+      '🔧 修復買進價解析邏輯：b欄位格式"價格_張數_"需要split("_")[0]取價格',
+      '📊 基於用戶Python實驗：5314世紀成功案例驗證邏輯正確性',
+      '🎯 改進錯誤處理：提供更詳細的b欄位格式錯誤診斷',
+      '📝 增強日誌記錄：記錄原始b欄位內容和解析後的買進價',
+      '🧪 同步測試頁面：JavaScript測試邏輯與Python實驗保持一致',
+      '✅ 驗證成功案例：otc_5314.tw路徑確實可以正常獲取世紀股票資料'
+    ],
+    fixes: [
+      '🐛 修復買進價直接parseFloat(info.b)導致的NaN錯誤',
+      '🐛 修復b欄位包含"_張數_"後綴時價格解析失敗',
+      '🐛 修復JavaScript實作與Python實驗結果不一致的問題',
+      '🐛 修復買進價備援機制在特定格式下失效的問題'
+    ],
+    impact: 'high',
+    breaking: []
+  },
+  {
     version: '1.0.2.0358',
     date: '2026-01-28',
     type: 'patch',

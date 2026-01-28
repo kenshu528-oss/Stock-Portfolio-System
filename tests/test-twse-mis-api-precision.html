@@ -171,6 +171,17 @@
                 <li><strong>精準市場路徑</strong>：上市用 tse，上櫃用 otc，走錯路抓不到資料</li>
                 <li><strong>即時價格陷阱</strong>：z(成交價) 是橫槓 - 時，改抓 b(買進價)</li>
                 <li><strong>用途定位</strong>：GitHub Pages 即時監控專用，配股配息用 FinMind</li>
+                <li><strong>⚠️ CORS 限制</strong>：本機端測試會被 CORS 阻擋，需在 GitHub Pages 環境測試</li>
+            </ul>
+        </div>
+
+        <div class="key-points" style="background-color: #fef2f2; border-color: #f87171;">
+            <h4 style="color: #dc2626;">⚠️ 重要說明：CORS 限制</h4>
+            <ul>
+                <li style="color: #991b1b;"><strong>本機端測試</strong>：會遇到 CORS 錯誤，這是正常現象</li>
+                <li style="color: #991b1b;"><strong>雲端環境測試</strong>：在 GitHub Pages 上可正常運行</li>
+                <li style="color: #991b1b;"><strong>設計原理</strong>：證交所 API 專為雲端環境設計，本機端用後端代理</li>
+                <li style="color: #991b1b;"><strong>測試建議</strong>：部署到 GitHub Pages 後進行實際測試</li>
             </ul>
         </div>
 
@@ -178,6 +189,8 @@
             <button onclick="testAllStocks()">🚀 開始測試</button>
             <button onclick="clearResults()">🧹 清除結果</button>
             <button onclick="testSingleStock()">🎯 測試單一股票</button>
+            <button onclick="simulateTest()">🎭 模擬測試（無CORS）</button>
+            <button onclick="checkCORS()">🔍 檢查CORS狀態</button>
         </div>
 
         <div class="test-section">
@@ -307,9 +320,16 @@
                 if (info.z && info.z !== '-' && !isNaN(parseFloat(info.z))) {
                     currentPrice = parseFloat(info.z);
                     priceSource = '成交價';
-                } else if (info.b && info.b !== '-' && !isNaN(parseFloat(info.b))) {
-                    currentPrice = parseFloat(info.b);
-                    priceSource = '買進價';
+                } else if (info.b && info.b !== '-') {
+                    // b 格式通常為 "價格_張數_"，取第一個底線前的內容
+                    const buyPrices = info.b.split('_');
+                    const buyPrice = buyPrices[0];
+                    if (buyPrice && !isNaN(parseFloat(buyPrice))) {
+                        currentPrice = parseFloat(buyPrice);
+                        priceSource = '買進價';
+                    } else {
+                        throw new Error(`買進價格式錯誤: b=${info.b}`);
+                    }
                 } else {
                     throw new Error(`無有效價格：z=${info.z}, b=${info.b}`);
                 }
@@ -457,13 +477,112 @@
             renderStockCard(result, containerId);
         }
 
+        // 檢查 CORS 狀態
+        function checkCORS() {
+            const isLocalFile = window.location.protocol === 'file:';
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1';
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            
+            log('🔍 環境檢測結果：', 'info');
+            log(`  協議: ${window.location.protocol}`, 'info');
+            log(`  主機: ${window.location.hostname}`, 'info');
+            log(`  完整URL: ${window.location.href}`, 'info');
+            
+            if (isLocalFile) {
+                log('⚠️ 本機檔案環境：證交所API會被CORS阻擋', 'warning');
+                log('💡 建議：部署到GitHub Pages或使用本機服務器', 'info');
+            } else if (isLocalhost) {
+                log('🏠 本機服務器環境：證交所API會被CORS阻擋', 'warning');
+                log('💡 建議：使用後端代理或部署到GitHub Pages', 'info');
+            } else if (isGitHubPages) {
+                log('✅ GitHub Pages環境：證交所API應該可以正常使用', 'success');
+            } else {
+                log('🌐 其他雲端環境：證交所API可能可以使用', 'info');
+            }
+        }
+
+        // 模擬測試（無CORS限制）
+        function simulateTest() {
+            log('🎭 開始模擬測試（展示邏輯，無實際API調用）...', 'info');
+            clearResults();
+            
+            // 模擬測試資料
+            const mockResults = [
+                // 上市股票
+                { symbol: '2330', name: '台積電', price: 1760, change: 15, market: 'tse', priceSource: '成交價', success: true },
+                { symbol: '2881', name: '富邦金', price: 111.5, change: 3.0, market: 'tse', priceSource: '成交價', success: true },
+                { symbol: '2886', name: '兆豐金', price: 40.55, change: -0.45, market: 'tse', priceSource: '買進價', success: true },
+                { symbol: '2317', name: '鴻海', price: 120.5, change: 2.5, market: 'tse', priceSource: '成交價', success: true },
+                
+                // 上櫃股票
+                { symbol: '5314', name: '世紀', price: 85.2, change: -1.8, market: 'otc', priceSource: '買進價', success: true },
+                { symbol: '6188', name: '廣明', price: 109, change: 4.5, market: 'otc', priceSource: '成交價', success: true },
+                { symbol: '4585', name: '達明', price: 338, change: -5.0, market: 'otc', priceSource: '成交價', success: true },
+                { symbol: '3008', name: '大立光', price: 2850, change: 50, market: 'otc', priceSource: '成交價', success: true },
+                
+                // ETF
+                { symbol: '0050', name: '元大台灣50', price: 172.6, change: 1.2, market: 'tse', priceSource: '成交價', success: true },
+                { symbol: '00940', name: '元大台灣價值高息', price: 9.79, change: 0.05, market: 'tse', priceSource: '買進價', success: true },
+                { symbol: '00679B', name: '元大美債20年', price: 27.19, change: -0.15, market: 'tse', priceSource: '成交價', success: true }
+            ];
+            
+            // 模擬逐一處理
+            let index = 0;
+            const processNext = () => {
+                if (index >= mockResults.length) {
+                    log('✅ 模擬測試完成！展示了完整的邏輯流程', 'success');
+                    return;
+                }
+                
+                const result = mockResults[index];
+                const changePercent = result.price > 0 ? (result.change / (result.price - result.change)) * 100 : 0;
+                
+                log(`🎭 模擬 ${result.symbol} ${result.name}：${result.market}_${result.symbol}.tw`, 'info');
+                log(`✅ ${result.symbol} 模擬成功：${result.price} (${result.priceSource})，漲跌 ${result.change.toFixed(2)} (${changePercent.toFixed(2)}%)`, 'success');
+                
+                // 渲染模擬結果
+                const mockResult = {
+                    success: true,
+                    symbol: result.symbol,
+                    name: result.name,
+                    price: result.price,
+                    change: result.change,
+                    changePercent: changePercent,
+                    priceSource: result.priceSource,
+                    market: result.market,
+                    time: '13:30:00',
+                    volume: '12,345',
+                    apiUrl: `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${result.market}_${result.symbol}.tw&json=1`
+                };
+                
+                // 根據市場類型渲染到對應區域
+                let containerId = 'tse-stocks';
+                if (result.market === 'otc') containerId = 'otc-stocks';
+                else if (result.symbol.match(/^00\d+/)) containerId = 'etf-stocks';
+                
+                renderStockCard(mockResult, containerId);
+                
+                index++;
+                setTimeout(processNext, 800); // 模擬API延遲
+            };
+            
+            processNext();
+        }
+
         // 頁面載入時的說明
         log('🎯 證交所 MIS API 精準測試工具已載入', 'info');
         log('📋 測試重點：', 'info');
         log('  1. 精準市場路徑：上市(tse) vs 上櫃(otc)', 'info');
         log('  2. 即時價格陷阱：成交價(-) → 買進價', 'info');
         log('  3. 特別關注：5314 世紀必須用 otc_5314.tw', 'warning');
-        log('🚀 點擊「開始測試」按鈕開始驗證！', 'info');
+        log('⚠️ CORS 提醒：本機端測試會被阻擋，請使用「模擬測試」或部署到 GitHub Pages', 'warning');
+        log('🚀 點擊「檢查CORS狀態」了解當前環境！', 'info');
+        
+        // 自動檢查環境
+        setTimeout(() => {
+            checkCORS();
+        }, 1000);
     </script>
 </body>
 </html>

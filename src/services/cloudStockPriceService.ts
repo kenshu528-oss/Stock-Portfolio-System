@@ -377,15 +377,25 @@ class CloudStockPriceService {
       
       // 處理即時價格陷阱：z(成交價)是橫槓-時，改抓b(買進價)
       let currentPrice = 0;
+      let priceSource = '';
       
       if (info.z && info.z !== '-' && !isNaN(parseFloat(info.z))) {
         // 有成交價，使用成交價
         currentPrice = parseFloat(info.z);
+        priceSource = '成交價';
         logger.debug('stock', `${symbol} 使用成交價: ${currentPrice}`);
-      } else if (info.b && info.b !== '-' && !isNaN(parseFloat(info.b))) {
+      } else if (info.b && info.b !== '-') {
         // 沒成交，改抓買進價
-        currentPrice = parseFloat(info.b);
-        logger.debug('stock', `${symbol} 無成交，使用買進價: ${currentPrice}`);
+        // b 格式通常為 "價格_張數_"，取第一個底線前的內容
+        const buyPrices = info.b.split('_');
+        const buyPrice = buyPrices[0];
+        if (buyPrice && !isNaN(parseFloat(buyPrice))) {
+          currentPrice = parseFloat(buyPrice);
+          priceSource = '買進價';
+          logger.debug('stock', `${symbol} 無成交，使用買進價: ${currentPrice} (原始: ${info.b})`);
+        } else {
+          throw new Error(`買進價格式錯誤: b=${info.b}`);
+        }
       } else {
         throw new Error(`無有效價格資料: z=${info.z}, b=${info.b}`);
       }
@@ -405,7 +415,7 @@ class CloudStockPriceService {
         name: info.n,
         time: info.t,
         volume: info.v,
-        priceSource: info.z !== '-' ? '成交價' : '買進價'
+        priceSource: priceSource
       });
 
       return {

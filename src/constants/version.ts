@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 358, // 【證交所API精準實作】基於用戶詳細指導：精準市場路徑判斷+即時價格陷阱處理+買進價備援機制
+  PATCH: 359, // 【買進價格式修復】基於用戶Python實驗：修復b欄位"價格_張數_"格式解析，確保5314等股票價格正確提取
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
