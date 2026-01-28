@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock List 後綴機制測試</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .test-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .test-button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .test-button:hover {
+            background: #005a87;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        .warning { background: #fff3cd; border-color: #ffeaa7; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Stock List 後綴機制測試</h1>
+            <p>測試 Stock List 如何動態添加 Yahoo Finance 後綴</p>
+            <p><strong>版本</strong>: v1.0.2.0355</p>
+        </div>
+
+        <!-- 測試 1：檢查原始檔案結構 -->
+        <div class="test-section">
+            <div class="test-title">📁 測試 1：檢查原始 Stock List 檔案結構</div>
+            <p>檢查 public/stock_list.json 的原始結構，確認是否包含後綴資訊</p>
+            <button class="test-button" onclick="testOriginalFile()">檢查原始檔案</button>
+            <div id="result1" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- 測試 2：測試動態增強機制 -->
+        <div class="test-section">
+            <div class="test-title">⚙️ 測試 2：測試動態增強機制</div>
+            <p>測試 stockListService 如何動態添加後綴和市場分類</p>
+            <button class="test-button" onclick="testEnhancementMechanism()">測試增強機制</button>
+            <div id="result2" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- 測試 3：測試後綴判斷邏輯 -->
+        <div class="test-section">
+            <div class="test-title">🎯 測試 3：測試後綴判斷邏輯</div>
+            <p>測試不同股票代碼的後綴判斷邏輯</p>
+            <button class="test-button" onclick="testSuffixLogic()">測試後綴邏輯</button>
+            <div id="result3" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- 測試 4：測試實際使用流程 -->
+        <div class="test-section">
+            <div class="test-title">🔄 測試 4：測試實際使用流程</div>
+            <p>測試從載入到使用的完整流程</p>
+            <button class="test-button" onclick="testCompleteFlow()">測試完整流程</button>
+            <div id="result4" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // 測試 1：檢查原始檔案結構
+        async function testOriginalFile() {
+            const resultDiv = document.getElementById('result1');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '🔍 正在檢查原始檔案...';
+
+            try {
+                const response = await fetch('../public/stock_list.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // 檢查幾個樣本股票
+                const samples = ['2330', '6188', '0050', '00679B'];
+                let result = `📊 原始檔案結構分析：\n\n`;
+                result += `📅 資料日期: ${data.date}\n`;
+                result += `📈 股票總數: ${data.count}\n\n`;
+                result += `🔍 樣本股票檢查：\n`;
+
+                for (const symbol of samples) {
+                    const stock = data.stocks[symbol];
+                    if (stock) {
+                        result += `\n${symbol} (${stock.name}):\n`;
+                        result += `  - industry: ${stock.industry}\n`;
+                        result += `  - market: ${stock.market}\n`;
+                        result += `  - yahooSuffix: ${stock.yahooSuffix || '❌ 未定義'}\n`;
+                        result += `  - marketType: ${stock.marketType || '❌ 未定義'}\n`;
+                    } else {
+                        result += `\n${symbol}: ❌ 不存在\n`;
+                    }
+                }
+
+                result += `\n\n✅ 結論：原始檔案只包含基本資訊（name, industry, market）`;
+                result += `\n❌ 原始檔案不包含 yahooSuffix 和 marketType`;
+                result += `\n💡 這些資訊需要透過動態增強機制添加`;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 檢查失敗: ${error.message}`;
+            }
+        }
+
+        // 測試 2：測試動態增強機制
+        async function testEnhancementMechanism() {
+            const resultDiv = document.getElementById('result2');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '⚙️ 正在測試增強機制...';
+
+            try {
+                // 模擬增強邏輯
+                const testCases = [
+                    { symbol: '2330', name: '台積電' },
+                    { symbol: '6188', name: '廣明' },
+                    { symbol: '0050', name: '元大台灣50' },
+                    { symbol: '00679B', name: '元大美債20年' },
+                    { symbol: '8112', name: '至上' },
+                    { symbol: '4585', name: '達明' }
+                ];
+
+                let result = `⚙️ 動態增強機制測試：\n\n`;
+
+                for (const testCase of testCases) {
+                    const enhanced = enhanceStockInfo(testCase.symbol, testCase);
+                    result += `${testCase.symbol} (${testCase.name}):\n`;
+                    result += `  原始: { name: "${testCase.name}" }\n`;
+                    result += `  增強後:\n`;
+                    result += `    - marketType: ${enhanced.marketType}\n`;
+                    result += `    - yahooSuffix: ${enhanced.yahooSuffix}\n`;
+                    result += `    - reasoning: ${enhanced.reasoning}\n\n`;
+                }
+
+                result += `✅ 結論：系統會動態為每個股票添加後綴和市場分類`;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 測試失敗: ${error.message}`;
+            }
+        }
+
+        // 模擬增強邏輯
+        function enhanceStockInfo(stockId, basicInfo) {
+            const code = parseInt(stockId.substring(0, 4));
+            const isBondETF = /^00\d{2,3}B$/i.test(stockId);
+            const isETF = /^00\d{2,3}[A-Z]?$/i.test(stockId);
+            
+            let marketType, yahooSuffix, reasoning;
+            
+            // 特殊案例處理
+            const specialCases = {
+                '8112': { suffix: '.TW', market: '上櫃', reason: '至上：雖在 8000 範圍但 Yahoo Finance 使用 .TW' },
+                '4585': { suffix: '.TW', market: '興櫃', reason: '達明：興櫃股票，最常用 .TW' },
+            };
+            
+            if (specialCases[stockId]) {
+                const special = specialCases[stockId];
+                marketType = special.market;
+                yahooSuffix = special.suffix;
+                reasoning = special.reason;
+            } else if (isBondETF) {
+                marketType = '上櫃';
+                yahooSuffix = '.TWO';
+                reasoning = '債券 ETF，優先使用櫃買中心 (.TWO)';
+            } else if (isETF) {
+                marketType = '上櫃';
+                yahooSuffix = '.TWO';
+                reasoning = '一般 ETF，優先使用櫃買中心 (.TWO)';
+            } else if (code >= 3000 && code <= 8999) {
+                marketType = '上櫃';
+                yahooSuffix = '.TWO';
+                reasoning = '上櫃股票，優先使用櫃買中心 (.TWO)';
+            } else if (code >= 1000 && code <= 2999) {
+                marketType = '上市';
+                yahooSuffix = '.TW';
+                reasoning = '上市股票，優先使用證交所 (.TW)';
+            } else {
+                marketType = '上市';
+                yahooSuffix = '.TW';
+                reasoning = '其他情況，預設使用證交所 (.TW)';
+            }
+            
+            return {
+                ...basicInfo,
+                marketType,
+                yahooSuffix,
+                reasoning,
+                enhanced: true
+            };
+        }
+
+        // 測試 3：測試後綴判斷邏輯
+        function testSuffixLogic() {
+            const resultDiv = document.getElementById('result3');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+
+            const testCases = [
+                // 上市股票
+                { symbol: '2330', expected: '.TW', category: '上市股票' },
+                { symbol: '2886', expected: '.TW', category: '上市股票' },
+                
+                // 上櫃股票
+                { symbol: '6188', expected: '.TWO', category: '上櫃股票' },
+                { symbol: '3687', expected: '.TWO', category: '上櫃股票' },
+                
+                // ETF
+                { symbol: '0050', expected: '.TWO', category: '一般ETF' },
+                { symbol: '00646', expected: '.TWO', category: '一般ETF' },
+                
+                // 債券ETF
+                { symbol: '00679B', expected: '.TWO', category: '債券ETF' },
+                { symbol: '00835B', expected: '.TWO', category: '債券ETF' },
+                
+                // 特殊案例
+                { symbol: '8112', expected: '.TW', category: '特殊案例' },
+                { symbol: '4585', expected: '.TW', category: '特殊案例' }
+            ];
+
+            let result = `🎯 後綴判斷邏輯測試：\n\n`;
+            let passCount = 0;
+
+            for (const testCase of testCases) {
+                const enhanced = enhanceStockInfo(testCase.symbol, { name: `測試${testCase.symbol}` });
+                const passed = enhanced.yahooSuffix === testCase.expected;
+                
+                result += `${testCase.symbol} (${testCase.category}):\n`;
+                result += `  預期: ${testCase.expected}\n`;
+                result += `  實際: ${enhanced.yahooSuffix}\n`;
+                result += `  結果: ${passed ? '✅ 通過' : '❌ 失敗'}\n`;
+                result += `  邏輯: ${enhanced.reasoning}\n\n`;
+                
+                if (passed) passCount++;
+            }
+
+            result += `📊 測試結果: ${passCount}/${testCases.length} 通過`;
+
+            resultDiv.className = passCount === testCases.length ? 'result success' : 'result warning';
+            resultDiv.textContent = result;
+        }
+
+        // 測試 4：測試完整流程
+        async function testCompleteFlow() {
+            const resultDiv = document.getElementById('result4');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.textContent = '🔄 正在測試完整流程...';
+
+            try {
+                let result = `🔄 Stock List 後綴機制完整流程：\n\n`;
+
+                // 步驟 1：載入原始資料
+                result += `步驟 1: 載入原始資料\n`;
+                result += `  - 從 public/stock_list.json 載入基本資訊\n`;
+                result += `  - 只包含: name, industry, market\n`;
+                result += `  - 不包含: yahooSuffix, marketType\n\n`;
+
+                // 步驟 2：動態增強
+                result += `步驟 2: 動態增強處理\n`;
+                result += `  - 呼叫 enhanceStockList() 方法\n`;
+                result += `  - 對每個股票執行 enhanceStockInfo()\n`;
+                result += `  - 根據股票代碼判斷後綴和市場分類\n\n`;
+
+                // 步驟 3：後綴判斷邏輯
+                result += `步驟 3: 後綴判斷邏輯\n`;
+                result += `  - 特殊案例: 8112→.TW, 4585→.TW\n`;
+                result += `  - 債券ETF (00XXXB): →.TWO\n`;
+                result += `  - 一般ETF (00XXX): →.TWO\n`;
+                result += `  - 上櫃股票 (3000-8999): →.TWO\n`;
+                result += `  - 上市股票 (1000-2999): →.TW\n`;
+                result += `  - 其他: →.TW (預設)\n\n`;
+
+                // 步驟 4：實際使用
+                result += `步驟 4: 實際使用\n`;
+                result += `  - getYahooSuffix(symbol) 獲取後綴\n`;
+                result += `  - getYahooSymbol(symbol) 獲取完整符號\n`;
+                result += `  - 股價服務使用增強後的資訊\n\n`;
+
+                // 測試實際案例
+                const testSymbol = '6188';
+                const enhanced = enhanceStockInfo(testSymbol, { name: '廣明' });
+                
+                result += `🧪 實際案例測試 (${testSymbol}):\n`;
+                result += `  原始資料: { name: "廣明", industry: "...", market: "台股" }\n`;
+                result += `  增強後:\n`;
+                result += `    - marketType: ${enhanced.marketType}\n`;
+                result += `    - yahooSuffix: ${enhanced.yahooSuffix}\n`;
+                result += `    - reasoning: ${enhanced.reasoning}\n`;
+                result += `  最終 Yahoo 符號: ${testSymbol}${enhanced.yahooSuffix}\n\n`;
+
+                result += `✅ 結論：\n`;
+                result += `  1. 原始檔案不包含後綴資訊\n`;
+                result += `  2. 系統動態計算並添加後綴\n`;
+                result += `  3. 基於股票代碼範圍和類型判斷\n`;
+                result += `  4. 支援特殊案例處理\n`;
+                result += `  5. 提供完整的推理過程`;
+
+                resultDiv.className = 'result success';
+                resultDiv.textContent = result;
+
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 測試失敗: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

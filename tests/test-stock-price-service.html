@@ -315,14 +315,35 @@
 
                 const code = parseInt(symbol.substring(0, 4));
                 const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+                const isETF = /^00\d{2,3}[A-Z]?$/i.test(symbol);
 
+                // 特殊案例處理
+                const specialCases = {
+                    '8112': '.TW', // 至上：雖在 8000 範圍但需使用 .TW
+                    '4585': '.TW', // 達明：興櫃股票，最常用 .TW
+                };
+                
+                if (specialCases[symbol]) {
+                    return `${symbol}${specialCases[symbol]}`;
+                }
+
+                // 債券 ETF：優先櫃買中心
                 if (isBondETF) {
                     return `${symbol}.TWO`;
-                } else if (code >= 3000 && code <= 8999) {
-                    return `${symbol}.TWO`;
-                } else {
-                    return `${symbol}.TW`;
                 }
+                
+                // 一般 ETF：優先櫃買中心
+                if (isETF) {
+                    return `${symbol}.TWO`;
+                }
+                
+                // 上櫃股票（3000-8999）：優先櫃買中心
+                if (code >= 3000 && code <= 8999) {
+                    return `${symbol}.TWO`;
+                }
+                
+                // 上市股票（1000-2999）：優先證交所
+                return `${symbol}.TW`;
             }
 
             createTimeoutPromise(timeout) {
