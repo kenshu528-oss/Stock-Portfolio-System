@@ -2740,11 +2740,11 @@ if (envToken && envToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT' && envToken
 #### 3. 環境變數配置標準化
 ```bash
 # 本機端 .env 檔案
-VITE_DEV_TOKEN=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
+VITE_DEV_TOKEN=your_github_token_here
 
 # GitHub Repository Secret
 Name: DEV_GITHUB_TOKEN
-Value: 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
+Value: your_github_token_here
 ```
 
 ### 🛡️ 安全措施實作
