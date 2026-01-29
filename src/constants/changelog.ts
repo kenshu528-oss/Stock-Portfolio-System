@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0370',
+    date: '2026-01-29',
+    type: 'hotfix',
+    title: '隱蔽後門生產環境修復：改善 Token 載入機制，支援手動輸入',
+    description: '修復隱蔽後門功能在生產環境中的 Token 載入問題。在生產環境（GitHub Pages）中，環境變數無法載入，導致隱蔽後門功能需要用戶手動輸入 Token。改善載入機制，提供更好的用戶體驗：優先使用環境變數，然後 localStorage，最後提示用戶輸入並自動保存。',
+    changes: [
+      '🔧 改善隱蔽後門的 Token 載入邏輯',
+      '💾 支援用戶手動輸入 Token 並自動保存到 localStorage',
+      '🔐 優化 Token 載入優先順序：環境變數 → localStorage → 用戶輸入',
+      '📱 改善生產環境中的用戶體驗',
+      '🛠️ 添加詳細的調試日誌記錄',
+      '✨ 確保隱蔽後門功能在所有環境中都能正常使用'
+    ],
+    fixes: [
+      '修復生產環境中環境變數無法載入的問題',
+      '修復隱蔽後門觸發後需要手動輸入 Token 的體驗',
+      '確保 Token 能夠正確保存和重複使用'
+    ]
+  },
+  {
     version: '1.0.2.0369',
     date: '2026-01-29',
     type: 'patch',

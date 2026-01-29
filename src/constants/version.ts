@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 369, // 【規格文檔完善】補充隱蔽後門功能規格說明，記錄環境變數機制和觸發方式，完善系統文檔
+  PATCH: 370, // 【隱蔽後門生產環境修復】改善生產環境中的 Token 載入機制，支援用戶手動輸入並保存到 localStorage
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

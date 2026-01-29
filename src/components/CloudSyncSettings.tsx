@@ -344,24 +344,33 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
           // 首先嘗試從環境變數讀取
           const envToken = import.meta.env?.VITE_DEV_TOKEN;
           if (envToken && envToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+            logger.debug('cloud', '隱蔽後門：使用環境變數 Token');
             return envToken;
           }
           
           // 如果環境變數不可用，嘗試從 localStorage 讀取之前保存的 Token
           const savedToken = localStorage.getItem('dev_github_token');
           if (savedToken && savedToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+            logger.debug('cloud', '隱蔽後門：使用 localStorage Token');
             return savedToken;
           }
           
-          // 生產環境備用 Token（隱蔽後門專用）
-          // 從 .env 檔案中的 VITE_DEV_TOKEN 讀取
-          const productionToken = import.meta.env?.VITE_DEV_TOKEN;
-          if (productionToken && productionToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
-            return productionToken;
+          // 生產環境：提示用戶輸入並保存
+          logger.warn('cloud', '隱蔽後門：環境變數未載入，請手動輸入 Token');
+          const userToken = prompt(
+            '🔐 隱蔽後門觸發\n\n' +
+            '環境變數未載入，請輸入 GitHub Token：\n' +
+            '(Token 會保存在 localStorage 中供下次使用)'
+          );
+          
+          if (userToken && userToken.trim() && userToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+            // 保存到 localStorage 供下次使用
+            localStorage.setItem('dev_github_token', userToken.trim());
+            logger.info('cloud', '隱蔽後門：Token 已保存到 localStorage');
+            return userToken.trim();
           }
           
-          // 最後使用佔位符，但提示用戶需要設定
-          console.warn('🔧 開發 Token 未正確載入，請檢查 .env 檔案或重新啟動開發服務器');
+          // 最後使用佔位符
           return 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
         } catch (e) {
           console.error('🔧 讀取開發 Token 時發生錯誤:', e);
