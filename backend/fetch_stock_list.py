@@ -15,8 +15,14 @@ from FinMind.data import DataLoader
 # FinMind Token - 優先從環境變數讀取，本地開發時使用硬編碼
 MY_TOKEN = os.environ.get('FINMIND_TOKEN', "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkYXRlIjoiMjAyNi0wMS0xNCAxNTowNjowNyIsInVzZXJfaWQiOiJrZW5zaHU1MjgiLCJlbWFpbCI6ImtlbnNodTUyOEBnbWFpbC5jb20iLCJpcCI6IjYxLjIxOC4xMTMuMTk0In0.RW-Bs2QVZzGOn_oHXPSV0pJsvo_WryHaLuHO8Z8pJ4k")
 
+# 檢查 Token 來源並記錄
+if os.environ.get('FINMIND_TOKEN'):
+    print("✅ 使用環境變數中的 FINMIND_TOKEN")
+else:
+    print("⚠️ 使用腳本內建的 FINMIND_TOKEN")
+
 if not MY_TOKEN:
-    print("找不到 FINMIND_TOKEN，請設定環境變數或檢查腳本設定")
+    print("❌ 找不到 FINMIND_TOKEN，請設定環境變數或檢查腳本設定")
     sys.exit(1)
 
 def get_today_filename():

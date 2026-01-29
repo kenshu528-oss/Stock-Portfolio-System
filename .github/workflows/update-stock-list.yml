@@ -49,10 +49,10 @@ jobs:
       run: |
         # 檢查環境變數
         if [ -z "$FINMIND_TOKEN" ]; then
-          echo "❌ 找不到 FINMIND_TOKEN 環境變數"
-          echo "使用腳本內建的 Token"
+          echo "⚠️ 找不到 FINMIND_TOKEN secret，使用腳本內建的 Token"
+          echo "💡 如需使用自定義 Token，請在 GitHub 倉庫設定中添加 FINMIND_TOKEN secret"
         else
-          echo "✅ FINMIND_TOKEN 環境變數已設定"
+          echo "✅ 使用 GitHub secret 中的 FINMIND_TOKEN"
         fi
         
         # 執行股票清單抓取腳本（強制更新）
