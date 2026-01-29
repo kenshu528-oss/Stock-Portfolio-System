@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 366, // 【QuickAddStock UI 優化】移除多個結果時的紅框提示詞，優化用戶體驗，確保點擊選擇時才獲取股價
+  PATCH: 368, // 【隱蔽後門安全修復】移除硬編碼 Token，改用安全的動態載入機制，符合 GitHub 安全規範
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

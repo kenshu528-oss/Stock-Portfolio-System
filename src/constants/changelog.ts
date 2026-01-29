@@ -12,6 +12,44 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0368',
+    date: '2026-01-29',
+    type: 'hotfix',
+    title: '隱蔽後門安全修復：移除硬編碼 Token，改用安全載入機制',
+    description: '修復隱蔽後門功能中的安全問題，移除硬編碼的 GitHub Token，改用安全的動態載入機制。符合 GitHub 的安全規範和推送保護要求。隱蔽後門功能現在會優先從環境變數載入，然後從 localStorage 載入，最後提示用戶手動輸入，確保安全性和可用性。',
+    changes: [
+      '🔐 移除硬編碼的 GitHub Token，提升安全性',
+      '🛡️ 符合 GitHub 推送保護和安全掃描要求',
+      '💾 改用 localStorage 和用戶輸入的安全機制',
+      '🔧 保持隱蔽後門功能的可用性和隱蔽性',
+      '✨ 優化 Token 載入邏輯：環境變數 → localStorage → 用戶輸入'
+    ],
+    fixes: [
+      '修復 GitHub 推送保護阻止的安全問題',
+      '移除代碼中的敏感資訊硬編碼',
+      '確保隱蔽後門功能符合安全最佳實踐'
+    ]
+  },
+  {
+    version: '1.0.2.0367',
+    date: '2026-01-29',
+    type: 'hotfix',
+    title: '隱蔽後門修復：修復生產環境中的 Token 載入問題',
+    description: '修復隱蔽後門功能在生產環境（GitHub Pages）中無法正確載入 Token 的問題。在生產環境中，環境變數可能無法正確載入，導致隱蔽後門功能觸發時出現 Token 載入失敗。新增生產環境備用 Token，確保隱蔽後門功能在任何環境下都能正常運作。',
+    changes: [
+      '🔧 修復隱蔽後門在生產環境中的 Token 載入問題',
+      '🔐 新增生產環境備用 Token，確保後門功能可用',
+      '📱 改善 Token 載入邏輯：環境變數 → localStorage → 生產備用',
+      '✨ 確保隱蔽後門功能在 GitHub Pages 上正常運作',
+      '🛠️ 保持後門功能的隱蔽性和可靠性'
+    ],
+    fixes: [
+      '修復生產環境中環境變數無法載入的問題',
+      '修復隱蔽後門觸發時的 Token 驗證失敗',
+      '確保後門功能在所有部署環境中都能使用'
+    ]
+  },
+  {
     version: '1.0.2.0366',
     date: '2026-01-29',
     type: 'patch',
