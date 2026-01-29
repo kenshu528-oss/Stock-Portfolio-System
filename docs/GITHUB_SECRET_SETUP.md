@@ -14,7 +14,7 @@
 1. 點擊 **New repository secret** 按鈕
 2. 填入以下資訊：
    - **Name**: `DEV_GITHUB_TOKEN`（注意：不是 VITE_DEV_TOKEN）
-   - **Value**: `ghp_YOUR_GITHUB_TOKEN_HERE`（與 .env 檔案中相同）
+   - **Value**: `your_github_token_here`（與 .env 檔案中相同）
 3. 點擊 **Add secret** 儲存
 
 ### 3. 驗證設定

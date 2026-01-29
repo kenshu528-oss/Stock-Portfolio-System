@@ -1492,7 +1492,7 @@ const hiddenToken = (() => {
 **本機端配置**
 ```bash
 # .env 檔案配置
-VITE_DEV_TOKEN=ghp_YOUR_GITHUB_TOKEN_HERE
+VITE_DEV_TOKEN=your_github_token_here
 
 # 說明：
 # - 此 Token 用於隱蔽後門功能的快速連線
@@ -1508,7 +1508,7 @@ VITE_DEV_TOKEN=ghp_YOUR_GITHUB_TOKEN_HERE
    - 前往：`https://github.com/kenshu528-oss/Stock-Portfolio-System/settings/secrets/actions`
    - 新增 Secret：
      - **Name**: `DEV_GITHUB_TOKEN`（注意：GitHub Secret 命名規則不允許底線開頭）
-     - **Value**: `ghp_YOUR_GITHUB_TOKEN_HERE`（與 .env 檔案相同）
+     - **Value**: `your_github_token_here`（與 .env 檔案相同）
 
 2. **GitHub Actions 工作流程**（`.github/workflows/deploy.yml`）：
    ```yaml
