@@ -1455,49 +1455,116 @@ const downloadData = async (token: string) => {
 - **觸發條件**: 僅在未連線狀態下可觸發（`connectionStatus !== 'connected'`）
 - **隱蔽性**: 圖示無任何可點擊的視覺提示，完全隱蔽
 
-##### Token 載入機制
+##### Token 載入機制（v1.0.2.0371 更新）
+
+**本機端和雲端環境統一的 Token 載入策略**
+
 ```typescript
 // 隱蔽後門的 Token 載入優先順序
 const hiddenToken = (() => {
-  // 1. 優先從環境變數讀取 (.env 檔案)
+  // 1. 優先從環境變數讀取
+  //    本機端：.env 檔案中的 VITE_DEV_TOKEN
+  //    雲端：GitHub Actions 建置時從 DEV_GITHUB_TOKEN Secret 注入
   const envToken = import.meta.env?.VITE_DEV_TOKEN;
-  if (envToken && envToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+  if (envToken && envToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT' && envToken.startsWith('ghp_')) {
     return envToken;
   }
   
   // 2. 從 localStorage 讀取之前保存的 Token
   const savedToken = localStorage.getItem('dev_github_token');
-  if (savedToken && savedToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+  if (savedToken && savedToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT' && savedToken.startsWith('ghp_')) {
     return savedToken;
   }
   
-  // 3. 生產環境從 VITE_DEV_TOKEN 讀取
-  const productionToken = import.meta.env?.VITE_DEV_TOKEN;
-  if (productionToken) {
-    return productionToken;
+  // 3. 最後選項：提示用戶手動輸入（僅在前兩步都失敗時）
+  const userToken = prompt('🔐 隱蔽後門觸發\n\n請輸入 GitHub Token：');
+  if (userToken && userToken.startsWith('ghp_')) {
+    localStorage.setItem('dev_github_token', userToken.trim());
+    return userToken.trim();
   }
   
-  // 4. 最後提示用戶手動輸入
-  return 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
+  return null; // 用戶取消或無效 Token
 })();
 ```
 
 ##### 環境變數配置
+
+**本機端配置**
 ```bash
 # .env 檔案配置
-VITE_DEV_TOKEN=ghp_YOUR_GITHUB_TOKEN_HERE
+VITE_DEV_TOKEN=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
 
 # 說明：
 # - 此 Token 用於隱蔽後門功能的快速連線
-# - 在生產環境中會自動從此環境變數載入
+# - 本機端開發時自動從此環境變數載入
 # - 確保 Token 有適當的 GitHub 權限（repo, gist）
-# - 請將 YOUR_GITHUB_TOKEN_HERE 替換為實際的 GitHub Token
 ```
+
+**雲端環境配置（GitHub Actions + GitHub Pages）**
+
+⚠️ **重要**：雲端環境無法讀取 `.env` 檔案，需要通過 GitHub Actions Secrets 注入
+
+1. **GitHub Secret 設定**：
+   - 前往：`https://github.com/kenshu528-oss/Stock-Portfolio-System/settings/secrets/actions`
+   - 新增 Secret：
+     - **Name**: `DEV_GITHUB_TOKEN`（注意：GitHub Secret 命名規則不允許底線開頭）
+     - **Value**: `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`（與 .env 檔案相同）
+
+2. **GitHub Actions 工作流程**（`.github/workflows/deploy.yml`）：
+   ```yaml
+   - name: Build
+     run: npm run build
+     env:
+       NODE_ENV: production
+       VITE_FINMIND_TOKEN: ${{ secrets.VITE_FINMIND_TOKEN }}
+       VITE_DEV_TOKEN: ${{ secrets.DEV_GITHUB_TOKEN }}  # 映射 Secret 到環境變數
+   ```
+
+3. **工作原理**：
+   ```
+   GitHub Secret: DEV_GITHUB_TOKEN
+       ↓ (建置時映射)
+   環境變數: VITE_DEV_TOKEN
+       ↓ (前端讀取)
+   隱蔽後門: 自動載入 Token
+   ```
 
 ##### 功能流程
 1. **觸發檢測**: 連續點擊計數器達到 5 次
 2. **狀態檢查**: 確認當前為未連線狀態
-3. **Token 載入**: 按優先順序載入 Token
+3. **Token 載入**: 按優先順序載入 Token（環境變數 → localStorage → 用戶輸入）
+4. **自動連線**: 自動填入 Token 並測試連線
+5. **狀態更新**: 更新連線狀態和用戶資訊
+6. **日誌記錄**: 記錄隱蔽後門觸發和連線結果
+
+##### 安全考量
+- **隱蔽性**: 無視覺提示，只有知道觸發方式的人才能使用
+- **權限控制**: 僅在未連線狀態下可觸發，避免誤操作
+- **Token 安全**: 不在代碼中硬編碼，符合 GitHub 安全規範
+- **環境隔離**: 本機和雲端使用不同的載入機制，但邏輯一致
+
+##### 故障排除
+如果隱蔽後門無法自動載入 Token：
+
+1. **本機端**：
+   - 檢查 `.env` 檔案中的 `VITE_DEV_TOKEN` 是否正確
+   - 重新啟動開發服務器：`npm run dev`
+
+2. **雲端環境**：
+   - 檢查 GitHub Secret `DEV_GITHUB_TOKEN` 是否已設定
+   - 檢查 GitHub Actions 建置日誌中的環境變數載入情況
+   - 重新觸發建置：推送新的 commit 或手動觸發 Actions
+
+3. **通用**：
+   - 清除瀏覽器快取，確保載入最新版本
+   - 檢查 Token 格式是否正確（必須以 `ghp_` 開頭）
+   - 確認 Token 權限包含 `repo` 和 `gist`
+
+##### 維護注意事項
+- **Token 更新**: 如需更新 Token，需同時更新 `.env` 檔案和 GitHub Secret
+- **版本控制**: `.env` 檔案不應提交到 Git，使用 `.env.example` 作為範本
+- **文檔同步**: Token 載入機制變更時，需同步更新此規格文檔
+- **測試驗證**: 每次修改後都要在本機和雲端環境測試隱蔽後門功能
 4. **自動連線**: 自動填入 Token 並測試連線
 5. **狀態更新**: 更新連線狀態和用戶資訊
 6. **日誌記錄**: 記錄隱蔽後門觸發和連線結果
