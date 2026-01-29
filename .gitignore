@@ -88,3 +88,9 @@ temp/
 
 # Local Netlify folder
 .netlify
+
+# Export folder (temporary files)
+export/
+
+# Vite cache
+.vite/
