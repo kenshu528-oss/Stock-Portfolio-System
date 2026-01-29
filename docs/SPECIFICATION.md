@@ -1445,6 +1445,69 @@ const downloadData = async (token: string) => {
 };
 ```
 
+#### 7.4 🔐 隱蔽後門功能規格
+
+##### 功能概述
+隱蔽後門是一個開發和維護用的快速連線功能，允許知道觸發方式的人快速建立 GitHub 連線，無需手動輸入 Token。
+
+##### 觸發機制
+- **觸發方式**: 連續點擊雲端同步設定中的「使用說明」圖示 5 次
+- **觸發條件**: 僅在未連線狀態下可觸發（`connectionStatus !== 'connected'`）
+- **隱蔽性**: 圖示無任何可點擊的視覺提示，完全隱蔽
+
+##### Token 載入機制
+```typescript
+// 隱蔽後門的 Token 載入優先順序
+const hiddenToken = (() => {
+  // 1. 優先從環境變數讀取 (.env 檔案)
+  const envToken = import.meta.env?.VITE_DEV_TOKEN;
+  if (envToken && envToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+    return envToken;
+  }
+  
+  // 2. 從 localStorage 讀取之前保存的 Token
+  const savedToken = localStorage.getItem('dev_github_token');
+  if (savedToken && savedToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT') {
+    return savedToken;
+  }
+  
+  // 3. 生產環境從 VITE_DEV_TOKEN 讀取
+  const productionToken = import.meta.env?.VITE_DEV_TOKEN;
+  if (productionToken) {
+    return productionToken;
+  }
+  
+  // 4. 最後提示用戶手動輸入
+  return 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
+})();
+```
+
+##### 環境變數配置
+```bash
+# .env 檔案配置
+VITE_DEV_TOKEN=ghp_YOUR_GITHUB_TOKEN_HERE
+
+# 說明：
+# - 此 Token 用於隱蔽後門功能的快速連線
+# - 在生產環境中會自動從此環境變數載入
+# - 確保 Token 有適當的 GitHub 權限（repo, gist）
+# - 請將 YOUR_GITHUB_TOKEN_HERE 替換為實際的 GitHub Token
+```
+
+##### 功能流程
+1. **觸發檢測**: 連續點擊計數器達到 5 次
+2. **狀態檢查**: 確認當前為未連線狀態
+3. **Token 載入**: 按優先順序載入 Token
+4. **自動連線**: 自動填入 Token 並測試連線
+5. **狀態更新**: 更新連線狀態和用戶資訊
+6. **日誌記錄**: 記錄隱蔽後門觸發和連線結果
+
+##### 安全考量
+- **隱蔽性**: 無視覺提示，只有知道觸發方式的人才能使用
+- **權限控制**: 僅在未連線狀態下可觸發，避免誤操作
+- **Token 安全**: 使用環境變數，不在代碼中硬編碼
+- **日誌記錄**: 所有操作都有詳細的調試日誌
+
 ### 8. 資料匯入匯出系統
 
 #### 8.1 匯出功能
