@@ -12,6 +12,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0360',
+    date: '2026-01-28',
+    type: 'minor',
+    title: '實驗記錄建立：基於用戶反饋的API穩定性追蹤系統',
+    description: '基於用戶重要反饋"Yahoo Finance代理服務很不穩定，如果有實驗記錄你就會知道"，建立完整的experiments資料夾來追蹤各種API的穩定性和可用性。記錄了Yahoo Finance代理服務的失敗情況、證交所API的CORS限制測試，以及基於實驗結果的架構決策。這個系統將幫助我們做出更明智的技術決策。',
+    changes: [
+      '📂 建立experiments資料夾：完整的實驗記錄追蹤系統',
+      '📊 記錄Yahoo Finance代理失敗：AllOrigins 500錯誤，CodeTabs連線失敗，ThingProxy DNS失敗',
+      '🔍 記錄證交所API CORS測試：Python成功，瀏覽器被阻擋',
+      '🏗️ 架構決策記錄：基於實驗結果的雲端股價策略調整',
+      '📈 成功案例記錄：用戶5314世紀Python實驗的詳細數據',
+      '🎯 建議方案：Netlify Functions證交所代理作為穩定解決方案'
+    ],
+    fixes: [
+      '🐛 移除證交所API作為雲端第一優先級：實驗證實有CORS限制',
+      '🐛 確認Yahoo Finance代理服務不穩定：用戶反饋完全正確',
+      '🐛 建立實驗追蹤機制：避免重複犯相同的架構錯誤',
+      '🐛 提供數據支持的決策：基於實際測試結果而非假設'
+    ],
+    impact: 'medium',
+    breaking: []
+  },
+  {
     version: '1.0.2.0359',
     date: '2026-01-28',
     type: 'hotfix',

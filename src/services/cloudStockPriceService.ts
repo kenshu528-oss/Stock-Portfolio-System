@@ -96,33 +96,33 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
-   * v1.0.2.0357 - 雲端環境專用：證交所API優先（無CORS），Yahoo Finance代理備援
+   * v1.0.2.0360 - 修正：證交所API有CORS限制，雲端環境使用Yahoo Finance代理
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'TWSE (台灣證交所)',
-        priority: 1,
-        timeout: 10000,
-        fetcher: this.fetchFromTWSEMIS.bind(this)
-      },
-      {
         name: 'Yahoo Finance (AllOrigins)',
-        priority: 2,
+        priority: 1,
         timeout: 8000,
         fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
         name: 'Yahoo Finance (CodeTabs)',
-        priority: 3,
+        priority: 2,
         timeout: 8000,
         fetcher: this.fetchFromYahooCodeTabs.bind(this)
       },
       {
         name: 'Yahoo Finance (ThingProxy)',
-        priority: 4,
+        priority: 3,
         timeout: 8000,
         fetcher: this.fetchFromYahooThingProxy.bind(this)
+      },
+      {
+        name: 'Yahoo Finance (本機端)',
+        priority: 4,
+        timeout: 8000,
+        fetcher: this.fetchFromYahooLocal.bind(this)
       }
     ];
   }

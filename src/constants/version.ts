@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 359, // 【買進價格式修復】基於用戶Python實驗：修復b欄位"價格_張數_"格式解析，確保5314等股票價格正確提取
+  PATCH: 360, // 【實驗記錄建立】基於用戶反饋建立experiments資料夾，記錄API穩定性測試和架構決策，證實Yahoo代理服務極不穩定
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
