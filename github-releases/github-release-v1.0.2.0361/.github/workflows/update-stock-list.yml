@@ -1,0 +1,104 @@
+name: Update Stock List
+
+on:
+  schedule:
+    # 每日台灣時間 6:00 執行（UTC 22:00 前一天）- 避開所有高峰
+    - cron: '0 22 * * *'
+  workflow_dispatch: # 允許手動觸發
+
+jobs:
+  update-stock-list:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install Python dependencies
+      run: |
+        pip install FinMind tqdm pandas
+        
+    - name: Check if already updated today
+      run: |
+        TODAY=$(date +%Y-%m-%d)
+        if [ -f "public/stock_list_$TODAY.json" ]; then
+          echo "📝 今日股票清單已存在，檢查是否需要更新"
+          # 檢查檔案是否是今天創建的
+          FILE_DATE=$(jq -r '.date' "public/stock_list_$TODAY.json" 2>/dev/null || echo "")
+          if [ "$FILE_DATE" = "$TODAY" ]; then
+            echo "✅ 今日股票清單已是最新，跳過更新"
+            echo "SKIP_UPDATE=true" >> $GITHUB_ENV
+          else
+            echo "⚠️ 檔案存在但日期不符，需要更新"
+            echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+          fi
+        else
+          echo "📋 今日股票清單不存在，需要更新"
+          echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+        fi
+        
+    - name: Fetch stock list
+      if: env.SKIP_UPDATE != 'true'
+      env:
+        FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+      run: |
+        # 檢查環境變數
+        if [ -z "$FINMIND_TOKEN" ]; then
+          echo "⚠️ 找不到 FINMIND_TOKEN secret，使用腳本內建的 Token"
+          echo "💡 如需使用自定義 Token，請在 GitHub 倉庫設定中添加 FINMIND_TOKEN secret"
+        else
+          echo "✅ 使用 GitHub secret 中的 FINMIND_TOKEN"
+        fi
+        
+        # 執行股票清單抓取腳本（強制更新）
+        python backend/fetch_stock_list.py --force
+        
+    - name: Check and copy stock list
+      if: env.SKIP_UPDATE != 'true'
+      run: |
+        mkdir -p public
+        TODAY=$(date +%Y-%m-%d)
+        
+        echo "🔍 檢查今日股票清單檔案..."
+        ls -la stock_list_*.json || echo "沒有找到股票清單檔案"
+        
+        # 尋找今日的股票清單檔案
+        if [ -f "stock_list_$TODAY.json" ]; then
+          cp "stock_list_$TODAY.json" public/stock_list.json
+          cp "stock_list_$TODAY.json" "public/stock_list_$TODAY.json"
+          echo "✅ 股票清單已複製: stock_list_$TODAY.json"
+          
+          # 顯示統計資訊
+          STOCK_COUNT=$(jq '.count' public/stock_list.json)
+          echo "📊 股票總數: $STOCK_COUNT"
+        else
+          echo "❌ 找不到今日股票清單: stock_list_$TODAY.json"
+          echo "📋 可用的檔案:"
+          ls -la stock_list_*.json || echo "沒有股票清單檔案"
+          exit 1
+        fi
+        
+    - name: Commit and push changes
+      if: env.SKIP_UPDATE != 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # 添加所有股票清單相關檔案
+        git add public/stock_list*.json
+        git add stock_list_*.json
+        
+        # 檢查是否有變更
+        if git diff --staged --quiet; then
+          echo "📝 股票清單無變更，跳過提交"
+        else
+          TODAY=$(date +%Y-%m-%d)
+          git commit -m "🤖 自動更新股票清單 $TODAY"
+          git push
+          echo "✅ 股票清單已更新並推送到倉庫"
+        fi
