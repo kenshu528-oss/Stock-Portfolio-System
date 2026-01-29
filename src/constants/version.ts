@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 364, // 【配股配息處理統一修復】修復新增股票配股配息處理：統一使用RightsEventService，移除重複邏輯，修復QuickAddStock提示詞
+  PATCH: 366, // 【QuickAddStock UI 優化】移除多個結果時的紅框提示詞，優化用戶體驗，確保點擊選擇時才獲取股價
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

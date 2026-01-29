@@ -4,7 +4,7 @@
 
 ### 基本資訊
 - **專案名稱**: Stock Portfolio System
-- **當前版本**: v1.0.2.0363
+- **當前版本**: v1.0.2.0365
 - **類型**: 現代化股票投資組合管理系統
 - **技術棧**: React 18 + TypeScript + Vite + Zustand + TailwindCSS
 - **目標用戶**: 個人投資者、股票交易員
@@ -12,6 +12,12 @@
 
 ### 專案目標
 提供一個功能完整、用戶友好的股票投資組合管理系統，支援多帳戶管理、即時股價更新、除權息計算、雲端同步等核心功能。系統設計為本機端和雲端雙環境運行，確保在不同環境下都能提供最佳的用戶體驗。
+
+### 🆕 v1.0.2.0365 最新功能
+- **GitHub Actions 修復**: 修復自動更新工作流程，完善錯誤處理
+- **Stock List 統一管理**: 本機環境跳過後端檢查，解決 503 錯誤
+- **最新股票資料**: 更新到 1/29 資料（4056支股票）
+- **規格文檔完善**: 更新技術棧說明和核心功能描述
 
 ---
 
@@ -49,12 +55,37 @@
 ### 前端技術棧
 ```
 React 18              - UI 框架，支援 Concurrent Features
-TypeScript            - 類型安全，提升開發體驗
-Vite                  - 現代化建置工具，快速熱重載
-Zustand               - 輕量級狀態管理，支援持久化
-TailwindCSS           - 原子化 CSS 框架
+TypeScript 5.9.3      - 類型安全，提升開發體驗
+Vite 4.5.14           - 現代化建置工具，快速熱重載
+Zustand 4.x           - 輕量級狀態管理，支援持久化
+TailwindCSS 3.x       - 原子化 CSS 框架，響應式設計
 Vitest                - 單元測試框架
 ESLint + Prettier     - 代碼品質控制
+```
+
+### 核心服務架構
+```
+狀態管理層:
+├── useAppStore (Zustand)     - 主要應用狀態
+├── 持久化機制 (localStorage) - 版本化狀態持久化 (v7)
+└── 狀態遷移系統              - 版本升級時的資料遷移
+
+服務層:
+├── RightsEventService        - 統一配股配息處理服務
+├── StockListService          - 股票清單管理服務 (4056支股票)
+├── CloudStockPriceService    - 雲端股價獲取服務
+├── DividendApiService        - 除權息資料服務
+├── GitHubGistService         - 雲端同步服務
+├── StockEnhancementService   - 股票資料增強服務
+├── DividendAutoService       - 自動配股配息服務
+└── Logger System             - 結構化日誌系統 (5級別)
+
+API 整合層:
+├── Vercel Edge Functions     - 企業級股價服務（首選）
+├── Yahoo Finance API         - 主要股價來源（智能後綴判斷）
+├── FinMind API              - 台股專用資料（4056支股票清單）
+├── 台灣證交所 OpenAPI        - 官方除權息資料
+└── GitHub Gist API          - 雲端資料同步
 ```
 
 ### 後端服務架構
@@ -72,6 +103,12 @@ ESLint + Prettier     - 代碼品質控制
 │   ├── /stock-search - 股票搜尋
 │   ├── /dividend - 除權息查詢
 │   └── /health - 健康檢查
+
+自動化服務:
+├── GitHub Actions
+│   ├── 每日股票清單更新 (UTC 22:00)
+│   ├── 自動版本管理
+│   └── 部署流程自動化
 ```
 
 ---
@@ -226,29 +263,118 @@ interface Account {
 - **帳戶切換**: 快速切換當前操作帳戶
 - **股票統計**: 自動統計每個帳戶的股票數量
 
-#### 1.3 預設帳戶配置
+### 2. 股票管理系統
+
+#### 2.1 股票記錄資料結構
 ```typescript
-const DEFAULT_ACCOUNTS: Account[] = [
-  {
-    id: 'account-1',
-    name: '帳戶1',
-    brokerageFee: 0.1425,
-    transactionTax: 0.3,
-    stockCount: 0,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  },
-  {
-    id: 'account-2', 
-    name: '帳戶2',
-    brokerageFee: 0.1425,
-    transactionTax: 0.3,
-    stockCount: 0,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
+interface StockRecord {
+  id: string;                    // 唯一識別碼
+  accountId: string;             // 所屬帳戶ID
+  symbol: string;                // 股票代碼 (如: 2330)
+  name: string;                  // 股票名稱 (如: 台積電)
+  shares: number;                // 持股數 (含配股調整)
+  costPrice: number;             // 原始成本價
+  adjustedCostPrice?: number;    // 調整後成本價 (扣除股息)
+  purchaseDate: Date;            // 購買日期
+  currentPrice: number;          // 現價
+  change: number;                // 漲跌金額
+  changePercent: number;         // 漲跌百分比
+  lastUpdated: Date;             // 最後更新時間
+  priceSource: string;           // 價格來源 (Yahoo/FinMind/Vercel)
+  dividendRecords?: DividendRecord[]; // 除權息記錄
+  lastDividendUpdate?: string;   // 最後除權息更新時間
+  isBondETF?: boolean;           // 是否為債券ETF
+  transactionTaxRate?: number;   // 交易稅率 (債券ETF為0.1%)
+}
 ```
+
+#### 2.2 股票操作功能
+- **QuickAddStock**: 快速新增股票，智能搜尋和股價獲取
+  - 🆕 修復提示詞：將"點擊獲取即時股價"改為"多個結果"
+  - 智能股票代碼搜尋，支援模糊匹配
+  - 即時股價獲取和顯示
+- **AddStockForm**: 完整的股票新增表單
+  - 🆕 自動配股配息處理：新增股票時自動帶入歷史配股配息
+  - 債券ETF自動識別和稅率設定
+- **編輯股票**: 修改持股數、成本價等資訊
+- **刪除股票**: 移除股票記錄
+- **批次更新**: 右上角批量更新股價和配股配息
+- **個股更新**: 單一股票的股價和配股配息更新
+
+#### 2.3 🆕 新增股票自動配股配息處理 (v1.0.2.0364)
+```typescript
+// 新增股票時的自動處理流程
+const handleAddStock = async (stockData: StockFormData) => {
+  // 1. 創建基本股票記錄
+  const newStock: StockRecord = { /* 基本資料 */ };
+  
+  // 2. 使用增強版新增功能（統一配股配息處理）
+  const result = await StockEnhancementService.addStockWithEnhancements(newStock);
+  
+  // 3. 自動處理流程
+  // ├── 識別債券ETF並設定證交稅率 (0.1%)
+  // ├── 統一使用 RightsEventService.processStockRightsEvents
+  // ├── 自動獲取配股配息資料（從購買日期開始）
+  // ├── 計算調整後持股數和成本價
+  // ├── 記錄詳細的處理日誌
+  // └── 確保新增股票總是執行配股配息處理
+};
+
+// 關鍵修復：統一使用 RightsEventService
+// - DividendAutoService 統一調用 RightsEventService.processStockRightsEvents
+// - StockEnhancementService 確保新增股票總是執行配股配息處理
+// - 移除重複的配股配息計算邏輯，避免不一致問題
+```
+
+### 3. 除權息計算系統
+
+#### 3.1 🆕 統一除權息處理服務 (v1.0.2.0364)
+```typescript
+// 所有配股配息處理統一使用 RightsEventService
+class RightsEventService {
+  static async processStockRightsEvents(
+    stockRecord: StockRecord,
+    onProgress?: (message: string) => void,
+    forceRecalculate: boolean = false
+  ): Promise<StockRecord> {
+    // 1. 獲取 API 除權息資料（FinMind API）
+    // 2. 按時間排序（從舊到新）
+    // 3. 累積計算配股
+    // 4. 更新股票記錄
+  }
+}
+
+// 所有入口都使用此服務：
+// ├── 新增股票時：autoUpdateDividends → RightsEventService
+// ├── 個股更新：RightsEventManager → RightsEventService  
+// ├── 批量更新：updateAllStockPrices → RightsEventService
+// └── 手動更新：用戶點擊 → RightsEventService
+```
+
+#### 3.2 除權息記錄結構
+```typescript
+interface DividendRecord {
+  id: string;                    // 唯一識別碼
+  stockId: string;               // 關聯股票記錄ID
+  symbol: string;                // 股票代碼
+  exDividendDate: Date;          // 除權息日期
+  cashDividendPerShare: number;  // 每股現金股利
+  totalCashDividend: number;     // 總現金股利金額
+  stockDividendRatio: number;    // 配股比例 (每1000股配X股)
+  stockDividendShares: number;   // 配得股數
+  sharesBeforeRight: number;     // 除權息前持股數
+  sharesAfterRight: number;      // 除權息後持股數
+  costPriceBeforeRight: number;  // 除權息前成本價
+  costPriceAfterRight: number;   // 除權息後調整成本價
+  recordDate?: Date;             // 停止過戶日
+  paymentDate?: Date;            // 發放日
+  type: 'cash' | 'stock' | 'both'; // 除權息類型
+}
+```
+
+#### 3.3 除權息模式切換
+- **不含權息模式** (`excluding_rights`): 顯示原始成本價和損益
+- **含權息模式** (`including_rights`): 顯示調整後成本價和損益
 
 ### 2. Stock List 系統 (股票清單管理)
 
@@ -268,14 +394,50 @@ interface StockListData {
 }
 ```
 
-#### 2.2 Stock List 工作機制
+#### 2.2 🆕 Stock List 統一管理機制 (v1.0.2.0364)
+
+##### 問題修復
+- **本機端檔案被刪除問題**: 統一使用 `public/stock_list.json`
+- **資料過舊問題**: 更新到最新 1/29 資料（4056支股票，比之前多1支）
+- **503 錯誤干擾**: 本機環境完全跳過後端檢查，直接使用前端檔案
+
+##### 統一管理策略
+```typescript
+// StockListService 統一管理邏輯
+class StockListService {
+  async loadStockList(): Promise<StockListData | null> {
+    // 本機環境：直接使用前端檔案，跳過後端檢查
+    if (window.location.hostname === 'localhost') {
+      return await this.loadFromFrontend();
+    }
+    
+    // 雲端環境：正常的後端檢查流程
+    return await this.loadWithBackendCheck();
+  }
+  
+  private async loadFromFrontend(): Promise<StockListData | null> {
+    try {
+      const response = await fetch('/stock_list.json');
+      if (response.ok) {
+        const data = await response.json();
+        logger.info('stock', `✅ 載入 Stock List: ${data.count} 支股票 (${data.date})`);
+        return data;
+      }
+    } catch (error) {
+      logger.error('stock', 'Stock List 載入失敗', error);
+    }
+    return null;
+  }
+}
+```
 
 ##### 資料來源與更新
 ```
 資料來源: FinMind API (TaiwanStockInfo 資料集)
-更新頻率: 每日自動更新
-檔案位置: public/stock_list_YYYY-MM-DD.json
-當前檔案: stock_list_2026-01-26.json (4054支股票)
+更新頻率: 每日自動更新 (GitHub Actions UTC 22:00)
+檔案位置: public/stock_list.json (統一檔案)
+當前資料: 2026-01-29 (4056支股票)
+自動化: GitHub Actions + Python 腳本
 ```
 
 ##### 自動更新機制

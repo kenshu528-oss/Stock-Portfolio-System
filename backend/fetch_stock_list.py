@@ -24,6 +24,8 @@ else:
 if not MY_TOKEN:
     print("❌ 找不到 FINMIND_TOKEN，請設定環境變數或檢查腳本設定")
     sys.exit(1)
+else:
+    print(f"🔑 Token 長度: {len(MY_TOKEN)} 字元")
 
 def get_today_filename():
     """獲取今日的檔案名稱"""
@@ -49,14 +51,19 @@ def fetch_stock_list():
         api = DataLoader()
         
         # 2. 設定 Token（新版本用法）
+        print("🔐 正在驗證 FinMind Token...")
         api.login_by_token(api_token=MY_TOKEN)
+        print("✅ Token 驗證成功")
         
         # 3. 取得全台灣股票資訊
+        print("📡 正在下載股票資訊...")
         df = api.taiwan_stock_info()
         
         if df.empty:
-            print("抓取失敗，資料為空")
+            print("❌ 抓取失敗，資料為空")
             return False
+        
+        print(f"📊 成功下載 {len(df)} 筆股票資料")
         
         # 4. 建立股票資料結構
         stock_data = {
@@ -67,6 +74,7 @@ def fetch_stock_list():
         }
         
         # 5. 轉換為字典格式 { "代號": {"name": "中文名稱", "industry": "產業別"} }
+        print("🔄 正在處理股票資料...")
         for _, row in df.iterrows():
             stock_data['stocks'][row['stock_id']] = {
                 'name': row['stock_name'],
@@ -76,14 +84,15 @@ def fetch_stock_list():
         
         # 6. 儲存為 JSON 檔案
         filename = get_today_filename()
+        print(f"💾 正在儲存檔案: {filename}")
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(stock_data, f, ensure_ascii=False, indent=2)
         
-        print(f"下載成功！總共抓取 {len(df)} 支標的。")
-        print(f"檔案已存為: {filename}")
+        print(f"✅ 下載成功！總共抓取 {len(df)} 支標的。")
+        print(f"📁 檔案已存為: {filename}")
         
         # 7. 預覽前 5 筆資料
-        print("\n資料預覽：")
+        print("\n📋 資料預覽：")
         for i, (stock_id, stock_info) in enumerate(stock_data['stocks'].items()):
             if i >= 5:
                 break
@@ -95,7 +104,10 @@ def fetch_stock_list():
         return True
         
     except Exception as e:
-        print(f"抓取失敗: {str(e)}")
+        print(f"❌ 抓取失敗: {str(e)}")
+        print(f"🔍 錯誤類型: {type(e).__name__}")
+        import traceback
+        print(f"📋 詳細錯誤: {traceback.format_exc()}")
         return False
 
 def cleanup_old_files():

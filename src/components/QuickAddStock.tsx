@@ -836,14 +836,7 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                 </div>
               ))}
               
-              {/* 搜尋提示 */}
-              {searchResults.some(stock => stock.source === '多個結果') && (
-                <div className="p-2 bg-slate-800 border-t border-slate-600">
-                  <p className="text-xs text-slate-400 text-center">
-                    💡 點擊股票獲取即時股價
-                  </p>
-                </div>
-              )}
+              {/* 移除搜尋提示 - 根據用戶需求，不需要紅框提示詞 */}
             </div>
           )}
           

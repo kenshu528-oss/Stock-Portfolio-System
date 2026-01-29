@@ -51,12 +51,23 @@ jobs:
         if [ -z "$FINMIND_TOKEN" ]; then
           echo "⚠️ 找不到 FINMIND_TOKEN secret，使用腳本內建的 Token"
           echo "💡 如需使用自定義 Token，請在 GitHub 倉庫設定中添加 FINMIND_TOKEN secret"
+          echo "🔧 腳本會自動使用內建的 Token，無需擔心"
         else
           echo "✅ 使用 GitHub secret 中的 FINMIND_TOKEN"
         fi
         
         # 執行股票清單抓取腳本（強制更新）
-        python backend/fetch_stock_list.py --force
+        echo "🚀 開始執行股票清單更新..."
+        cd backend
+        python fetch_stock_list.py --force
+        
+        # 檢查腳本執行結果
+        if [ $? -eq 0 ]; then
+          echo "✅ 股票清單抓取成功"
+        else
+          echo "❌ 股票清單抓取失敗"
+          exit 1
+        fi
         
     - name: Check and copy stock list
       if: env.SKIP_UPDATE != 'true'
@@ -65,9 +76,13 @@ jobs:
         TODAY=$(date +%Y-%m-%d)
         
         echo "🔍 檢查今日股票清單檔案..."
+        echo "當前目錄: $(pwd)"
+        echo "backend 目錄內容:"
+        ls -la backend/ || echo "backend 目錄不存在"
+        echo "根目錄股票清單檔案:"
         ls -la stock_list_*.json || echo "沒有找到股票清單檔案"
         
-        # 尋找今日的股票清單檔案
+        # 尋找今日的股票清單檔案（優先從根目錄）
         if [ -f "stock_list_$TODAY.json" ]; then
           cp "stock_list_$TODAY.json" public/stock_list.json
           cp "stock_list_$TODAY.json" "public/stock_list_$TODAY.json"
@@ -76,10 +91,18 @@ jobs:
           # 顯示統計資訊
           STOCK_COUNT=$(jq '.count' public/stock_list.json)
           echo "📊 股票總數: $STOCK_COUNT"
+        elif [ -f "backend/stock_list_$TODAY.json" ]; then
+          cp "backend/stock_list_$TODAY.json" public/stock_list.json
+          cp "backend/stock_list_$TODAY.json" "public/stock_list_$TODAY.json"
+          echo "✅ 從 backend 目錄複製股票清單: stock_list_$TODAY.json"
+          
+          # 顯示統計資訊
+          STOCK_COUNT=$(jq '.count' public/stock_list.json)
+          echo "📊 股票總數: $STOCK_COUNT"
         else
           echo "❌ 找不到今日股票清單: stock_list_$TODAY.json"
           echo "📋 可用的檔案:"
-          ls -la stock_list_*.json || echo "沒有股票清單檔案"
+          find . -name "stock_list_*.json" -type f || echo "沒有股票清單檔案"
           exit 1
         fi
         
