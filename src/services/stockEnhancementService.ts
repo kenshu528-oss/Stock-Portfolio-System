@@ -23,13 +23,10 @@ export async function enhanceStockRecord(stock: StockRecord): Promise<StockRecor
       transactionTaxRate: bondInfo.transactionTaxRate,
     };
     
-    // 3. 自動計算股息（疊加功能，不影響原有邏輯）
-    if (shouldUpdateDividends(enhancedStock)) {
-      console.log(`${stock.symbol} 需要更新股息，開始自動計算...`);
-      enhancedStock = await autoUpdateDividends(enhancedStock);
-    } else {
-      console.log(`${stock.symbol} 股息資料已是最新，跳過更新`);
-    }
+    // 3. 自動計算配股配息（疊加功能，不影響原有邏輯）
+    // ✅ 對於新增股票，總是執行配股配息處理
+    console.log(`${stock.symbol} 新增股票，開始自動計算配股配息...`);
+    enhancedStock = await autoUpdateDividends(enhancedStock);
     
     console.log(`股票記錄增強完成: ${stock.symbol}`, {
       isBondETF: enhancedStock.isBondETF,

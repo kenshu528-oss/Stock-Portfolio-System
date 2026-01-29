@@ -103,45 +103,14 @@ class UnifiedStockListService implements StockListService {
 
   /**
    * 本機環境載入策略
-   * 遵循 v1.0.2.0266 的邏輯：優先後端 API，備用前端檔案
+   * 🔧 優化：直接使用前端檔案，避免 503 錯誤
    */
   private async loadFromDevelopment(): Promise<StockListData | null> {
-    logger.debug('stock', '本機環境載入策略');
+    logger.debug('stock', '本機環境載入策略：直接使用前端檔案');
 
-    // 策略 1：嘗試後端 API (與 v1.0.2.0266 相同)
-    try {
-      // 🔧 使用與 v1.0.2.0266 相同的後端檢查邏輯
-      const backendUrl = 'http://localhost:3001/api/stock-search?query=test';
-      const response = await fetch(backendUrl, {
-        method: 'HEAD',
-        signal: AbortSignal.timeout(3000) // 3秒超時
-      });
-
-      if (response.ok) {
-        // 後端可用，嘗試獲取股票清單
-        try {
-          const listUrl = 'http://localhost:3001/api/stock-list';
-          const listResponse = await fetch(listUrl, {
-            signal: AbortSignal.timeout(5000)
-          });
-          
-          if (listResponse.ok) {
-            const data = await listResponse.json();
-            if (this.validateStockListData(data)) {
-              logger.debug('stock', '後端 API 載入成功', { count: data.count });
-              return data;
-            }
-          }
-        } catch (listError) {
-          logger.debug('stock', '後端股票清單 API 不可用', listError);
-        }
-      }
-    } catch (error) {
-      logger.debug('stock', '後端 API 不可用，使用備用方案', error);
-    }
-
-    // 策略 2：備用 - 前端檔案 (與 v1.0.2.0266 相同)
-    logger.debug('stock', '使用前端檔案作為備用方案');
+    // 🔧 本機環境優化：直接使用前端檔案，跳過後端檢查
+    // 避免 503 Service Unavailable 錯誤干擾開發體驗
+    logger.debug('stock', '跳過後端檢查，直接使用前端檔案');
     return await this.loadFromFile();
   }
 
@@ -451,12 +420,6 @@ class UnifiedStockListService implements StockListService {
     return `${symbol}.TW`;
   }
 
-  /**
-   * 獲取快取的資料（供其他服務使用）
-   */
-  getCachedData(): StockListData | null {
-    return this.cachedData;
-  }
   /**
    * 獲取快取的資料（供其他服務使用）
    */

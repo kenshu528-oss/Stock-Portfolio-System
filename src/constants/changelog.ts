@@ -12,6 +12,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0364',
+    date: '2026-01-29',
+    type: 'hotfix',
+    title: '修復新增股票配股配息處理：統一使用RightsEventService，確保新增股票自動處理配股配息',
+    description: '修復新增股票時沒有帶入配股配息的問題。根本原因：dividendAutoService使用自己的簡化邏輯而非統一的RightsEventService，且stockEnhancementService中的shouldUpdateDividends檢查可能跳過新股票的配股配息處理。修復：1) dividendAutoService統一調用RightsEventService.processStockRightsEvents，2) 新增股票總是執行配股配息處理，3) 修復QuickAddStock的"點擊獲取即時股價"提示詞，4) 統一Stock List管理，更新到最新1/29資料。遵循rights-calculation.md規範，確保所有配股配息處理都使用同一個服務。',
+    changes: [
+      '🔧 修復dividendAutoService：統一使用RightsEventService.processStockRightsEvents',
+      '🔧 修復stockEnhancementService：新增股票總是執行配股配息處理',
+      '🔧 移除重複邏輯：刪除dividendAutoService中的自定義配股配息計算',
+      '🔧 修復QuickAddStock：移除"點擊獲取即時股價"提示，改為"多個結果"',
+      '📋 統一Stock List管理：只使用public/stock_list.json，移除重複檔案',
+      '📅 更新Stock List：從1/27更新到1/29最新資料（4056支股票）',
+      '🛠️ 新增update_stock_list.bat：統一的股票清單更新工具',
+      '✅ 遵循rights-calculation.md：統一使用RightsEventService處理所有配股配息',
+      '📝 添加logger系統：使用結構化日誌記錄配股配息處理過程',
+      '🚨 確保新增股票配股配息：不依賴shouldUpdateDividends檢查結果'
+    ],
+    fixes: [
+      '修復新增股票沒有帶入配股配息的問題',
+      '修復dividendAutoService邏輯不一致問題',
+      '修復QuickAddStock提示詞錯誤',
+      '統一所有配股配息處理邏輯使用RightsEventService',
+      '統一Stock List檔案管理，避免多個位置造成混亂',
+      '更新Stock List到最新資料，確保搜尋功能正常'
+    ]
+  },
+  {
     version: '1.0.2.0363',
     date: '2026-01-29',
     type: 'hotfix',

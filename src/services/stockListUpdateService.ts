@@ -30,26 +30,44 @@ class StockListUpdateService {
     try {
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       
-      // 強制輸出重要的調試信息
-      console.log('🔍 [stock] 檢查股票清單新鮮度開始', { today });
+      // 檢查股票清單新鮮度
+      logger.debug('stock', '檢查股票清單新鮮度開始', { today });
 
-      // 主要檢查後端是否載入了今日的股票清單
+      // 🔧 本機環境優化：直接檢查前端檔案，跳過後端檢查
+      const isLocalhost = window.location.hostname === 'localhost' || 
+                         window.location.hostname === '127.0.0.1';
+      
       let backendStatus;
-      try {
-        console.log('🔍 [stock] 準備調用 checkBackendStockList');
-        backendStatus = await this.checkBackendStockList();
-        console.log('🔍 [stock] checkBackendStockList 完成', backendStatus);
-      } catch (backendError) {
-        console.error('❌ [stock] checkBackendStockList 失敗', {
-          error: backendError instanceof Error ? backendError.message : String(backendError),
-          stack: backendError instanceof Error ? backendError.stack : undefined
-        });
-        backendStatus = { isToday: false };
+      if (isLocalhost) {
+        // 本機環境：直接檢查前端檔案，避免 503 錯誤
+        logger.debug('stock', '本機環境，跳過後端檢查，直接檢查前端檔案');
+        try {
+          const stockListData = await stockListService.loadStockList();
+          const isToday = stockListData?.date === today;
+          backendStatus = { isToday, date: stockListData?.date };
+          logger.debug('stock', '前端檔案檢查結果', backendStatus);
+        } catch (error) {
+          logger.debug('stock', '前端檔案檢查失敗', error);
+          backendStatus = { isToday: false };
+        }
+      } else {
+        // 雲端環境：檢查後端
+        try {
+          logger.debug('stock', '雲端環境，檢查後端');
+          backendStatus = await this.checkBackendStockList();
+          logger.debug('stock', 'checkBackendStockList 完成', backendStatus);
+        } catch (backendError) {
+          logger.error('stock', 'checkBackendStockList 失敗', {
+            error: backendError instanceof Error ? backendError.message : String(backendError),
+            stack: backendError instanceof Error ? backendError.stack : undefined
+          });
+          backendStatus = { isToday: false };
+        }
       }
       
       const needsUpdate = !backendStatus.isToday;
       
-      console.log('🔍 [stock] 股票清單檢查結果', {
+      logger.debug('stock', '股票清單檢查結果', {
         backendStatus,
         needsUpdate,
         today
@@ -131,7 +149,7 @@ class StockListUpdateService {
       try {
         const backendUrl = 'http://localhost:3001/api/stock-list';
         
-        console.log('🌐 [stock] 準備檢查後端 API', { url: backendUrl });
+        logger.debug('stock', '準備檢查後端 API', { url: backendUrl });
         
         // 🔧 修復：使用兼容性更好的超時處理
         const controller = new AbortController();
@@ -147,7 +165,7 @@ class StockListUpdateService {
         
         clearTimeout(timeoutId);
         
-        console.log('🌐 [stock] 後端 API HEAD 請求回應', { 
+        logger.debug('stock', '後端 API HEAD 請求回應', { 
           status: response.status,
           statusText: response.statusText,
           ok: response.ok,
@@ -161,7 +179,7 @@ class StockListUpdateService {
           const isToday = response.headers.get('X-Stock-List-Is-Today') === 'true';
           const today = new Date().toISOString().split('T')[0];
           
-          console.log('✅ [stock] 後端 API 檢查結果', { 
+          logger.debug('stock', '後端 API 檢查結果', { 
             stockListDate, 
             today,
             isToday,
@@ -173,16 +191,24 @@ class StockListUpdateService {
             date: stockListDate || undefined
           };
         } else {
-          console.warn('⚠️ [stock] 後端 API 檢查失敗', { 
-            status: response.status,
-            statusText: response.statusText 
-          });
+          // 503 是正常情況（後端服務未啟動），使用 debug 等級
+          if (response.status === 503) {
+            logger.debug('stock', '後端服務未啟動，使用前端檔案', { 
+              status: response.status,
+              statusText: response.statusText 
+            });
+          } else {
+            logger.warn('stock', '後端 API 檢查失敗', { 
+              status: response.status,
+              statusText: response.statusText 
+            });
+          }
         }
       } catch (error) {
         if (error.name === 'AbortError') {
-          console.warn('⏰ [stock] 後端 API 檢查超時（8秒）');
+          logger.debug('stock', '後端 API 檢查超時（8秒）');
         } else {
-          console.error('❌ [stock] 後端 API 檢查失敗 - 詳細錯誤', {
+          logger.error('stock', '後端 API 檢查失敗 - 詳細錯誤', {
             errorName: error.name,
             errorMessage: error instanceof Error ? error.message : String(error),
             errorStack: error instanceof Error ? error.stack : undefined,

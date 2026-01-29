@@ -1,180 +1,48 @@
 // 股息自動計算服務
 // 遵循 api-data-integrity.md：使用真實API資料，不提供虛假預設資料
+// 遵循 rights-calculation.md：統一使用 RightsEventService 處理配股配息
 
-import type { StockRecord, DividendRecord } from '../types';
-import { API_ENDPOINTS, shouldUseBackendProxy } from '../config/api';
-
-export interface DividendAPIResponse {
-  symbol: string;
-  dividends: Array<{
-    exDate: string;        // 除息日
-    payDate?: string;      // 發放日
-    amount: number;        // 每股股息
-    type: 'cash' | 'stock' | 'mixed'; // 股息類型
-    year: number;          // 年度
-    quarter?: number;      // 季度（如果是季配息）
-  }>;
-}
-
-/**
- * 從API獲取股息資料
- * 遵循 api-data-integrity.md：真實資料優先，API失敗時不提供虛假資料
- */
-async function fetchDividendData(symbol: string): Promise<DividendAPIResponse | null> {
-  try {
-    // 🔧 遵循 api-standards.md：檢查環境，GitHub Pages 下使用 DividendApiService
-    if (!shouldUseBackendProxy()) {
-      console.log(`🔧 [DEBUG] dividendAutoService GitHub Pages 環境，使用 DividendApiService: ${symbol}`);
-      
-      // 在 GitHub Pages 環境下，使用 DividendApiService
-      const { DividendApiService } = await import('./dividendApiService');
-      const dividendRecords = await DividendApiService.getDividendData(symbol);
-      
-      if (dividendRecords.length === 0) {
-        return null;
-      }
-      
-      // 轉換為 DividendAPIResponse 格式
-      const dividends = dividendRecords.map(record => ({
-        exDividendDate: record.exDividendDate,
-        cashDividendPerShare: record.dividendPerShare || record.cashDividendPerShare || 0,
-        stockDividendRatio: record.stockDividendRatio || 0,
-        recordDate: record.recordDate,
-        paymentDate: record.paymentDate
-      }));
-      
-      return { dividends };
-    }
-    
-    // 開發環境：使用後端API
-    console.log(`🔧 [DEBUG] dividendAutoService 開發環境，使用後端 API: ${symbol}`);
-    const response = await fetch(API_ENDPOINTS.getDividend(symbol));
-    
-    if (!response.ok) {
-      // 404 是正常情況（股票無股息資料），不需要警告
-      if (response.status !== 404) {
-        console.warn(`股息API回應錯誤: ${response.status} for ${symbol}`);
-      }
-      return null;
-    }
-    
-    const data = await response.json();
-    
-    // 驗證API回應格式
-    if (!data || !Array.isArray(data.dividends)) {
-      console.warn(`股息API回應格式錯誤 for ${symbol}:`, data);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error(`獲取股息資料失敗 for ${symbol}:`, error);
-    return null;
-  }
-}
-
-/**
- * 計算股票的歷史股息記錄
- * @param stock 股票記錄
- * @param purchaseDate 購買日期
- * @returns 符合條件的股息記錄陣列
- */
-export async function calculateHistoricalDividends(
-  stock: StockRecord, 
-  purchaseDate: Date
-): Promise<DividendRecord[]> {
-  try {
-    // 使用 DEBUG 等級，避免過多日誌
-    // console.log(`開始計算 ${stock.symbol} 的歷史股息...`);
-    
-    // 從API獲取股息資料
-    const dividendData = await fetchDividendData(stock.symbol);
-    
-    if (!dividendData || dividendData.dividends.length === 0) {
-      // 使用 DEBUG 等級，避免過多日誌
-      // console.log(`${stock.symbol} 無股息資料或API無回應`);
-      return [];
-    }
-    
-    const purchaseDateObj = new Date(purchaseDate);
-    const validDividends: DividendRecord[] = [];
-    
-    // 篩選購買日期之後的股息
-    for (const dividend of dividendData.dividends) {
-      const exDateObj = new Date(dividend.exDate);
-      
-      // 只計算購買日期之後的除息
-      if (exDateObj > purchaseDateObj) {
-        const dividendRecord: DividendRecord = {
-          id: `${stock.symbol}-${dividend.exDate}`,
-          stockId: stock.id,
-          symbol: stock.symbol,
-          exDividendDate: new Date(dividend.exDate),
-          dividendPerShare: dividend.amount,
-          totalDividend: dividend.amount * stock.shares,
-          shares: stock.shares
-        };
-        
-        validDividends.push(dividendRecord);
-      }
-    }
-    
-    // 使用 DEBUG 等級，避免過多日誌
-    // console.log(`${stock.symbol} 找到 ${validDividends.length} 筆有效股息記錄`);
-    return validDividends.sort((a, b) => new Date(a.exDividendDate).getTime() - new Date(b.exDividendDate).getTime());
-    
-  } catch (error) {
-    console.error(`計算 ${stock.symbol} 股息時發生錯誤:`, error);
-    return [];
-  }
-}
+import type { StockRecord } from '../types';
+import { RightsEventService } from './rightsEventService';
+import { logger } from '../utils/logger';
 
 /**
  * 自動更新股票的股息記錄
+ * 遵循 rights-calculation.md：統一使用 RightsEventService.processStockRightsEvents
  * @param stock 股票記錄
  * @returns 更新後的股票記錄
  */
 export async function autoUpdateDividends(stock: StockRecord): Promise<StockRecord> {
   try {
-    // 計算歷史股息
-    const dividends = await calculateHistoricalDividends(stock, stock.purchaseDate);
+    logger.info('dividend', `開始自動更新 ${stock.symbol} 的配股配息資料`);
     
-    // 計算調整後成本價（成本價 - 累積每股股息）
-    let adjustedCostPrice = stock.costPrice;
-    if (dividends.length > 0) {
-      const totalDividendPerShare = dividends.reduce(
-        (sum, dividend) => sum + dividend.dividendPerShare, 
-        0
-      );
-      adjustedCostPrice = Math.max(stock.costPrice - totalDividendPerShare, 0);
-      
-      console.log(`${stock.symbol} 調整後成本價計算:`, {
-        原始成本: stock.costPrice,
-        累積股息: totalDividendPerShare,
-        調整後成本: adjustedCostPrice
-      });
-    }
+    // ✅ 遵循 rights-calculation.md：統一使用 RightsEventService
+    // 使用 forceRecalculate=false 進行增量更新（新增股票時的預設行為）
+    const updatedStock = await RightsEventService.processStockRightsEvents(
+      stock,
+      (message) => {
+        logger.debug('dividend', `${stock.symbol} 處理進度: ${message}`);
+      },
+      false // 增量更新，不強制重新計算
+    );
     
-    // 更新股票記錄
-    const updatedStock: StockRecord = {
-      ...stock,
-      dividendRecords: dividends,
-      adjustedCostPrice: adjustedCostPrice,
-      lastDividendUpdate: new Date().toISOString()
-    };
+    logger.success('dividend', `${stock.symbol} 配股配息資料更新完成`, {
+      配股配息記錄: updatedStock.dividendRecords?.length || 0,
+      最終持股數: updatedStock.shares,
+      調整後成本價: updatedStock.adjustedCostPrice
+    });
     
-    // 使用 DEBUG 等級，避免過多日誌
-    // console.log(`${stock.symbol} 股息記錄已更新，共 ${dividends.length} 筆`);
     return updatedStock;
     
   } catch (error) {
-    console.error(`自動更新 ${stock.symbol} 股息失敗:`, error);
+    logger.error('dividend', `自動更新 ${stock.symbol} 配股配息失敗`, error);
     return stock; // 返回原始記錄，不影響其他功能
   }
 }
 
 /**
  * 批量更新多支股票的股息記錄
+ * 遵循 rights-calculation.md：統一使用 RightsEventService.processStockRightsEvents
  * @param stocks 股票記錄陣列
  * @param onProgress 進度回調函數
  * @returns 更新後的股票記錄陣列
@@ -194,7 +62,15 @@ export async function batchUpdateDividends(
     }
     
     try {
-      const updatedStock = await autoUpdateDividends(stock);
+      // ✅ 遵循 rights-calculation.md：統一使用 RightsEventService
+      const updatedStock = await RightsEventService.processStockRightsEvents(
+        stock,
+        (message) => {
+          logger.debug('dividend', `${stock.symbol} 批量處理: ${message}`);
+        },
+        false // 批量更新使用增量更新
+      );
+      
       updatedStocks.push(updatedStock);
       
       // 避免API請求過於頻繁
@@ -202,7 +78,7 @@ export async function batchUpdateDividends(
         await new Promise(resolve => setTimeout(resolve, 500));
       }
     } catch (error) {
-      console.error(`批量更新 ${stock.symbol} 股息失敗:`, error);
+      logger.error('dividend', `批量更新 ${stock.symbol} 配股配息失敗`, error);
       updatedStocks.push(stock); // 保留原始記錄
     }
   }

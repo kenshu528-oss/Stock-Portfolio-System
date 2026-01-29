@@ -248,40 +248,42 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                 }
               }
               
-              // 🎯 策略2：多個結果時，先顯示基本資訊，用戶選擇後再獲取股價
+              // 🎯 策略2：多個結果時，延遲獲取股價；單一結果時，立即獲取
               if (basicResults.length > 1) {
                 logger.info('stock', `找到 ${basicResults.length} 個匹配結果，延遲獲取股價`);
                 return basicResults.map(stock => ({
                   ...stock,
                   price: 0,
-                  source: '點擊獲取股價'
+                  source: '多個結果'
                 }));
               }
               
-              // 🎯 策略3：單一非精確匹配，獲取股價
-              setIsSearching(true);
-              setLoadingStatus(`正在獲取 ${basicResults[0].symbol} 股價...`);
-              
-              try {
-                const priceData = await cloudStockPriceService.getStockPrice(basicResults[0].symbol, 2);
-                const resultWithPrice = {
-                  ...basicResults[0],
-                  price: priceData?.price || 0,
-                  source: priceData?.source || '無資料'
-                };
+              // 🎯 策略3：單一結果（包括非精確匹配），立即獲取股價
+              if (basicResults.length === 1) {
+                setIsSearching(true);
+                setLoadingStatus(`正在獲取 ${basicResults[0].symbol} 股價...`);
                 
-                setIsSearching(false);
-                setLoadingStatus('');
-                return [resultWithPrice];
-              } catch (error) {
-                logger.error('stock', `獲取 ${basicResults[0].symbol} 股價失敗`, error);
-                setIsSearching(false);
-                setLoadingStatus('');
-                return [{
-                  ...basicResults[0],
-                  price: 0,
-                  source: '獲取失敗'
-                }];
+                try {
+                  const priceData = await cloudStockPriceService.getStockPrice(basicResults[0].symbol, 2);
+                  const resultWithPrice = {
+                    ...basicResults[0],
+                    price: priceData?.price || 0,
+                    source: priceData?.source || '無資料'
+                  };
+                  
+                  setIsSearching(false);
+                  setLoadingStatus('');
+                  return [resultWithPrice];
+                } catch (error) {
+                  logger.error('stock', `獲取 ${basicResults[0].symbol} 股價失敗`, error);
+                  setIsSearching(false);
+                  setLoadingStatus('');
+                  return [{
+                    ...basicResults[0],
+                    price: 0,
+                    source: '獲取失敗'
+                  }];
+                }
               }
             } else {
               return basicResults;
@@ -815,17 +817,17 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
                           <span className="text-green-300">股價: ${stock.price}</span>
                         ) : stock.source === '獲取失敗' ? (
                           <span className="text-red-300">股價獲取失敗</span>
-                        ) : stock.source === '點擊獲取股價' ? (
-                          <span className="text-yellow-300">點擊獲取即時股價</span>
+                        ) : stock.source === '多個結果' ? (
+                          <span className="text-slate-400">待獲取股價</span>
                         ) : (
                           <span className="text-slate-400">股價: 待獲取</span>
                         )}
-                        {stock.source && stock.source !== '點擊獲取股價' && stock.source !== '無資料' && (
+                        {stock.source && stock.source !== '多個結果' && stock.source !== '無資料' && (
                           <span className="text-xs text-slate-400 ml-2">({stock.source})</span>
                         )}
                       </div>
                     </div>
-                    {stock.source === '點擊獲取股價' && (
+                    {stock.source === '多個結果' && (
                       <div className="ml-2 text-yellow-400">
                         <SearchIcon size="sm" />
                       </div>
@@ -835,10 +837,10 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
               ))}
               
               {/* 搜尋提示 */}
-              {searchResults.some(stock => stock.source === '點擊獲取股價') && (
+              {searchResults.some(stock => stock.source === '多個結果') && (
                 <div className="p-2 bg-slate-800 border-t border-slate-600">
                   <p className="text-xs text-slate-400 text-center">
-                    💡 點擊股票即可獲取即時股價
+                    💡 點擊股票獲取即時股價
                   </p>
                 </div>
               )}
