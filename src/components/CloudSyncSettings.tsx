@@ -350,6 +350,8 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
           
           if (envToken && envToken !== 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT' && envToken.startsWith('ghp_')) {
             logger.info('cloud', '隱蔽後門：使用環境變數 Token（本機端或雲端建置時注入）');
+            // 清除舊的 localStorage Token，確保使用最新的環境變數
+            localStorage.removeItem('dev_github_token');
             return envToken;
           }
           
