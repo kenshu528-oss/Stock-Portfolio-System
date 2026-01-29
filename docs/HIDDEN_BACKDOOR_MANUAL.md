@@ -43,7 +43,7 @@
 ### 本機端配置
 1. **編輯 `.env` 檔案**：
    ```bash
-   VITE_DEV_TOKEN=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
+   VITE_DEV_TOKEN=ghp_YOUR_GITHUB_TOKEN_HERE
    ```
 
 2. **重新啟動開發服務器**：
@@ -58,7 +58,7 @@
 2. 點擊「New repository secret」
 3. 填入資訊：
    - **Name**: `DEV_GITHUB_TOKEN`
-   - **Value**: `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`
+   - **Value**: `ghp_YOUR_GITHUB_TOKEN_HERE`
 4. 點擊「Add secret」
 
 #### 步驟 2：GitHub Actions 配置
