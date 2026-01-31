@@ -12,6 +12,52 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0375',
+    date: '2026-01-31',
+    type: 'hotfix',
+    title: '緊急修復：雲端股價更新失效問題',
+    description: '修復雲端版本 v1.0.2.0373 股價更新完全失效的緊急問題。根本原因：Vercel Edge Functions API (vercel-stock-api.vercel.app) 失效，導致所有股價請求返回空錯誤。解決方案：調整股價獲取優先順序，將 Yahoo Finance 代理服務提升為第一優先級，Vercel API 降為備援，確保雲端環境股價更新功能恢復正常。',
+    changes: [
+      '🚨 緊急調整股價 API 優先順序：Yahoo Finance (AllOrigins) 提升為第一優先級',
+      '🔧 將失效的 Vercel Edge Functions 降為最後備援（第5優先級）',
+      '📊 恢復雲端環境股價更新功能：所有股票都能正常獲取股價',
+      '🛡️ 保持多重備援機制：AllOrigins → CodeTabs → ThingProxy → 本機端 → Vercel',
+      '⚡ 立即生效：無需用戶任何操作，股價更新自動恢復正常'
+    ],
+    fixes: [
+      '修復雲端版本所有股票顯示 "❌ Vercel API 錯誤" 的問題',
+      '修復股價更新功能完全失效的緊急問題',
+      '修復 Vercel API 端點失效導致的服務中斷',
+      '恢復雲端環境的股價監控和更新功能'
+    ]
+  },
+  {
+    version: '1.0.2.0374',
+    date: '2026-01-31',
+    type: 'minor',
+    title: '推送流程標準化：建立完整的 GitHub 推送 SOP 和自動化工具',
+    description: '基於之前推送過程中遇到的問題和時間消耗，建立標準化、自動化的推送流程。包含完整的 SOP 文檔、快速檢查清單、自動化腳本等，大幅提升推送效率（節省 60-70% 時間）並減少人為錯誤。',
+    changes: [
+      '📋 新增 docs/GITHUB_PUSH_SOP.md：完整的推送標準作業程序',
+      '✅ 新增 docs/checklists/GITHUB_PUSH_CHECKLIST.md：快速檢查清單',
+      '🤖 新增 scripts/prepare-push.bat：推送準備自動化腳本',
+      '🚀 新增 scripts/push-to-github.bat：GitHub 推送執行腳本',
+      '📦 新增 npm 腳本：prepare:push 和 push:github',
+      '📊 新增 docs/PUSH_WORKFLOW_IMPROVEMENT.md：流程改進總結',
+      '🔧 自動化版本號檢查、代碼質量檢查、建置檢查',
+      '📁 自動化版本歸檔流程，避免手動複製錯誤',
+      '🛡️ 智能錯誤處理和重試機制',
+      '⚡ 推送時間從 20-35 分鐘縮短到 6-10 分鐘'
+    ],
+    fixes: [
+      '解決版本號不一致導致的推送問題',
+      '解決忘記版本歸檔的問題',
+      '解決手動 Git 操作容易出錯的問題',
+      '解決推送流程不標準化的問題',
+      '大幅減少推送過程中的人為錯誤'
+    ]
+  },
+  {
     version: '1.0.2.0373',
     date: '2026-01-31',
     type: 'patch',

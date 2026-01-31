@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 373, // 【中文回覆規範】新增 Chinese Response Requirement steering 規則，確保所有技術溝通使用專業中文
+  PATCH: 375, // 【緊急修復】雲端股價更新失效：Vercel API 失效，調整股價獲取優先順序，恢復雲端環境股價更新功能
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

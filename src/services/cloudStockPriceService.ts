@@ -96,38 +96,39 @@ class CloudStockPriceService {
 
   /**
    * 定義股價資料源（按優先順序）
+   * v1.0.2.0374 緊急修復：Vercel API 失效，調整優先順序
    */
   private getPriceSources(): PriceSource[] {
     return [
       {
-        name: 'Vercel Edge Functions',
-        priority: 1,
-        timeout: 8000,
-        fetcher: this.fetchFromVercel.bind(this)
-      },
-      {
         name: 'Yahoo Finance (AllOrigins)',
-        priority: 2,
+        priority: 1,
         timeout: 8000,
         fetcher: this.fetchFromYahooAllOrigins.bind(this)
       },
       {
         name: 'Yahoo Finance (CodeTabs)',
-        priority: 3,
+        priority: 2,
         timeout: 8000,
         fetcher: this.fetchFromYahooCodeTabs.bind(this)
       },
       {
         name: 'Yahoo Finance (ThingProxy)',
-        priority: 4,
+        priority: 3,
         timeout: 8000,
         fetcher: this.fetchFromYahooThingProxy.bind(this)
       },
       {
         name: 'Yahoo Finance (本機端)',
-        priority: 5,
+        priority: 4,
         timeout: 8000,
         fetcher: this.fetchFromYahooLocal.bind(this)
+      },
+      {
+        name: 'Vercel Edge Functions',
+        priority: 5,
+        timeout: 8000,
+        fetcher: this.fetchFromVercel.bind(this)
       }
     ];
   }
