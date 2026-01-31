@@ -26,40 +26,48 @@ class VercelStockPriceService {
    */
   async getStockPrice(symbol: string): Promise<StockPrice | null> {
     try {
-      const yahooSymbol = await this.getYahooSymbol(symbol);
-      const url = `${this.baseUrl}/stock?symbol=${encodeURIComponent(yahooSymbol)}`;
+      logger.info('stock', `Vercel API 請求: ${symbol}`);
       
-      logger.debug('stock', `Vercel API 請求 (雲端唯一解法): ${symbol} → ${yahooSymbol}`, { 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const url = `${this.baseUrl}/stock-price?symbol=${encodeURIComponent(symbol)}`;
+      
+      logger.debug('stock', `Vercel API 請求 (雲端唯一解法): ${symbol}`, { 
         url: this.baseUrl,
         fullUrl: url 
       });
       
       const response = await fetch(url, {
-        method: 'GET',
+        signal: controller.signal,
         headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Stock-Portfolio-System/1.0.2.0376'
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
         }
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error(`股票代碼 ${symbol} 不存在`);
+          logger.warn('stock', `股票不存在: ${symbol}`);
+          return null;
         }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
       
-      if (!data || typeof data.price !== 'number' || data.price <= 0) {
-        throw new Error('無效的股價資料');
+      if (!data.success || !data.price || data.price <= 0) {
+        logger.warn('stock', `無效股價數據: ${symbol}`, data);
+        return null;
       }
 
       logger.info('stock', `✅ Vercel API 獲取成功 (雲端唯一解法)`, { 
         symbol, 
         price: data.price,
-        actualSource: 'vercel-stock-api.vercel.app',
-        displaySource: 'Yahoo Finance'
+        source: data.source,
+        fullSymbol: data.fullSymbol
       });
 
       // 🔧 關鍵：返回 "Yahoo Finance" 而不是 "Vercel"，隱藏 Vercel 標註
@@ -72,12 +80,12 @@ class VercelStockPriceService {
       };
 
     } catch (error) {
-      const message = error instanceof Error ? error.message : '未知錯誤';
-      logger.error('stock', `❌ Vercel API 失敗 (雲端唯一解法): ${symbol}`, { 
-        error: message,
-        endpoint: this.baseUrl
-      });
-      throw error;
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.error('stock', `請求超時: ${symbol}`);
+      } else {
+        logger.error('stock', `API錯誤: ${symbol}`, error);
+      }
+      return null;
     }
   }
 
@@ -147,3 +155,4 @@ class VercelStockPriceService {
 // 導出單例
 export const vercelStockPriceService = new VercelStockPriceService();
 export default VercelStockPriceService;
+export { VercelStockPriceService };

@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0377',
+    date: '2026-01-31',
+    type: 'hotfix',
+    title: '緊急修復：恢復 Vercel Edge Functions API 正確端點',
+    description: '修復 v1.0.2.0376 中錯誤修改 Vercel API 端點導致的股價獲取失敗問題。根本原因：將正確的 stock-price 端點錯誤改為 stock 端點，並且移除了動態匯入導致模組載入失敗。修復：1) 恢復正確的 stock-price API 端點；2) 修復 vercelStockPriceService 匯入和調用方式；3) 恢復 v1.0.2.0371 的穩定配置。用戶確認 v1.0.2.0371 的 Vercel Edge Functions API 一直都沒問題，是我錯誤地修改導致問題。',
+    changes: [
+      '🔧 恢復正確的 Vercel API 端點：stock → stock-price',
+      '🔧 修復 vercelStockPriceService 匯入：移除錯誤的動態匯入',
+      '🔧 恢復正確的 API 調用方式：基於 v1.0.2.0371 的穩定配置',
+      '🔧 修復模組載入問題：確保 cloudStockPriceService 能正確調用 Vercel 服務',
+      '✅ 確認 Vercel Edge Functions 穩定性：用戶確認 v1.0.2.0371 一直都沒問題',
+      '🚫 承認錯誤診斷：不是 Vercel API 失效，是我錯誤修改導致問題'
+    ],
+    fixes: [
+      '修復 v1.0.2.0376 中錯誤的 API 端點修改',
+      '修復本機端開發環境的模組匯入錯誤',
+      '修復雲端股價獲取失敗問題',
+      '恢復 Vercel Edge Functions 作為穩定的股價來源'
+    ]
+  },
+  {
     version: '1.0.2.0376',
     date: '2026-01-31',
     type: 'hotfix',
