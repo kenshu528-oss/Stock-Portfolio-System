@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0376',
+    date: '2026-01-31',
+    type: 'hotfix',
+    title: '緊急修復：恢復 Vercel Edge Functions 為唯一股價來源',
+    description: '根據用戶反饋，v1.0.2.0371 的 Vercel Edge Functions API 一直都沒問題，是 v1.0.2.0375 錯誤地將其降級導致問題。雲端代理 API 不穩定甚至不能用，應該禁止使用。修復：恢復 Vercel Edge Functions 為第一且唯一優先級，移除所有不穩定的代理服務，增加超時時間到10秒，確保雲端環境股價更新穩定可靠。',
+    changes: [
+      '🔧 恢復 Vercel Edge Functions 為第一且唯一優先級',
+      '🚫 移除所有不穩定的 Yahoo Finance 代理服務（AllOrigins、CodeTabs、ThingProxy）',
+      '⏱️ 增加 Vercel API 超時時間：8秒 → 10秒，提高成功率',
+      '🛡️ 確保雲端環境只使用穩定的 Vercel Edge Functions',
+      '📊 恢復 v1.0.2.0371 的穩定配置，Vercel API 一直都沒問題',
+      '🔧 更新 User-Agent 版本號到 v1.0.2.0376'
+    ],
+    fixes: [
+      '修復 v1.0.2.0375 錯誤降級 Vercel API 導致的問題',
+      '禁用不穩定的代理 API，避免雲端股價獲取失敗',
+      '恢復雲端環境的穩定股價更新功能',
+      '確保 Vercel Edge Functions 作為雲端唯一解決方案'
+    ]
+  },
+  {
     version: '1.0.2.0375',
     date: '2026-01-31',
     type: 'hotfix',

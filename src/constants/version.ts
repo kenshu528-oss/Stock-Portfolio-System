@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 375, // 【緊急修復】雲端股價更新失效：Vercel API 失效，調整股價獲取優先順序，恢復雲端環境股價更新功能
+  PATCH: 376, // 【緊急修復】恢復 Vercel Edge Functions 為第一優先級：禁用不穩定的代理 API，Vercel 是雲端環境唯一穩定解決方案
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

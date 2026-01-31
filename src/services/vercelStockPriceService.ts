@@ -38,7 +38,7 @@ class VercelStockPriceService {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'Stock-Portfolio-System/1.0.2.0372'
+          'User-Agent': 'Stock-Portfolio-System/1.0.2.0376'
         }
       });
 
