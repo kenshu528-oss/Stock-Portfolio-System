@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vercel API 診斷測試</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Vercel Edge Functions API 診斷測試</h1>
+    
+    <div class="test-section">
+        <h2>📊 API 端點測試</h2>
+        <p>測試 Vercel API 是否正常回應</p>
+        <button onclick="testVercelAPI()">測試 Vercel API</button>
+        <button onclick="testDirectYahoo()">測試直接 Yahoo API</button>
+        <button onclick="clearResults()">清除結果</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const VERCEL_BASE_URL = 'https://vercel-stock-api.vercel.app/api';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testVercelAPI() {
+            log('🚀 開始測試 Vercel Edge Functions API...', 'info');
+            
+            const testSymbols = ['2330.TW', '2886.TW', '0050.TWO'];
+            
+            for (const symbol of testSymbols) {
+                try {
+                    log(`📊 測試股票: ${symbol}`, 'info');
+                    
+                    const url = `${VERCEL_BASE_URL}/stock?symbol=${encodeURIComponent(symbol)}`;
+                    log(`🔗 請求 URL: ${url}`, 'info');
+                    
+                    const startTime = Date.now();
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'Stock-Portfolio-System/1.0.2.0375'
+                        }
+                    });
+                    const endTime = Date.now();
+                    
+                    log(`⏱️ 回應時間: ${endTime - startTime}ms`, 'info');
+                    log(`📡 HTTP 狀態: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        log(`❌ 錯誤回應: ${errorText}`, 'error');
+                        continue;
+                    }
+                    
+                    const data = await response.json();
+                    log(`✅ 成功獲取資料:`, 'success');
+                    log(`<pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                    
+                    // 驗證資料格式
+                    if (typeof data.price === 'number' && data.price > 0) {
+                        log(`✅ 資料格式正確: 價格 ${data.price}`, 'success');
+                    } else {
+                        log(`❌ 資料格式錯誤: price=${data.price}`, 'error');
+                    }
+                    
+                } catch (error) {
+                    log(`❌ 請求失敗: ${error.message}`, 'error');
+                    log(`🔍 錯誤詳情: ${error.stack}`, 'error');
+                }
+                
+                log('---', 'info');
+            }
+            
+            log('🏁 Vercel API 測試完成', 'info');
+        }
+
+        async function testDirectYahoo() {
+            log('🚀 開始測試直接 Yahoo Finance API...', 'info');
+            
+            const testSymbols = ['2330.TW', '2886.TW', '0050.TWO'];
+            
+            for (const symbol of testSymbols) {
+                try {
+                    log(`📊 測試股票: ${symbol}`, 'info');
+                    
+                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+                    log(`🔗 請求 URL: ${url}`, 'info');
+                    
+                    const startTime = Date.now();
+                    const response = await fetch(url);
+                    const endTime = Date.now();
+                    
+                    log(`⏱️ 回應時間: ${endTime - startTime}ms`, 'info');
+                    log(`📡 HTTP 狀態: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                    
+                    if (!response.ok) {
+                        log(`❌ 直接 Yahoo API 失敗 (預期的 CORS 錯誤)`, 'error');
+                        continue;
+                    }
+                    
+                    const data = await response.json();
+                    const result = data?.chart?.result?.[0];
+                    if (result?.meta) {
+                        const price = result.meta.regularMarketPrice || result.meta.previousClose;
+                        log(`✅ 直接 Yahoo API 成功: 價格 ${price}`, 'success');
+                    }
+                    
+                } catch (error) {
+                    if (error.message.includes('CORS')) {
+                        log(`❌ CORS 錯誤 (預期): ${error.message}`, 'error');
+                    } else {
+                        log(`❌ 其他錯誤: ${error.message}`, 'error');
+                    }
+                }
+                
+                log('---', 'info');
+            }
+            
+            log('🏁 直接 Yahoo API 測試完成', 'info');
+        }
+
+        // 頁面載入時自動測試
+        window.addEventListener('load', () => {
+            log('📋 Vercel API 診斷測試已載入', 'info');
+            log('🎯 目標：診斷 v1.0.2.0373 雲端股價更新失效問題', 'info');
+            log('🔍 檢查 Vercel Edge Functions API 是否真的失效', 'info');
+        });
+    </script>
+</body>
+</html>
