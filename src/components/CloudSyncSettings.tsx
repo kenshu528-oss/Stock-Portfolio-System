@@ -621,7 +621,7 @@ export const CloudSyncSettings: React.FC<CloudSyncSettingsProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="text-sm text-blue-300">
-                  <p className="font-medium mb-1">使用說明</p>
+                  <p className="font-medium mb-1">💡 使用說明</p>
                   <ul className="space-y-1 text-xs">
                     <li>• 資料以私人 Gist 形式安全儲存</li>
                     <li>• 可在多裝置間同步投資組合資料</li>
