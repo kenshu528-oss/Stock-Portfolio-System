@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡單驗證測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 簡單驗證測試</h1>
+        <p>測試基本功能是否正常工作</p>
+        
+        <h3>測試 1：基本 JavaScript 功能</h3>
+        <button onclick="testBasicJS()">測試 JavaScript</button>
+        <div id="js-result"></div>
+        
+        <h3>測試 2：檔案路徑測試</h3>
+        <button onclick="testFilePaths()">測試檔案路徑</button>
+        <div id="path-result"></div>
+        
+        <h3>測試 3：Stock List 載入測試</h3>
+        <button onclick="testStockListLoad()">測試 Stock List</button>
+        <div id="stock-result"></div>
+        
+        <h3>測試 4：後綴邏輯測試</h3>
+        <button onclick="testSuffixLogic()">測試後綴邏輯</button>
+        <div id="suffix-result"></div>
+    </div>
+
+    <script>
+        // 測試 1：基本 JavaScript 功能
+        function testBasicJS() {
+            const resultDiv = document.getElementById('js-result');
+            try {
+                const testData = {
+                    timestamp: new Date().toISOString(),
+                    browser: navigator.userAgent,
+                    location: window.location.href
+                };
+                
+                resultDiv.className = 'test-result success';
+                resultDiv.innerHTML = `
+                    ✅ JavaScript 正常工作<br>
+                    時間: ${testData.timestamp}<br>
+                    位置: ${testData.location}
+                `;
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = `❌ JavaScript 錯誤: ${error.message}`;
+            }
+        }
+
+        // 測試 2：檔案路徑測試
+        async function testFilePaths() {
+            const resultDiv = document.getElementById('path-result');
+            resultDiv.className = 'test-result info';
+            resultDiv.textContent = '🔍 測試檔案路徑...';
+            
+            const pathsToTest = [
+                '../public/stock_list.json',  // 正確路徑：tests/../public/
+                '../../public/stock_list.json', // 備用路徑
+                '../stock_list.json',         // 如果在根目錄
+                '/stock_list.json'            // 絕對路徑
+            ];
+            
+            let results = '📁 檔案路徑測試結果:\n\n';
+            
+            for (const path of pathsToTest) {
+                try {
+                    const response = await fetch(path, { method: 'HEAD' });
+                    results += `${path}: ${response.ok ? '✅ 可訪問' : '❌ 無法訪問 (' + response.status + ')'}\n`;
+                } catch (error) {
+                    results += `${path}: ❌ 錯誤 (${error.message})\n`;
+                }
+            }
+            
+            resultDiv.className = 'test-result info';
+            resultDiv.style.whiteSpace = 'pre-wrap';
+            resultDiv.textContent = results;
+        }
+
+        // 測試 3：Stock List 載入測試
+        async function testStockListLoad() {
+            const resultDiv = document.getElementById('stock-result');
+            resultDiv.className = 'test-result info';
+            resultDiv.textContent = '📊 載入 Stock List...';
+            
+            try {
+                // 嘗試不同路徑
+                let data = null;
+                let successPath = null;
+                
+                const paths = ['../public/stock_list.json', '../../public/stock_list.json', '../stock_list.json'];
+                
+                for (const path of paths) {
+                    try {
+                        const response = await fetch(path);
+                        if (response.ok) {
+                            data = await response.json();
+                            successPath = path;
+                            break;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                
+                if (data) {
+                    const sampleStocks = ['2330', '6188', '0050', '00679B'];
+                    let result = `✅ Stock List 載入成功\n`;
+                    result += `路徑: ${successPath}\n`;
+                    result += `日期: ${data.date}\n`;
+                    result += `總數: ${data.count}\n\n`;
+                    result += `樣本股票:\n`;
+                    
+                    for (const symbol of sampleStocks) {
+                        const stock = data.stocks[symbol];
+                        if (stock) {
+                            result += `${symbol}: ${stock.name} (${stock.industry})\n`;
+                        }
+                    }
+                    
+                    resultDiv.className = 'test-result success';
+                    resultDiv.style.whiteSpace = 'pre-wrap';
+                    resultDiv.textContent = result;
+                } else {
+                    resultDiv.className = 'test-result error';
+                    resultDiv.textContent = '❌ 無法載入 Stock List';
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.textContent = `❌ 載入錯誤: ${error.message}`;
+            }
+        }
+
+        // 測試 4：後綴邏輯測試
+        function testSuffixLogic() {
+            const resultDiv = document.getElementById('suffix-result');
+            
+            // 模擬後綴判斷邏輯
+            function getSuffix(symbol) {
+                const code = parseInt(symbol.substring(0, 4));
+                const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+                const isETF = /^00\d{2,3}[A-Z]?$/i.test(symbol);
+                
+                // 特殊案例
+                if (symbol === '8112') return '.TW';
+                if (symbol === '4585') return '.TW';
+                
+                if (isBondETF) return '.TWO';
+                if (isETF) return '.TWO';
+                if (code >= 3000 && code <= 8999) return '.TWO';
+                if (code >= 1000 && code <= 2999) return '.TW';
+                return '.TW';
+            }
+            
+            const testCases = [
+                { symbol: '2330', expected: '.TW', name: '台積電' },
+                { symbol: '6188', expected: '.TWO', name: '廣明' },
+                { symbol: '0050', expected: '.TWO', name: '元大台灣50' },
+                { symbol: '00679B', expected: '.TWO', name: '元大美債20年' },
+                { symbol: '8112', expected: '.TW', name: '至上' },
+                { symbol: '4585', expected: '.TW', name: '達明' }
+            ];
+            
+            let result = '🎯 後綴邏輯測試結果:\n\n';
+            let passCount = 0;
+            
+            for (const testCase of testCases) {
+                const actual = getSuffix(testCase.symbol);
+                const passed = actual === testCase.expected;
+                
+                result += `${testCase.symbol} (${testCase.name}):\n`;
+                result += `  預期: ${testCase.expected}, 實際: ${actual} ${passed ? '✅' : '❌'}\n\n`;
+                
+                if (passed) passCount++;
+            }
+            
+            result += `📊 測試結果: ${passCount}/${testCases.length} 通過`;
+            
+            resultDiv.className = passCount === testCases.length ? 'test-result success' : 'test-result error';
+            resultDiv.style.whiteSpace = 'pre-wrap';
+            resultDiv.textContent = result;
+        }
+    </script>
+</body>
+</html>

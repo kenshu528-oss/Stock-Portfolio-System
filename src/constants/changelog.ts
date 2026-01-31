@@ -12,6 +12,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0378',
+    date: '2026-01-31',
+    type: 'hotfix',
+    title: '系統性回滾：完全恢復 v1.0.2.0371 穩定配置，保留有價值功能改進',
+    description: '基於用戶確認 v1.0.2.0371 完全正常工作，進行系統性回滾。移除 v1.0.2.0375-0377 中所有錯誤的 API 修改，完全恢復 v1.0.2.0371 的 Vercel Edge Functions 配置。同時保留 v1.0.2.0372-0374 中有價值的功能改進：Token 安全修復、中文回覆規範、推送流程標準化。',
+    changes: [
+      '🔄 完全恢復 v1.0.2.0371 的 VercelStockPriceService 配置',
+      '🔄 恢復正確的 VercelStockPriceService.getStockPrice() 靜態方法調用',
+      '🔄 恢復正確的 fetchFromVercel 實作邏輯',
+      '🔄 移除所有 v1.0.2.0375-0377 的錯誤修改',
+      '✅ 保留 v1.0.2.0372：Token 安全修復和股價更新進度顯示',
+      '✅ 保留 v1.0.2.0373：中文回覆規範 steering 規則',
+      '✅ 保留 v1.0.2.0374：GitHub 推送流程標準化和自動化工具',
+      '🎯 基於用戶確認：v1.0.2.0371 的 Vercel API 一直都沒問題'
+    ],
+    fixes: [
+      '修復 v1.0.2.0375-0377 中所有錯誤的 API 修改',
+      '恢復 Vercel Edge Functions 作為穩定的股價來源',
+      '修復雲端股價獲取失敗問題',
+      '確保與 v1.0.2.0371 完全相同的 Vercel 配置'
+    ]
+  },
+  {
     version: '1.0.2.0377',
     date: '2026-01-31',
     type: 'hotfix',

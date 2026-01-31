@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 377, // 【緊急修復】修復 Vercel Edge Functions API 端點：恢復正確的 stock-price 端點和調用方式
+  PATCH: 378, // 【系統性回滾】回滾到 v1.0.2.0371 穩定配置，保留有價值功能改進
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
