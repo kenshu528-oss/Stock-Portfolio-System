@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後綴邏輯測試（純 JavaScript）</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .result { margin: 10px 0; padding: 15px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; }
+        .success { background: #d4edda; color: #155724; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { background: #007cba; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #005a87; }
+        .test-case { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007cba; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Stock List 後綴邏輯測試</h1>
+        <p><strong>說明</strong>: 這個測試不需要載入外部檔案，純粹測試後綴判斷邏輯</p>
+        
+        <h3>🧪 測試後綴判斷邏輯</h3>
+        <button onclick="runAllTests()">執行完整測試</button>
+        <div id="test-result"></div>
+        
+        <h3>📊 動態增強機制演示</h3>
+        <button onclick="demonstrateEnhancement()">演示增強機制</button>
+        <div id="enhancement-result"></div>
+        
+        <h3>🔍 自訂測試</h3>
+        <input type="text" id="custom-symbol" placeholder="輸入股票代號 (如: 2330)" style="padding: 8px; margin: 5px;">
+        <button onclick="testCustomSymbol()">測試</button>
+        <div id="custom-result"></div>
+    </div>
+
+    <script>
+        // 模擬 Stock List 增強邏輯
+        function enhanceStockInfo(stockId, basicInfo = {}) {
+            const code = parseInt(stockId.substring(0, 4));
+            const isBondETF = /^00\d{2,3}B$/i.test(stockId);
+            const isETF = /^00\d{2,3}[A-Z]?$/i.test(stockId);
+            
+            let marketType, yahooSuffix, reasoning;
+            
+            // 特殊案例處理（基於實際測試結果）
+            const specialCases = {
+                '8112': { suffix: '.TW', market: '上櫃', reason: '至上：雖在 8000 範圍但 Yahoo Finance 使用 .TW' },
+                '4585': { suffix: '.TW', market: '興櫃', reason: '達明：興櫃股票，最常用 .TW' },
+            };
+            
+            if (specialCases[stockId]) {
+                const special = specialCases[stockId];
+                marketType = special.market;
+                yahooSuffix = special.suffix;
+                reasoning = special.reason;
+            } else if (isBondETF) {
+                // 債券 ETF：優先櫃買中心
+                marketType = '上櫃';
+                yahooSuffix = '.TWO';
+                reasoning = '債券 ETF，優先使用櫃買中心 (.TWO)';
+            } else if (isETF) {
+                // 一般 ETF：優先櫃買中心
+                marketType = '上櫃';
+                yahooSuffix = '.TWO';
+                reasoning = '一般 ETF，優先使用櫃買中心 (.TWO)';
+            } else if (code >= 3000 && code <= 8999) {
+                // 上櫃股票（3000-8999）：優先櫃買中心
+                marketType = '上櫃';
+                yahooSuffix = '.TWO';
+                reasoning = '上櫃股票，優先使用櫃買中心 (.TWO)';
+            } else if (code >= 1000 && code <= 2999) {
+                // 上市股票（1000-2999）：優先證交所
+                marketType = '上市';
+                yahooSuffix = '.TW';
+                reasoning = '上市股票，優先使用證交所 (.TW)';
+            } else {
+                // 其他情況：預設證交所
+                marketType = '上市';
+                yahooSuffix = '.TW';
+                reasoning = '其他情況，預設使用證交所 (.TW)';
+            }
+            
+            return {
+                ...basicInfo,
+                marketType,
+                yahooSuffix,
+                reasoning,
+                enhanced: true,
+                fullYahooSymbol: `${stockId}${yahooSuffix}`
+            };
+        }
+
+        // 執行完整測試
+        function runAllTests() {
+            const resultDiv = document.getElementById('test-result');
+            
+            const testCases = [
+                // 上市股票
+                { symbol: '2330', expected: '.TW', category: '上市股票', name: '台積電' },
+                { symbol: '2886', expected: '.TW', category: '上市股票', name: '兆豐金' },
+                
+                // 上櫃股票
+                { symbol: '6188', expected: '.TWO', category: '上櫃股票', name: '廣明' },
+                { symbol: '3687', expected: '.TWO', category: '上櫃股票', name: '歐買尬' },
+                
+                // 一般 ETF
+                { symbol: '0050', expected: '.TWO', category: '一般ETF', name: '元大台灣50' },
+                { symbol: '00646', expected: '.TWO', category: '一般ETF', name: '元大S&P500' },
+                
+                // 債券 ETF
+                { symbol: '00679B', expected: '.TWO', category: '債券ETF', name: '元大美債20年' },
+                { symbol: '00835B', expected: '.TWO', category: '債券ETF', name: '第一金科技債10+' },
+                
+                // 特殊案例
+                { symbol: '8112', expected: '.TW', category: '特殊案例', name: '至上' },
+                { symbol: '4585', expected: '.TW', category: '特殊案例', name: '達明' }
+            ];
+            
+            let result = '🎯 後綴判斷邏輯測試結果:\n\n';
+            let passCount = 0;
+            
+            for (const testCase of testCases) {
+                const enhanced = enhanceStockInfo(testCase.symbol, { name: testCase.name });
+                const passed = enhanced.yahooSuffix === testCase.expected;
+                
+                result += `${testCase.symbol} (${testCase.name}) - ${testCase.category}:\n`;
+                result += `  預期後綴: ${testCase.expected}\n`;
+                result += `  實際後綴: ${enhanced.yahooSuffix}\n`;
+                result += `  完整符號: ${enhanced.fullYahooSymbol}\n`;
+                result += `  市場分類: ${enhanced.marketType}\n`;
+                result += `  判斷邏輯: ${enhanced.reasoning}\n`;
+                result += `  測試結果: ${passed ? '✅ 通過' : '❌ 失敗'}\n\n`;
+                
+                if (passed) passCount++;
+            }
+            
+            result += `📊 總測試結果: ${passCount}/${testCases.length} 通過`;
+            
+            if (passCount === testCases.length) {
+                result += '\n\n🎉 所有測試通過！後綴判斷邏輯正確運作。';
+                resultDiv.className = 'result success';
+            } else {
+                result += '\n\n⚠️ 部分測試失敗，需要檢查邏輯。';
+                resultDiv.className = 'result error';
+            }
+            
+            resultDiv.textContent = result;
+        }
+
+        // 演示增強機制
+        function demonstrateEnhancement() {
+            const resultDiv = document.getElementById('enhancement-result');
+            
+            const originalData = {
+                '2330': { name: '台積電', industry: '半導體業', market: '台股' },
+                '6188': { name: '廣明', industry: '其他電子類', market: '台股' },
+                '0050': { name: '元大台灣50', industry: '上市指數股票型基金(ETF)', market: '台股' },
+                '00679B': { name: '元大美債20年', industry: '上櫃指數股票型基金(ETF)', market: '台股' }
+            };
+            
+            let result = '⚙️ Stock List 動態增強機制演示:\n\n';
+            result += '📋 原始資料 → 增強後資料\n\n';
+            
+            for (const [symbol, basicInfo] of Object.entries(originalData)) {
+                const enhanced = enhanceStockInfo(symbol, basicInfo);
+                
+                result += `${symbol} (${basicInfo.name}):\n`;
+                result += `  原始: {\n`;
+                result += `    name: "${basicInfo.name}",\n`;
+                result += `    industry: "${basicInfo.industry}",\n`;
+                result += `    market: "${basicInfo.market}"\n`;
+                result += `  }\n`;
+                result += `  增強後: {\n`;
+                result += `    name: "${enhanced.name}",\n`;
+                result += `    industry: "${enhanced.industry}",\n`;
+                result += `    market: "${enhanced.market}",\n`;
+                result += `    marketType: "${enhanced.marketType}",\n`;
+                result += `    yahooSuffix: "${enhanced.yahooSuffix}",\n`;
+                result += `    fullYahooSymbol: "${enhanced.fullYahooSymbol}",\n`;
+                result += `    reasoning: "${enhanced.reasoning}",\n`;
+                result += `    enhanced: ${enhanced.enhanced}\n`;
+                result += `  }\n\n`;
+            }
+            
+            result += '✅ 結論: 系統會自動為每個股票添加 Yahoo Finance 後綴和市場分類';
+            
+            resultDiv.className = 'result info';
+            resultDiv.textContent = result;
+        }
+
+        // 測試自訂股票代號
+        function testCustomSymbol() {
+            const input = document.getElementById('custom-symbol');
+            const resultDiv = document.getElementById('custom-result');
+            const symbol = input.value.trim().toUpperCase();
+            
+            if (!symbol) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ 請輸入股票代號';
+                return;
+            }
+            
+            const enhanced = enhanceStockInfo(symbol, { name: `測試股票${symbol}` });
+            
+            let result = `🔍 自訂測試結果 - ${symbol}:\n\n`;
+            result += `完整 Yahoo 符號: ${enhanced.fullYahooSymbol}\n`;
+            result += `市場分類: ${enhanced.marketType}\n`;
+            result += `Yahoo 後綴: ${enhanced.yahooSuffix}\n`;
+            result += `判斷邏輯: ${enhanced.reasoning}\n\n`;
+            
+            // 分析代碼
+            const code = parseInt(symbol.substring(0, 4));
+            const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+            const isETF = /^00\d{2,3}[A-Z]?$/i.test(symbol);
+            
+            result += `代碼分析:\n`;
+            result += `  數字代碼: ${code}\n`;
+            result += `  是否為債券ETF: ${isBondETF ? '是' : '否'}\n`;
+            result += `  是否為一般ETF: ${isETF ? '是' : '否'}\n`;
+            result += `  代碼範圍: ${code >= 1000 && code <= 2999 ? '上市(1000-2999)' : 
+                                   code >= 3000 && code <= 8999 ? '上櫃(3000-8999)' : '其他'}\n`;
+            
+            resultDiv.className = 'result success';
+            resultDiv.textContent = result;
+        }
+
+        // 頁面載入時自動執行一次測試
+        window.onload = function() {
+            runAllTests();
+        };
+    </script>
+</body>
+</html>

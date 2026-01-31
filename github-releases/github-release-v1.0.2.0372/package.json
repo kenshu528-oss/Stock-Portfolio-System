@@ -1,0 +1,52 @@
+{
+  "name": "stock-portfolio-system",
+  "private": true,
+  "version": "1.0.2.0372",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 500",
+    "preview": "vite preview",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "check:svg": "node scripts/check-svg-paths.js",
+    "check:version": "node scripts/check-version-consistency.js",
+    "check:state": "node scripts/check-state-management.cjs",
+    "check:rights": "node scripts/check-rights-calculation.cjs",
+    "check:all": "scripts\\pre-commit-check.bat",
+    "dev:assistant": "node scripts/dev-assistant.cjs",
+    "dev:check": "node scripts/dev-assistant.cjs",
+    "update:stock-list": "node scripts/update-stock-list.cjs",
+    "build:stock-list": "node scripts/build_stock_list.js",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zustand": "^4.4.1"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^5.1.2",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.0.3",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "fast-check": "^3.12.0",
+    "husky": "^9.1.7",
+    "jsdom": "^27.4.0",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5",
+    "vitest": "^0.34.1"
+  }
+}

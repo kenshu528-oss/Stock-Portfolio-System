@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GitHub API 診斷工具</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        input { width: 500px; padding: 5px; margin: 5px; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>GitHub API 診斷工具</h1>
+    
+    <div>
+        <label>GitHub Token:</label><br>
+        <input type="password" id="tokenInput" placeholder="輸入您的 GitHub Token">
+        <button onclick="toggleTokenVisibility()">顯示/隱藏</button>
+    </div>
+    
+    <div>
+        <button onclick="runDiagnosis()">開始診斷</button>
+        <button onclick="clearResults()">清除結果</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <script>
+        function toggleTokenVisibility() {
+            const input = document.getElementById('tokenInput');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function runDiagnosis() {
+            const token = document.getElementById('tokenInput').value;
+            
+            if (!token) {
+                addResult('❌ 請輸入 GitHub Token', 'error');
+                return;
+            }
+            
+            clearResults();
+            addResult('🔍 開始診斷...', 'info');
+            
+            // 1. 檢查 Token 格式
+            addResult(`📋 Token 格式檢查:`, 'info');
+            addResult(`- 長度: ${token.length} 字符`, 'info');
+            addResult(`- 開頭: ${token.substring(0, 20)}...`, 'info');
+            
+            if (token.startsWith('github_pat_')) {
+                addResult('✅ Token 格式正確 (Fine-grained PAT)', 'success');
+            } else if (token.startsWith('ghp_')) {
+                addResult('✅ Token 格式正確 (Classic PAT)', 'success');
+            } else {
+                addResult('⚠️ Token 格式可能不正確', 'warning');
+            }
+            
+            // 2. 測試基本 API 調用
+            addResult('🌐 測試 GitHub API 連接...', 'info');
+            
+            try {
+                // 測試 token 格式
+                const tokenResponse = await fetch('https://api.github.com/user', {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                addResult(`📡 Token 格式回應: ${tokenResponse.status} ${tokenResponse.statusText}`, 
+                    tokenResponse.ok ? 'success' : 'error');
+                
+                if (tokenResponse.ok) {
+                    const user = await tokenResponse.json();
+                    addResult(`✅ 用戶驗證成功: ${user.login} (${user.name || 'No name'})`, 'success');
+                    addResult(`📧 Email: ${user.email || '未公開'}`, 'info');
+                    addResult(`🏢 公司: ${user.company || '未設定'}`, 'info');
+                    
+                    // 測試 Gist 權限
+                    await testGistPermissions(token);
+                    
+                } else {
+                    const errorData = await tokenResponse.json().catch(() => ({}));
+                    addResult(`❌ Token 驗證失敗: ${errorData.message || '未知錯誤'}`, 'error');
+                    
+                    // 嘗試 Bearer 格式
+                    addResult('🔄 嘗試 Bearer 格式...', 'info');
+                    const bearerResponse = await fetch('https://api.github.com/user', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+                    
+                    addResult(`📡 Bearer 格式回應: ${bearerResponse.status} ${bearerResponse.statusText}`, 
+                        bearerResponse.ok ? 'success' : 'error');
+                    
+                    if (bearerResponse.ok) {
+                        const user = await bearerResponse.json();
+                        addResult(`✅ Bearer 格式成功: ${user.login}`, 'success');
+                    }
+                }
+                
+            } catch (error) {
+                addResult(`❌ 網路錯誤: ${error.message}`, 'error');
+            }
+            
+            // 3. 檢查 API 限制
+            await checkRateLimit(token);
+        }
+        
+        async function testGistPermissions(token) {
+            addResult('🔐 測試 Gist 權限...', 'info');
+            
+            try {
+                const gistResponse = await fetch('https://api.github.com/gists', {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (gistResponse.ok) {
+                    const gists = await gistResponse.json();
+                    addResult(`✅ Gist 權限正常，找到 ${gists.length} 個 Gist`, 'success');
+                } else {
+                    addResult(`❌ Gist 權限不足: ${gistResponse.status}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Gist 測試錯誤: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkRateLimit(token) {
+            addResult('⏱️ 檢查 API 限制...', 'info');
+            
+            try {
+                const rateLimitResponse = await fetch('https://api.github.com/rate_limit', {
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (rateLimitResponse.ok) {
+                    const rateLimit = await rateLimitResponse.json();
+                    const core = rateLimit.resources.core;
+                    const remaining = core.remaining;
+                    const limit = core.limit;
+                    const resetTime = new Date(core.reset * 1000);
+                    
+                    addResult(`📊 API 限制狀態: ${remaining}/${limit} 剩餘`, 
+                        remaining > 100 ? 'success' : remaining > 10 ? 'warning' : 'error');
+                    addResult(`🔄 重置時間: ${resetTime.toLocaleString()}`, 'info');
+                    
+                    if (remaining === 0) {
+                        addResult('⚠️ API 限制已達上限，這可能是 401 錯誤的原因！', 'error');
+                    }
+                } else {
+                    addResult(`❌ 無法檢查 API 限制: ${rateLimitResponse.status}`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ API 限制檢查錯誤: ${error.message}`, 'error');
+            }
+        }
+        
+        // 自動填入 Token（如果在開發環境）
+        window.addEventListener('load', () => {
+            const devToken = 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
+            document.getElementById('tokenInput').value = devToken;
+        });
+    </script>
+</body>
+</html>
