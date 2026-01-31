@@ -160,7 +160,7 @@ crontab -e
 
 ### **FinMind Token**
 - Token 有效期限，需要定期更新
-- 目前 Token：`eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...`
+- Token 已設定在環境變數中，請勿在代碼中硬編碼
 - 過期時需要到 FinMind 官網重新申請
 
 ### **檔案管理**

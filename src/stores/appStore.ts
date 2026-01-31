@@ -6,29 +6,29 @@ import { logger } from '../utils/logger';
 // 除權息資料更新函數（統一使用 RightsEventService，確保與個股內更新邏輯完全一致）
 const updateStockDividendData = async (stock: StockRecord, state: any, forceRecalculate: boolean = false) => {
   try {
-    console.log(`🔧 [DEBUG] 批量更新: 開始處理 ${stock.symbol} 的除權息資料 (forceRecalculate: ${forceRecalculate})`);
-    logger.debug('dividend', `批量更新: 開始處理 ${stock.symbol} 的除權息資料 (forceRecalculate: ${forceRecalculate})`);
+    // console.log(`🔧 [DEBUG] 批量更新: 開始處理 ${stock.symbol} 的除權息資料 (forceRecalculate: ${forceRecalculate})`);
+    // logger.debug('dividend', `批量更新: 開始處理 ${stock.symbol} 的除權息資料 (forceRecalculate: ${forceRecalculate})`);
     
     // 動態導入服務（避免循環依賴）
     const { RightsEventService } = await import('../services/rightsEventService');
-    console.log(`🔧 [DEBUG] RightsEventService 導入成功`);
+    // console.log(`🔧 [DEBUG] RightsEventService 導入成功`);
     
     // ⚠️ 關鍵：必須傳入 forceRecalculate 參數，確保與個股內更新行為一致
     const updatedStock = await RightsEventService.processStockRightsEvents(
       stock,
       (message) => {
-        console.log(`🔧 [DEBUG] ${stock.symbol}: ${message}`);
-        logger.debug('dividend', `${stock.symbol}: ${message}`);
+        // console.log(`🔧 [DEBUG] ${stock.symbol}: ${message}`);
+        // logger.debug('dividend', `${stock.symbol}: ${message}`);
       },
       forceRecalculate // 傳入 forceRecalculate 參數
     );
     
-    console.log(`🔧 [DEBUG] ${stock.symbol} 除權息處理完成，結果:`, {
-      原始持股: stock.shares,
-      更新後持股: updatedStock.shares,
-      除權息記錄數: updatedStock.dividendRecords?.length || 0,
-      調整後成本價: updatedStock.adjustedCostPrice
-    });
+    // console.log(`🔧 [DEBUG] ${stock.symbol} 除權息處理完成，結果:`, {
+    //   原始持股: stock.shares,
+    //   更新後持股: updatedStock.shares,
+    //   除權息記錄數: updatedStock.dividendRecords?.length || 0,
+    //   調整後成本價: updatedStock.adjustedCostPrice
+    // });
     
     // 更新股票記錄
     state.updateStock(stock.id, {
@@ -38,13 +38,14 @@ const updateStockDividendData = async (stock: StockRecord, state: any, forceReca
       lastDividendUpdate: updatedStock.lastDividendUpdate
     });
     
-    logger.success('dividend', `${stock.symbol} 除權息更新完成`, {
+    // 只保留成功日誌，但使用 INFO 等級而非 SUCCESS
+    logger.info('dividend', `${stock.symbol} 除權息更新完成`, {
       records: updatedStock.dividendRecords?.length || 0,
       shares: updatedStock.shares,
       adjustedCost: updatedStock.adjustedCostPrice?.toFixed(2)
     });
   } catch (error) {
-    console.error(`🔧 [DEBUG] ${stock.symbol} 除權息更新失敗:`, error);
+    // console.error(`🔧 [DEBUG] ${stock.symbol} 除權息更新失敗:`, error);
     logger.error('dividend', `${stock.symbol} 除權息更新失敗`, error);
   }
 };
@@ -458,7 +459,7 @@ export const useAppStore = create<AppState & AppActions>()(
               state.setPriceUpdateProgress(i + 1, stocks.length);
               
               try {
-                logger.debug('stock', `開始更新 ${stock.symbol} 股價`);
+                logger.info('stock', `更新進度 ${i + 1}/${stocks.length}: ${stock.symbol}`);
                 
                 // ✅ 根據環境使用合適的股價服務
                 let priceData = null;
@@ -472,10 +473,10 @@ export const useAppStore = create<AppState & AppActions>()(
                     const { StockPriceService } = await import('../services/stockPriceService');
                     const stockPriceService = new StockPriceService();
                     priceData = await stockPriceService.getStockPrice(stock.symbol);
-                    logger.debug('stock', `${stock.symbol} 後端代理獲取結果`, { 
-                      price: priceData?.price, 
-                      source: priceData?.source 
-                    });
+                    // logger.debug('stock', `${stock.symbol} 後端代理獲取結果`, { 
+                    //   price: priceData?.price, 
+                    //   source: priceData?.source 
+                    // });
                   } else {
                     // 雲端環境：使用 Vercel Edge Functions 優先
                     const { StockDataMerger, DataSourcePriority } = await import('../services/stockDataMerger');
@@ -484,17 +485,17 @@ export const useAppStore = create<AppState & AppActions>()(
                       includeChineseName: false,
                       timeout: 10000
                     });
-                    logger.debug('stock', `${stock.symbol} Vercel Edge Functions 獲取結果`, { 
-                      price: priceData?.price, 
-                      source: priceData?.source 
-                    });
+                    // logger.debug('stock', `${stock.symbol} Vercel Edge Functions 獲取結果`, { 
+                    //   price: priceData?.price, 
+                    //   source: priceData?.source 
+                    // });
                   }
                 } catch (error) {
                   logger.warn('stock', `${stock.symbol} 股價獲取失敗`, error.message);
                 }
                 
                 if (priceData && priceData.price > 0) {
-                  logger.debug('stock', `${stock.symbol} 準備更新股價: ${priceData.price}`);
+                  // logger.debug('stock', `${stock.symbol} 準備更新股價: ${priceData.price}`);
                   
                   // 更新股價資料
                   state.updateStock(stock.id, {
@@ -506,7 +507,7 @@ export const useAppStore = create<AppState & AppActions>()(
                   // ⚠️ 根據 STEERING 規則：必須調用除權息處理並傳入 forceRecalculate: true
                   await updateStockDividendData(stock, state, true);
                   
-                  logger.success('stock', `${stock.symbol} 股價更新成功: ${priceData.price} (${priceData.source})`);
+                  logger.info('stock', `✅ ${stock.symbol} 更新完成 (${priceData.price})`);
                   successCount++;
                 } else {
                   logger.warn('stock', `${stock.symbol} 無法獲取股價資料`);

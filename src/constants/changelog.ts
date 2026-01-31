@@ -12,6 +12,26 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0372',
+    date: '2026-01-31',
+    type: 'patch',
+    title: 'Token 安全修復：移除硬編碼 Token，完全依賴環境變數',
+    description: '修復代碼中硬編碼 FinMind Token 的安全問題。移除 Python 腳本和文檔中的敏感 Token 信息，確保所有 Token 都通過環境變數安全管理。同時恢復股價更新進度顯示，平衡用戶體驗和 Console 簡潔性。',
+    changes: [
+      '🔒 移除 backend/fetch_stock_list.py 中硬編碼的 FinMind Token',
+      '🔒 移除 backend/README_STOCK_SEARCH.md 中的 Token 信息',
+      '🌐 確保雲端環境完全依賴 GitHub Secrets 中的 VITE_FINMIND_TOKEN',
+      '📊 恢復股價更新進度顯示：更新進度 X/Y: 股票代號',
+      '📋 創建股價更新 UI 規格文件，規範進度顯示和日誌輸出',
+      '🔧 優化 Console 輸出：保留重要進度信息，移除過多 debug 日誌'
+    ],
+    fixes: [
+      '修復雲端環境 Token 過期問題：使用最新的環境變數配置',
+      '修復股價更新時缺少進度顯示的問題',
+      '修復 GitHub 檢測硬編碼 Token 導致 Token 被撤銷的問題'
+    ]
+  },
+  {
     version: '1.0.2.0371',
     date: '2026-01-29',
     type: 'hotfix',

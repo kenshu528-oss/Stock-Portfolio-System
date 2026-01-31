@@ -140,5 +140,6 @@ export const getFrontendUrl = (): string => {
   if (import.meta.env.PROD) {
     return window.location.origin;
   }
-  return import.meta.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
+  // 使用當前頁面的 origin，而不是硬編碼端口
+  return window.location.origin;
 };

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 371, // 【隱蔽後門雲端修復】通過 GitHub Actions Secrets 恢復雲端環境的隱蔽後門自動載入功能
+  PATCH: 372, // 【Token 安全修復】移除代碼中硬編碼的 FinMind Token，完全依賴環境變數，確保雲端環境正常運作
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
