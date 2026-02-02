@@ -65,29 +65,58 @@ export default async function handler(req: NextRequest) {
       throw new Error('無效的 Yahoo Finance 資料');
     }
 
-    // 🔧 修復：優先獲取即時股價，與本機端邏輯一致
+    // 🔍 調試：輸出完整的 meta 資料結構
+    console.log(`🔍 ${yahooSymbol} Yahoo Finance meta:`, {
+      regularMarketPrice: result.meta.regularMarketPrice,
+      previousClose: result.meta.previousClose,
+      marketState: result.meta.marketState,
+      regularMarketTime: result.meta.regularMarketTime,
+      hasIndicators: !!result.indicators,
+      hasQuote: !!result.indicators?.quote?.[0],
+      timestampLength: result.timestamp?.length || 0
+    });
+
+    // 🔧 強制獲取最新成交價 - 多重策略確保獲取到今天的價格
     let currentPrice = 0;
     const previousClose = result.meta.previousClose || 0;
+    let priceSource = 'unknown';
     
-    // 1. 優先使用最新的交易資料（即時價格）
-    if (result.indicators?.quote?.[0] && result.timestamp) {
+    // 策略 1: 優先使用 meta 中的當前市場價格（最可靠）
+    if (result.meta.regularMarketPrice && result.meta.regularMarketPrice > 0) {
+      currentPrice = result.meta.regularMarketPrice;
+      priceSource = 'regularMarketPrice';
+      console.log(`📊 ${yahooSymbol} 使用 regularMarketPrice: ${currentPrice}`);
+    }
+    
+    // 策略 2: 如果 regularMarketPrice 無效，使用最新交易資料
+    if (currentPrice <= 0 && result.indicators?.quote?.[0] && result.timestamp) {
       const quotes = result.indicators.quote[0];
       const timestamps = result.timestamp;
       const latestIndex = timestamps.length - 1;
       
-      // 獲取最新的收盤價、開盤價或最後交易價
-      currentPrice = quotes.close?.[latestIndex] || 
-                    quotes.open?.[latestIndex] || 
-                    quotes.high?.[latestIndex] || 
-                    quotes.low?.[latestIndex] || 0;
+      // 按優先順序嘗試獲取價格
+      const prices = [
+        quotes.close?.[latestIndex],
+        quotes.open?.[latestIndex], 
+        quotes.high?.[latestIndex],
+        quotes.low?.[latestIndex]
+      ];
       
-      console.log(`📊 ${yahooSymbol} 即時資料: close=${quotes.close?.[latestIndex]}, open=${quotes.open?.[latestIndex]}`);
+      for (const price of prices) {
+        if (price && price > 0) {
+          currentPrice = price;
+          priceSource = 'indicators.quote';
+          console.log(`📊 ${yahooSymbol} 使用 indicators.quote: ${currentPrice}`);
+          break;
+        }
+      }
     }
     
-    // 2. 如果沒有即時資料，使用 meta 中的價格
+    // 策略 3: 最後備援使用 previousClose
     if (currentPrice <= 0) {
-      currentPrice = result.meta.regularMarketPrice || result.meta.previousClose || 0;
-      console.log(`📊 ${yahooSymbol} 使用 meta 價格: regularMarketPrice=${result.meta.regularMarketPrice}`);
+      currentPrice = previousClose;
+      priceSource = 'previousClose';
+      console.log(`📊 ${yahooSymbol} 使用 previousClose: ${currentPrice}`);
     }
     
     const change = currentPrice - previousClose;
@@ -98,7 +127,7 @@ export default async function handler(req: NextRequest) {
     const regularMarketTime = result.meta.regularMarketTime ? new Date(result.meta.regularMarketTime * 1000) : new Date();
     
     console.log(`📊 ${yahooSymbol} 市場狀態: ${marketState}, 更新時間: ${regularMarketTime.toLocaleString('zh-TW')}`);
-    console.log(`✅ Vercel API 成功: ${yahooSymbol} = ${currentPrice} [${marketState}]`);
+    console.log(`✅ Vercel API 成功: ${yahooSymbol} = ${currentPrice} [${marketState}] 來源: ${priceSource}`);
 
     const stockData = {
       price: Math.round(currentPrice * 100) / 100,

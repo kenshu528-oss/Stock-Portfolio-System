@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0384',
+    date: '2026-02-02',
+    type: 'hotfix',
+    title: 'Vercel API 強化修復：強制獲取最新成交價，解決獲取前一天收盤價問題',
+    description: '用戶反映雲端版本仍然獲取前一天的收盤價而非最新成交價。分析發現Vercel API雖然有修復邏輯，但Yahoo Finance API的資料結構可能不一致，導致無法正確獲取最新價格。修復：實施多重策略強制獲取最新成交價，優先使用regularMarketPrice，備援使用indicators.quote，最後使用previousClose，並添加詳細調試資訊。',
+    changes: [
+      '🔧 強化價格獲取策略：regularMarketPrice → indicators.quote → previousClose',
+      '📊 優先使用regularMarketPrice：Yahoo Finance最可靠的當前市場價格',
+      '🔍 添加詳細調試資訊：輸出完整meta資料結構和價格來源',
+      '✅ 多重備援機制：確保總是能獲取到有效的股價',
+      '📝 記錄價格來源：明確標示使用哪個欄位獲取價格',
+      '🎯 解決前一天收盤價問題：強制獲取當天最新成交價'
+    ],
+    fixes: [
+      '修復Vercel API獲取前一天收盤價而非最新成交價的問題',
+      '修復Yahoo Finance API資料結構不一致導致的價格錯誤',
+      '修復indicators.quote為空時無法獲取價格的問題',
+      '確保雲端環境總是獲取最新的股價資料'
+    ]
+  },
+  {
     version: '1.0.2.0383',
     date: '2026-02-02',
     type: 'hotfix',
