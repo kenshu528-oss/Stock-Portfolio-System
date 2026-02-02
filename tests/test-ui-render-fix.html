@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI 重新渲染修復測試 - v1.0.2.0380</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            overflow-x: auto; 
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            font-size: 12px;
+            max-height: 400px;
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            cursor: pointer; 
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            font-size: 14px;
+        }
+        button:hover { background: #0056b3; }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .fix-summary {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 UI 重新渲染修復測試 - v1.0.2.0380</h1>
+        
+        <div class="fix-summary">
+            <h2>🔧 v1.0.2.0380 修復內容</h2>
+            
+            <h3>✅ 已完成的修復：</h3>
+            <ol>
+                <li><strong>批量更新策略優化</strong>：改為收集所有更新後一次性應用，避免頻繁的狀態變更</li>
+                <li><strong>強制重新渲染機制</strong>：添加多重觸發機制確保 React 重新渲染</li>
+                <li><strong>updateStock 函數修復</strong>：確保每次更新都觸發重新渲染</li>
+                <li><strong>StockList useMemo 修復</strong>：確保依賴正確，避免記憶化問題</li>
+                <li><strong>App.tsx 狀態訂閱</strong>：添加 lastPriceUpdate 和 forceRender 訂閱</li>
+            </ol>
+            
+            <h3>🎯 修復策略：</h3>
+            <ul>
+                <li><strong>分階段批量更新</strong>：收集 → 應用 → 除權息 → 強制渲染</li>
+                <li><strong>多重渲染觸發</strong>：立即觸發 + 延遲觸發 + 新陣列引用</li>
+                <li><strong>狀態標記</strong>：添加 _batchUpdateComplete 和 _renderTrigger 標記</li>
+                <li><strong>依賴修復</strong>：確保 React.useMemo 依賴正確</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 測試步驟</h2>
+            <div class="status info">
+                <h4>請按照以下步驟測試修復效果：</h4>
+                <ol>
+                    <li><strong>重新啟動開發服務器</strong>：
+                        <pre>Ctrl+C 停止服務器
+npm run dev</pre>
+                    </li>
+                    <li><strong>硬重新載入主應用</strong>：按 Ctrl+Shift+R 載入 <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+                    <li><strong>觀察當前股價</strong>：記下幾支股票的當前價格</li>
+                    <li><strong>執行批量更新</strong>：點擊右上角的「🔄 更新股價」按鈕</li>
+                    <li><strong>觀察 Console 日誌</strong>：應該看到新的批量處理日誌：
+                        <pre>🚀 批量更新開始 - 版本 v1.0.2.0380-UI-FIX
+🔄 一次性應用 XX 個股價更新...
+📊 批量更新完成，觸發 UI 重新渲染
+🔄 開始處理除權息...
+🔄 最終強制觸發 UI 重新渲染...
+✅ 延遲重新渲染觸發完成</pre>
+                    </li>
+                    <li><strong>檢查 UI 更新</strong>：股價應該立即在表格中更新顯示</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 預期結果</h2>
+            <div class="status success">
+                <h4>✅ 成功的標誌：</h4>
+                <ul>
+                    <li><strong>批量處理優化</strong>：一次性應用所有股價更新，而不是逐一更新</li>
+                    <li><strong>UI 立即更新</strong>：股價在表格中立即顯示新數值，無需手動重新載入</li>
+                    <li><strong>多重渲染觸發</strong>：Console 顯示立即觸發和延遲觸發都執行</li>
+                    <li><strong>狀態一致性</strong>：UI 顯示的股價與 Console 日誌一致</li>
+                    <li><strong>性能穩定</strong>：批量處理仍然保持高效能</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔍 故障排除</h2>
+            <div class="status warning">
+                <h4>⚠️ 如果 UI 仍然沒有更新：</h4>
+                <ol>
+                    <li><strong>檢查版本號</strong>：確認 Console 顯示 v1.0.2.0380-UI-FIX</li>
+                    <li><strong>檢查批量日誌</strong>：確認看到新的分階段處理日誌</li>
+                    <li><strong>重新啟動服務器</strong>：完全重新啟動 npm run dev</li>
+                    <li><strong>清除瀏覽器快取</strong>：按 Ctrl+Shift+R</li>
+                    <li><strong>檢查 React DevTools</strong>：安裝並檢查組件重新渲染</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎉 成功確認</h2>
+            <div class="status success">
+                <h4>✅ 如果看到以下現象，表示修復成功：</h4>
+                <ul>
+                    <li>點擊「🔄 更新股價」後，股價立即在表格中更新</li>
+                    <li>Console 顯示新的分階段批量處理日誌</li>
+                    <li>股價數值與 Console 日誌中的數值一致</li>
+                    <li>不需要手動重新載入頁面就能看到更新</li>
+                    <li>整個更新過程流暢，無卡頓或延遲</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📈 技術細節</h2>
+            <div class="status info">
+                <h4>🔧 修復的技術原理：</h4>
+                <pre>// v1.0.2.0380 新的批量更新策略
+
+// 第一階段：收集所有更新
+const stockUpdates = new Map();
+for (const stock of stocks) {
+  if (priceData) {
+    stockUpdates.set(stock.id, {
+      currentPrice: priceData.price,
+      lastUpdated: new Date(),
+      priceSource: priceData.source
+    });
+  }
+}
+
+// 第二階段：一次性應用所有更新
+set((currentState) => {
+  const updatedStocks = currentState.stocks.map(stock => {
+    const update = stockUpdates.get(stock.id);
+    return update ? { ...stock, ...update } : stock;
+  });
+  
+  return {
+    ...currentState,
+    stocks: updatedStocks,           // 新陣列引用
+    lastPriceUpdate: new Date(),     // 觸發重新渲染
+    forceRender: Math.random(),      // 強制重新渲染
+    _batchUpdateComplete: true       // 批量更新完成標記
+  };
+});
+
+// 第三階段：處理除權息
+// 第四階段：最終強制重新渲染</pre>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🚀 如果修復成功</h2>
+            <div class="status success">
+                <p><strong>恭喜！</strong>批量股價更新功能現在應該完全正常工作了！</p>
+                <p>這個修復解決了 React 重新渲染的根本問題，確保：</p>
+                <ul>
+                    <li>✅ 批量 API 正常工作</li>
+                    <li>✅ 股價數據正確更新</li>
+                    <li>✅ UI 立即反映變化</li>
+                    <li>✅ 性能保持優異</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            console.log('🎯 UI 重新渲染修復測試頁面已載入 - v1.0.2.0380');
+            console.log('📍 請重新啟動開發服務器後測試：npm run dev');
+            console.log('🔧 修復內容：分階段批量更新 + 多重渲染觸發 + 依賴修復');
+        };
+    </script>
+</body>
+</html>

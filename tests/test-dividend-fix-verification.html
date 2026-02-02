@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>除權息修復驗證測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .test-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background-color: #2980b9;
+        }
+        .test-button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .log-container {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.success { background-color: #27ae60; color: white; }
+        .status.error { background-color: #e74c3c; color: white; }
+        .status.warning { background-color: #f39c12; color: white; }
+        .status.info { background-color: #3498db; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 除權息修復驗證測試 v1.0.2.0380</h1>
+        
+        <div class="test-section">
+            <h3>📋 測試目標</h3>
+            <p>驗證除權息處理失敗不會中斷股價更新流程：</p>
+            <ul>
+                <li>✅ 測試無股息資料的股票（2208、4585、00981A）</li>
+                <li>✅ 確認除權息 API 404 錯誤被正確處理</li>
+                <li>✅ 驗證股價更新流程不被中斷</li>
+                <li>✅ 確認 UI 能正常顯示股價更新</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 測試 1：除權息 API 錯誤處理</h3>
+            <p>測試無股息資料股票的 API 調用是否正確處理 404 錯誤</p>
+            <button class="test-button" onclick="testDividendAPI()">測試除權息 API</button>
+            <div id="dividendResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 測試 2：股價更新流程</h3>
+            <p>模擬完整的股價更新流程，包含有問題的股票</p>
+            <button class="test-button" onclick="testStockPriceUpdate()">測試股價更新</button>
+            <div id="stockUpdateResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 測試 3：綜合測試</h3>
+            <p>測試混合有股息和無股息的股票更新</p>
+            <button class="test-button" onclick="testMixedUpdate()">綜合測試</button>
+            <div id="mixedResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 即時日誌</h3>
+            <button class="test-button" onclick="clearLogs()">清除日誌</button>
+            <div id="logContainer" class="log-container"></div>
+        </div>
+    </div>
+
+    <script>
+        // 日誌收集
+        const logs = [];
+        const originalConsole = {
+            log: console.log,
+            warn: console.warn,
+            error: console.error,
+            info: console.info
+        };
+
+        function addLog(level, message, ...args) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] [${level.toUpperCase()}] ${message} ${args.length > 0 ? JSON.stringify(args) : ''}`;
+            logs.push(logEntry);
+            
+            // 更新日誌顯示
+            const logContainer = document.getElementById('logContainer');
+            if (logContainer) {
+                logContainer.textContent = logs.slice(-50).join('\n'); // 只顯示最近50條
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            
+            // 調用原始 console 方法
+            originalConsole[level](message, ...args);
+        }
+
+        // 攔截 console 輸出
+        console.log = (...args) => addLog('log', args.join(' '));
+        console.warn = (...args) => addLog('warn', args.join(' '));
+        console.error = (...args) => addLog('error', args.join(' '));
+        console.info = (...args) => addLog('info', args.join(' '));
+
+        function clearLogs() {
+            logs.length = 0;
+            document.getElementById('logContainer').textContent = '';
+        }
+
+        function showResult(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.textContent = content;
+            element.style.display = 'block';
+        }
+
+        // 測試 1：除權息 API 錯誤處理
+        async function testDividendAPI() {
+            console.log('🧪 開始測試除權息 API 錯誤處理...');
+            
+            const testStocks = ['2208', '4585', '00981A']; // 已知無股息資料的股票
+            const results = [];
+            
+            for (const symbol of testStocks) {
+                try {
+                    console.log(`測試 ${symbol} 除權息 API...`);
+                    
+                    const response = await fetch(`http://localhost:3001/api/dividend/${symbol}`);
+                    
+                    if (response.status === 404) {
+                        console.log(`✅ ${symbol}: 正確返回 404，無股息資料`);
+                        results.push(`${symbol}: ✅ 404 正確處理`);
+                    } else if (response.ok) {
+                        const data = await response.json();
+                        console.log(`✅ ${symbol}: 成功獲取股息資料`, data);
+                        results.push(`${symbol}: ✅ 有股息資料 (${data.dividends?.length || 0} 筆)`);
+                    } else {
+                        console.warn(`⚠️ ${symbol}: 非預期狀態碼 ${response.status}`);
+                        results.push(`${symbol}: ⚠️ 狀態碼 ${response.status}`);
+                    }
+                } catch (error) {
+                    console.error(`❌ ${symbol}: API 調用失敗`, error);
+                    results.push(`${symbol}: ❌ 調用失敗 - ${error.message}`);
+                }
+            }
+            
+            const summary = `除權息 API 測試完成：\n\n${results.join('\n')}\n\n✅ 關鍵：404 錯誤應該被正確處理，不拋出異常`;
+            showResult('dividendResult', summary, 'success');
+            console.log('🧪 除權息 API 測試完成');
+        }
+
+        // 測試 2：股價更新流程
+        async function testStockPriceUpdate() {
+            console.log('🧪 開始測試股價更新流程...');
+            
+            const testStocks = [
+                { symbol: '2330', hasDiv: true, name: '台積電' },
+                { symbol: '2208', hasDiv: false, name: '台鋼' },
+                { symbol: '4585', hasDiv: false, name: '達明' }
+            ];
+            
+            const results = [];
+            
+            for (const stock of testStocks) {
+                try {
+                    console.log(`測試 ${stock.symbol} (${stock.name}) 股價更新...`);
+                    
+                    // 1. 測試股價獲取
+                    const priceResponse = await fetch(`http://localhost:3001/api/stock/${stock.symbol}`);
+                    let priceSuccess = false;
+                    
+                    if (priceResponse.ok) {
+                        const priceData = await priceResponse.json();
+                        console.log(`✅ ${stock.symbol}: 股價獲取成功 - ${priceData.price}`);
+                        priceSuccess = true;
+                    } else {
+                        console.warn(`⚠️ ${stock.symbol}: 股價獲取失敗 - ${priceResponse.status}`);
+                    }
+                    
+                    // 2. 測試除權息處理（模擬）
+                    let dividendSuccess = true;
+                    try {
+                        const divResponse = await fetch(`http://localhost:3001/api/dividend/${stock.symbol}`);
+                        if (divResponse.ok) {
+                            console.log(`✅ ${stock.symbol}: 除權息處理成功`);
+                        } else if (divResponse.status === 404) {
+                            console.log(`ℹ️ ${stock.symbol}: 無除權息資料（正常）`);
+                        } else {
+                            throw new Error(`除權息 API 錯誤: ${divResponse.status}`);
+                        }
+                    } catch (error) {
+                        console.warn(`⚠️ ${stock.symbol}: 除權息處理失敗 - ${error.message}`);
+                        dividendSuccess = false;
+                    }
+                    
+                    // 3. 評估整體結果
+                    if (priceSuccess) {
+                        results.push(`${stock.symbol} (${stock.name}): ✅ 股價更新成功 ${dividendSuccess ? '+ 除權息正常' : '(除權息失敗但不影響)'}`);
+                    } else {
+                        results.push(`${stock.symbol} (${stock.name}): ❌ 股價更新失敗`);
+                    }
+                    
+                } catch (error) {
+                    console.error(`❌ ${stock.symbol}: 更新流程異常`, error);
+                    results.push(`${stock.symbol} (${stock.name}): ❌ 流程異常 - ${error.message}`);
+                }
+            }
+            
+            const summary = `股價更新流程測試完成：\n\n${results.join('\n')}\n\n✅ 關鍵：除權息失敗不應影響股價更新成功`;
+            showResult('stockUpdateResult', summary, 'success');
+            console.log('🧪 股價更新流程測試完成');
+        }
+
+        // 測試 3：綜合測試
+        async function testMixedUpdate() {
+            console.log('🧪 開始綜合測試...');
+            
+            const mixedStocks = ['2330', '2208', '4585', '00981A', '0050'];
+            const results = {
+                success: 0,
+                failed: 0,
+                dividendWarnings: 0
+            };
+            
+            console.log(`測試 ${mixedStocks.length} 支股票的混合更新...`);
+            
+            for (const symbol of mixedStocks) {
+                try {
+                    // 模擬完整的更新流程
+                    console.log(`處理 ${symbol}...`);
+                    
+                    // 股價更新
+                    const priceResponse = await fetch(`http://localhost:3001/api/stock/${symbol}`);
+                    if (priceResponse.ok) {
+                        const priceData = await priceResponse.json();
+                        console.log(`✅ ${symbol}: 股價 ${priceData.price} (${priceData.source})`);
+                        results.success++;
+                        
+                        // 除權息處理（不影響主流程）
+                        try {
+                            const divResponse = await fetch(`http://localhost:3001/api/dividend/${symbol}`);
+                            if (divResponse.status === 404) {
+                                console.log(`ℹ️ ${symbol}: 無除權息資料，跳過處理`);
+                                results.dividendWarnings++;
+                            } else if (divResponse.ok) {
+                                const divData = await divResponse.json();
+                                console.log(`✅ ${symbol}: 除權息資料 ${divData.dividends?.length || 0} 筆`);
+                            }
+                        } catch (divError) {
+                            console.warn(`⚠️ ${symbol}: 除權息處理失敗，但不影響股價更新`);
+                            results.dividendWarnings++;
+                        }
+                        
+                    } else {
+                        console.error(`❌ ${symbol}: 股價獲取失敗`);
+                        results.failed++;
+                    }
+                    
+                } catch (error) {
+                    console.error(`❌ ${symbol}: 處理異常`, error);
+                    results.failed++;
+                }
+            }
+            
+            const summary = `綜合測試完成：
+            
+📊 結果統計：
+- 股價更新成功：${results.success}/${mixedStocks.length}
+- 股價更新失敗：${results.failed}/${mixedStocks.length}
+- 除權息警告：${results.dividendWarnings} (不影響股價更新)
+
+✅ 關鍵驗證：
+- 除權息 404 錯誤不中斷股價更新流程
+- 股價更新優先，除權息處理失敗不影響結果
+- UI 應該能正常顯示所有成功更新的股價`;
+            
+            showResult('mixedResult', summary, results.failed === 0 ? 'success' : 'warning');
+            console.log('🧪 綜合測試完成');
+        }
+
+        // 頁面載入時的初始化
+        window.addEventListener('load', () => {
+            console.log('🔧 除權息修復驗證測試頁面載入完成');
+            console.log('📋 測試目標：驗證 v1.0.2.0380 修復除權息處理失敗導致股價更新中斷的問題');
+            console.log('🎯 關鍵修復：除權息處理失敗時使用 warn 而非 error，不中斷股價更新流程');
+        });
+    </script>
+</body>
+</html>

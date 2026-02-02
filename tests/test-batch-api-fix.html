@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量股價 API 修復測試</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>批量股價 API 修復測試</h1>
+    
+    <div class="test-section">
+        <h2>環境檢查</h2>
+        <div id="env-info"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>API 端點測試</h2>
+        <button onclick="testApiEndpoint()">測試 API 端點配置</button>
+        <div id="api-test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>批量股價測試</h2>
+        <button onclick="testBatchStockPrice()">測試批量股價獲取</button>
+        <div id="batch-test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>直接 API 測試</h2>
+        <button onclick="testDirectApi()">直接測試後端 API</button>
+        <div id="direct-test-result"></div>
+    </div>
+
+    <script>
+        // 環境檢查
+        function checkEnvironment() {
+            const envInfo = {
+                hostname: window.location.hostname,
+                port: window.location.port,
+                protocol: window.location.protocol,
+                isDevelopment: window.location.hostname === 'localhost',
+                userAgent: navigator.userAgent
+            };
+            
+            document.getElementById('env-info').innerHTML = `
+                <pre>${JSON.stringify(envInfo, null, 2)}</pre>
+            `;
+        }
+        
+        // 測試 API 端點配置
+        async function testApiEndpoint() {
+            const resultDiv = document.getElementById('api-test-result');
+            resultDiv.innerHTML = '<div class="info">測試中...</div>';
+            
+            try {
+                // 模擬 API 配置邏輯
+                const getApiBaseUrl = () => {
+                    const isDevelopment = window.location.hostname === 'localhost';
+                    if (isDevelopment) {
+                        return 'http://localhost:3001';
+                    }
+                    return '/.netlify/functions';
+                };
+                
+                const getBatchStocks = () => {
+                    const baseUrl = getApiBaseUrl();
+                    if (!baseUrl) return null;
+                    
+                    if (baseUrl.includes('netlify')) {
+                        return `${baseUrl}/stocks-batch`;
+                    }
+                    
+                    return `${baseUrl}/api/stocks/batch`;
+                };
+                
+                const apiUrl = getBatchStocks();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ API 端點配置成功</div>
+                    <pre>API URL: ${apiUrl}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ API 端點配置失敗</div>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        // 測試批量股價獲取
+        async function testBatchStockPrice() {
+            const resultDiv = document.getElementById('batch-test-result');
+            resultDiv.innerHTML = '<div class="info">測試中...</div>';
+            
+            try {
+                const symbols = ['2330', '0050', '2886'];
+                
+                // 使用與前端相同的邏輯
+                const getApiBaseUrl = () => {
+                    const isDevelopment = window.location.hostname === 'localhost';
+                    if (isDevelopment) {
+                        return 'http://localhost:3001';
+                    }
+                    return '/.netlify/functions';
+                };
+                
+                const apiUrl = `${getApiBaseUrl()}/api/stocks/batch`;
+                
+                console.log('批量 API 端點:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ symbols })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ 批量股價獲取成功</div>
+                    <pre>請求 URL: ${apiUrl}</pre>
+                    <pre>請求股票: ${symbols.join(', ')}</pre>
+                    <pre>回應資料: ${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ 批量股價獲取失敗</div>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        // 直接測試後端 API
+        async function testDirectApi() {
+            const resultDiv = document.getElementById('direct-test-result');
+            resultDiv.innerHTML = '<div class="info">測試中...</div>';
+            
+            try {
+                const symbols = ['2330', '0050'];
+                const apiUrl = 'http://localhost:3001/api/stocks/batch';
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ symbols })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ 直接 API 測試成功</div>
+                    <pre>API URL: ${apiUrl}</pre>
+                    <pre>回應資料: ${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ 直接 API 測試失敗</div>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        // 頁面載入時執行環境檢查
+        window.onload = function() {
+            checkEnvironment();
+        };
+    </script>
+</body>
+</html>

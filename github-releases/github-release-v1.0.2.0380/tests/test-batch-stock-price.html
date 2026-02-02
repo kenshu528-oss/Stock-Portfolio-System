@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>批量股價更新測試</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .test-section h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .loading {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .symbol-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 批量股價更新測試</h1>
+        
+        <!-- 環境檢測 -->
+        <div class="test-section">
+            <h3>🔍 環境檢測</h3>
+            <button onclick="detectEnvironment()">檢測當前環境</button>
+            <div id="env-results" class="results"></div>
+        </div>
+
+        <!-- 預設測試股票 -->
+        <div class="test-section">
+            <h3>🚀 快速測試</h3>
+            <button onclick="testSmallBatch()">小批量測試 (5支股票)</button>
+            <button onclick="testMediumBatch()">中批量測試 (15支股票)</button>
+            <button onclick="testLargeBatch()">大批量測試 (30支股票)</button>
+            <div id="quick-results" class="results"></div>
+        </div>
+
+        <!-- 自訂股票測試 -->
+        <div class="test-section">
+            <h3>⚙️ 自訂測試</h3>
+            <textarea id="custom-symbols" class="symbol-input" rows="4" 
+                placeholder="輸入股票代號，用逗號或換行分隔，例如：2330,0050,2454,2881"></textarea>
+            <button onclick="testCustomBatch()">測試自訂股票</button>
+            <div id="custom-results" class="results"></div>
+        </div>
+
+        <!-- 效能比較 -->
+        <div class="test-section">
+            <h3>⚡ 效能比較</h3>
+            <button onclick="comparePerformance()">序列 vs 批量效能比較</button>
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div id="performance-results" class="results"></div>
+        </div>
+
+        <!-- 統計資訊 -->
+        <div class="stats" id="stats-container" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-value" id="total-requests">0</div>
+                <div class="stat-label">總請求數</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="success-rate">0%</div>
+                <div class="stat-label">成功率</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avg-time">0ms</div>
+                <div class="stat-label">平均耗時</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="efficiency-gain">0%</div>
+                <div class="stat-label">效能提升</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 測試用股票代號
+        const TEST_SYMBOLS = {
+            small: ['2330', '0050', '2454', '2881', '2886'],
+            medium: ['2330', '0050', '2454', '2881', '2886', '2317', '2412', '3008', '2308', '2303', '0056', '00878', '00646', '00679B', '6505'],
+            large: ['2330', '0050', '2454', '2881', '2886', '2317', '2412', '3008', '2308', '2303', '0056', '00878', '00646', '00679B', '6505', '2891', '2892', '5880', '2474', '3711', '2382', '1301', '1303', '2002', '1216', '2207', '2227', '2357', '2395', '2408']
+        };
+
+        let testStats = {
+            totalRequests: 0,
+            successCount: 0,
+            totalTime: 0,
+            batchTime: 0,
+            serialTime: 0
+        };
+
+        // 檢測環境
+        function detectEnvironment() {
+            const envResults = document.getElementById('env-results');
+            envResults.innerHTML = '<span class="loading">🔍 檢測環境中...</span>';
+
+            const hostname = window.location.hostname;
+            const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+            const isGitHubPages = hostname.includes('github.io');
+            const isNetlify = hostname.includes('netlify.app');
+
+            let environment = 'unknown';
+            let expectedService = 'unknown';
+
+            if (isLocalhost) {
+                environment = 'local';
+                expectedService = '後端批量 API';
+            } else if (isGitHubPages) {
+                environment = 'github-pages';
+                expectedService = 'Vercel 批量服務';
+            } else if (isNetlify) {
+                environment = 'netlify';
+                expectedService = 'Vercel 批量服務';
+            }
+
+            const envInfo = `
+🌐 環境資訊:
+  - 主機名稱: ${hostname}
+  - 環境類型: ${environment}
+  - 預期服務: ${expectedService}
+  - 是否本機: ${isLocalhost ? '是' : '否'}
+  - 是否 GitHub Pages: ${isGitHubPages ? '是' : '否'}
+  - 是否 Netlify: ${isNetlify ? '是' : '否'}
+
+📡 API 端點測試:`;
+
+            envResults.innerHTML = envInfo;
+
+            // 測試 API 端點
+            if (isLocalhost) {
+                testBackendAPI();
+            } else {
+                testVercelAPI();
+            }
+        }
+
+        // 測試後端 API
+        async function testBackendAPI() {
+            const envResults = document.getElementById('env-results');
+            
+            try {
+                const response = await fetch('/api/stocks/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symbols: ['2330'] })
+                });
+
+                if (response.ok) {
+                    envResults.innerHTML += '\n<span class="success">✅ 後端批量 API 可用</span>';
+                } else {
+                    envResults.innerHTML += `\n<span class="error">❌ 後端批量 API 錯誤: ${response.status}</span>`;
+                }
+            } catch (error) {
+                envResults.innerHTML += `\n<span class="error">❌ 後端批量 API 無法連接: ${error.message}</span>`;
+            }
+        }
+
+        // 測試 Vercel API
+        async function testVercelAPI() {
+            const envResults = document.getElementById('env-results');
+            
+            try {
+                const response = await fetch('https://vercel-stock-api.vercel.app/api/stock-price?symbol=2330');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        envResults.innerHTML += '\n<span class="success">✅ Vercel API 可用</span>';
+                    } else {
+                        envResults.innerHTML += '\n<span class="error">❌ Vercel API 回應異常</span>';
+                    }
+                } else {
+                    envResults.innerHTML += `\n<span class="error">❌ Vercel API 錯誤: ${response.status}</span>`;
+                }
+            } catch (error) {
+                envResults.innerHTML += `\n<span class="error">❌ Vercel API 無法連接: ${error.message}</span>`;
+            }
+        }
+
+        // 小批量測試
+        async function testSmallBatch() {
+            await runBatchTest(TEST_SYMBOLS.small, 'quick-results', '小批量測試');
+        }
+
+        // 中批量測試
+        async function testMediumBatch() {
+            await runBatchTest(TEST_SYMBOLS.medium, 'quick-results', '中批量測試');
+        }
+
+        // 大批量測試
+        async function testLargeBatch() {
+            await runBatchTest(TEST_SYMBOLS.large, 'quick-results', '大批量測試');
+        }
+
+        // 自訂批量測試
+        async function testCustomBatch() {
+            const input = document.getElementById('custom-symbols').value;
+            if (!input.trim()) {
+                alert('請輸入股票代號');
+                return;
+            }
+
+            const symbols = input.split(/[,\n]/).map(s => s.trim()).filter(s => s);
+            await runBatchTest(symbols, 'custom-results', '自訂測試');
+        }
+
+        // 執行批量測試
+        async function runBatchTest(symbols, resultElementId, testName) {
+            const resultsElement = document.getElementById(resultElementId);
+            resultsElement.innerHTML = `<span class="loading">🚀 ${testName} 進行中... (${symbols.length} 支股票)</span>`;
+
+            const startTime = Date.now();
+
+            try {
+                let results;
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+                if (isLocalhost) {
+                    // 本機端：使用後端批量 API
+                    const response = await fetch('/api/stocks/batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ symbols })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    results = await response.json();
+                } else {
+                    // 雲端環境：模擬 Vercel 批量調用
+                    results = await simulateVercelBatch(symbols);
+                }
+
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                // 統計結果
+                const successCount = results.filter(r => r.price > 0).length;
+                const failCount = symbols.length - successCount;
+                const successRate = Math.round((successCount / symbols.length) * 100);
+
+                // 更新統計
+                testStats.totalRequests += symbols.length;
+                testStats.successCount += successCount;
+                testStats.totalTime += duration;
+
+                // 顯示結果
+                let resultText = `
+<span class="success">✅ ${testName} 完成</span>
+
+📊 測試結果:
+  - 股票數量: ${symbols.length}
+  - 成功數量: ${successCount}
+  - 失敗數量: ${failCount}
+  - 成功率: ${successRate}%
+  - 總耗時: ${duration}ms
+  - 平均耗時: ${Math.round(duration / symbols.length)}ms/股
+
+📈 成功股票:`;
+
+                results.filter(r => r.price > 0).forEach(stock => {
+                    resultText += `\n  ${stock.symbol}: $${stock.price} (${stock.source || 'Unknown'})`;
+                });
+
+                if (failCount > 0) {
+                    resultText += '\n\n❌ 失敗股票:';
+                    results.filter(r => r.price <= 0).forEach(stock => {
+                        resultText += `\n  ${stock.symbol}: ${stock.error || 'No data'}`;
+                    });
+                }
+
+                resultsElement.innerHTML = resultText;
+                updateStats();
+
+            } catch (error) {
+                resultsElement.innerHTML = `<span class="error">❌ ${testName} 失敗: ${error.message}</span>`;
+            }
+        }
+
+        // 模擬 Vercel 批量調用
+        async function simulateVercelBatch(symbols) {
+            const results = [];
+            const BATCH_SIZE = 8;
+
+            for (let i = 0; i < symbols.length; i += BATCH_SIZE) {
+                const batch = symbols.slice(i, i + BATCH_SIZE);
+                const promises = batch.map(async (symbol) => {
+                    try {
+                        const response = await fetch(`https://vercel-stock-api.vercel.app/api/stock-price?symbol=${symbol}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            return {
+                                symbol,
+                                price: data.price || 0,
+                                change: data.change || 0,
+                                changePercent: data.changePercent || 0,
+                                source: data.source || 'Vercel'
+                            };
+                        } else {
+                            return { symbol, price: 0, error: `HTTP ${response.status}` };
+                        }
+                    } catch (error) {
+                        return { symbol, price: 0, error: error.message };
+                    }
+                });
+
+                const batchResults = await Promise.allSettled(promises);
+                batchResults.forEach((result, index) => {
+                    if (result.status === 'fulfilled') {
+                        results.push(result.value);
+                    } else {
+                        results.push({ symbol: batch[index], price: 0, error: 'Promise rejected' });
+                    }
+                });
+
+                // 批次間延遲
+                if (i + BATCH_SIZE < symbols.length) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+
+            return results;
+        }
+
+        // 效能比較測試
+        async function comparePerformance() {
+            const resultsElement = document.getElementById('performance-results');
+            const progressFill = document.getElementById('progress-fill');
+            
+            resultsElement.innerHTML = '<span class="loading">⚡ 效能比較測試進行中...</span>';
+            
+            const testSymbols = TEST_SYMBOLS.medium; // 使用中等批量
+            let progress = 0;
+
+            // 更新進度
+            function updateProgress(current, total, phase) {
+                progress = (current / total) * 50 + (phase === 'batch' ? 50 : 0);
+                progressFill.style.width = `${progress}%`;
+            }
+
+            try {
+                // 測試序列處理
+                resultsElement.innerHTML = '<span class="loading">⚡ 測試序列處理...</span>';
+                const serialStart = Date.now();
+                let serialSuccess = 0;
+
+                for (let i = 0; i < testSymbols.length; i++) {
+                    try {
+                        const response = await fetch(`https://vercel-stock-api.vercel.app/api/stock-price?symbol=${testSymbols[i]}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.price > 0) serialSuccess++;
+                        }
+                        await new Promise(resolve => setTimeout(resolve, 500)); // 模擬原有延遲
+                    } catch (error) {
+                        // 忽略錯誤，繼續測試
+                    }
+                    updateProgress(i + 1, testSymbols.length, 'serial');
+                }
+
+                const serialTime = Date.now() - serialStart;
+                testStats.serialTime = serialTime;
+
+                // 測試批量處理
+                resultsElement.innerHTML = '<span class="loading">⚡ 測試批量處理...</span>';
+                const batchStart = Date.now();
+                const batchResults = await simulateVercelBatch(testSymbols);
+                const batchTime = Date.now() - batchStart;
+                const batchSuccess = batchResults.filter(r => r.price > 0).length;
+                testStats.batchTime = batchTime;
+
+                updateProgress(testSymbols.length, testSymbols.length, 'batch');
+
+                // 計算效能提升
+                const timeSaved = serialTime - batchTime;
+                const efficiencyGain = Math.round((timeSaved / serialTime) * 100);
+
+                const comparisonResult = `
+<span class="success">⚡ 效能比較完成</span>
+
+📊 測試結果 (${testSymbols.length} 支股票):
+
+🐌 序列處理:
+  - 總耗時: ${serialTime}ms
+  - 成功數: ${serialSuccess}
+  - 平均耗時: ${Math.round(serialTime / testSymbols.length)}ms/股
+
+🚀 批量處理:
+  - 總耗時: ${batchTime}ms
+  - 成功數: ${batchSuccess}
+  - 平均耗時: ${Math.round(batchTime / testSymbols.length)}ms/股
+
+📈 效能提升:
+  - 時間節省: ${timeSaved}ms
+  - 效能提升: ${efficiencyGain}%
+  - 速度倍數: ${(serialTime / batchTime).toFixed(1)}x
+
+${efficiencyGain > 50 ? '🎉 批量處理效能顯著提升！' : '⚠️ 效能提升有限，可能需要優化'}`;
+
+                resultsElement.innerHTML = comparisonResult;
+                updateStats();
+
+            } catch (error) {
+                resultsElement.innerHTML = `<span class="error">❌ 效能比較失敗: ${error.message}</span>`;
+            }
+        }
+
+        // 更新統計資訊
+        function updateStats() {
+            const statsContainer = document.getElementById('stats-container');
+            statsContainer.style.display = 'grid';
+
+            document.getElementById('total-requests').textContent = testStats.totalRequests;
+            
+            const successRate = testStats.totalRequests > 0 ? 
+                Math.round((testStats.successCount / testStats.totalRequests) * 100) : 0;
+            document.getElementById('success-rate').textContent = `${successRate}%`;
+            
+            const avgTime = testStats.totalRequests > 0 ? 
+                Math.round(testStats.totalTime / testStats.totalRequests) : 0;
+            document.getElementById('avg-time').textContent = `${avgTime}ms`;
+            
+            const efficiencyGain = testStats.serialTime > 0 && testStats.batchTime > 0 ? 
+                Math.round(((testStats.serialTime - testStats.batchTime) / testStats.serialTime) * 100) : 0;
+            document.getElementById('efficiency-gain').textContent = `${efficiencyGain}%`;
+        }
+
+        // 頁面載入時自動檢測環境
+        window.addEventListener('load', () => {
+            detectEnvironment();
+        });
+    </script>
+</body>
+</html>
