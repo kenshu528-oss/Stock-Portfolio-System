@@ -54,10 +54,27 @@ export class VercelStockPriceService {
         return null;
       }
       
+      // 🔧 修復：判斷是否為交易時間，標示價格類型
+      const now = new Date();
+      const hour = now.getHours();
+      const minute = now.getMinutes();
+      const currentTime = hour * 60 + minute;
+      const marketOpen = 9 * 60; // 09:00
+      const marketClose = 13 * 60 + 30; // 13:30
+      const isMarketHours = currentTime >= marketOpen && currentTime <= marketClose;
+      const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+      const isMarketOpen = isMarketHours && isWeekday;
+      
+      // 根據市場狀態調整來源標示
+      const priceType = isMarketOpen ? '即時' : '收盤';
+      const enhancedSource = `${data.source} (${priceType}價)`;
+      
       logger.success('vercel', `${symbol} 股價獲取成功`, {
         price: data.price,
-        source: data.source,
-        fullSymbol: data.fullSymbol
+        source: enhancedSource,
+        fullSymbol: data.fullSymbol,
+        priceType,
+        isMarketOpen
       });
       
       return {
@@ -66,7 +83,7 @@ export class VercelStockPriceService {
         price: parseFloat(data.price.toFixed(2)),
         change: parseFloat(data.change.toFixed(2)),
         changePercent: parseFloat(data.changePercent.toFixed(2)),
-        source: data.source, // "Yahoo Finance (Vercel)"
+        source: enhancedSource, // "Yahoo Finance (Vercel) (收盤價)" 或 "Yahoo Finance (Vercel) (即時價)"
         timestamp: data.timestamp,
         success: true
       };

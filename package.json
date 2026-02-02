@@ -1,7 +1,7 @@
 {
   "name": "stock-portfolio-system",
   "private": true,
-  "version": "1.0.2.0380",
+  "version": "1.0.2.0381",
   "type": "module",
   "scripts": {
     "dev": "vite",

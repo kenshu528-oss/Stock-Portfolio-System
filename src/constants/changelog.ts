@@ -12,6 +12,29 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0381',
+    date: '2026-02-02',
+    type: 'hotfix',
+    title: '即時股價修復：添加證交所即時 API，獲取真正的即時價格',
+    description: '修復股價獲取問題：用戶反映新增個股顯示的是收盤價而非即時價格。分析發現 Yahoo Finance API 和 Vercel Edge Functions 在非交易時間只返回收盤價。添加證交所即時 API 作為第一優先級，確保獲取真正的即時價格。',
+    changes: [
+      '🔧 添加證交所即時 API：使用 mis.twse.com.tw 獲取真正的即時股價',
+      '📊 優化股價來源優先級：證交所即時 > Vercel Edge Functions',
+      '🔄 改善快取機制：縮短快取時間為2分鐘，確保即時性',
+      '📈 智能市場判斷：自動判斷上市/上櫃，使用對應的交易所 API',
+      '🔧 修復 QuickAddStock：總是重新獲取最新股價，避免使用舊價格',
+      '✅ 強制刷新支援：支援 forceRefresh 參數，跳過快取獲取最新價格',
+      '📝 改善日誌記錄：詳細記錄股價來源和獲取過程'
+    ],
+    fixes: [
+      '修復新增個股顯示收盤價而非即時價格的問題',
+      '修復 Yahoo Finance API 在非交易時間只返回收盤價',
+      '修復股價來源標示不準確的問題',
+      '確保即時股價的準確性和及時性',
+      '改善用戶體驗，提供真正的即時價格'
+    ]
+  },
+  {
     version: '1.0.2.0380',
     date: '2026-02-02',
     type: 'hotfix',

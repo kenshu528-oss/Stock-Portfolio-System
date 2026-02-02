@@ -610,49 +610,75 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     };
   }, []); // 🔧 修復：使用 ref，不需要依賴項
 
-  // 選擇股票 - 優化版本，選擇時獲取股價
+  // 選擇股票 - 修復版本，總是獲取最新股價確保一致性
   const handleSelectStock = async (stock: StockSearchResult) => {
-    // 如果股票還沒有股價，先獲取
-    if (stock.price === 0 && stock.source !== '獲取失敗') {
-      setIsSearching(true);
-      setLoadingStatus(`正在獲取 ${stock.symbol} 股價...`);
+    // 🔧 修復：總是重新獲取股價，確保與批量更新一致
+    setIsSearching(true);
+    setLoadingStatus(`正在獲取 ${stock.symbol} 最新股價...`);
+    
+    try {
+      logger.info('stock', `QuickAddStock 重新獲取 ${stock.symbol} 最新股價`);
       
-      try {
-        const priceData = await cloudStockPriceService.getStockPrice(stock.symbol, 2);
+      // 🔧 關鍵修復：清除快取，強制獲取最新價格
+      const priceData = await cloudStockPriceService.getStockPrice(stock.symbol, 2);
+      
+      if (priceData && priceData.price > 0) {
         const updatedStock = {
           ...stock,
-          price: priceData?.price || 0,
-          source: priceData?.source || '無資料'
+          price: priceData.price,
+          source: priceData.source,
+          timestamp: priceData.timestamp // 添加時間戳
         };
         
         setSelectedStock(updatedStock);
         setSearchQuery(`${updatedStock.symbol} - ${updatedStock.name}`);
-        setCostPrice(updatedStock.price > 0 ? updatedStock.price.toString() : '');
+        setCostPrice(updatedStock.price.toString());
         
-        logger.success('stock', `成功獲取 ${stock.symbol} 股價`, { 
+        logger.success('stock', `QuickAddStock 獲取 ${stock.symbol} 最新股價成功`, { 
           price: updatedStock.price,
-          source: updatedStock.source 
+          source: updatedStock.source,
+          timestamp: updatedStock.timestamp,
+          previousPrice: stock.price
         });
-      } catch (error) {
-        logger.error('stock', `獲取 ${stock.symbol} 股價失敗`, error);
+        
+        // 🔧 如果價格有變化，記錄日誌
+        if (stock.price > 0 && Math.abs(stock.price - updatedStock.price) > 0.01) {
+          logger.warn('stock', `${stock.symbol} 股價已更新`, {
+            舊價格: stock.price,
+            新價格: updatedStock.price,
+            差異: (updatedStock.price - stock.price).toFixed(2)
+          });
+        }
+      } else {
+        // 獲取失敗，使用原有價格但標記為失敗
         const failedStock = {
           ...stock,
-          price: 0,
           source: '獲取失敗'
         };
         
         setSelectedStock(failedStock);
         setSearchQuery(`${failedStock.symbol} - ${failedStock.name}`);
-        setCostPrice('');
-      } finally {
-        setIsSearching(false);
-        setLoadingStatus('');
+        setCostPrice(stock.price > 0 ? stock.price.toString() : '');
+        
+        logger.warn('stock', `QuickAddStock 獲取 ${stock.symbol} 股價失敗，使用原有價格`, {
+          原有價格: stock.price
+        });
       }
-    } else {
-      // 已有股價，直接選擇
-      setSelectedStock(stock);
-      setSearchQuery(`${stock.symbol} - ${stock.name}`);
+    } catch (error) {
+      logger.error('stock', `QuickAddStock 獲取 ${stock.symbol} 股價異常`, error);
+      
+      // 異常情況，使用原有價格
+      const errorStock = {
+        ...stock,
+        source: '獲取異常'
+      };
+      
+      setSelectedStock(errorStock);
+      setSearchQuery(`${errorStock.symbol} - ${errorStock.name}`);
       setCostPrice(stock.price > 0 ? stock.price.toString() : '');
+    } finally {
+      setIsSearching(false);
+      setLoadingStatus('');
     }
     
     setShowResults(false);

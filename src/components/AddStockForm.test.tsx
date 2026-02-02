@@ -34,18 +34,18 @@ describe('AddStockForm Component', () => {
 
   it('renders when open', () => {
     render(<AddStockForm {...defaultProps} />);
-    expect(screen.getByText('新增股票')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/)).toBeInTheDocument();
+    expect(screen.getByText('?��??�票')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/)).toBeInTheDocument();
   });
 
   it('does not render when closed', () => {
     render(<AddStockForm {...defaultProps} isOpen={false} />);
-    expect(screen.queryByText('新增股票')).not.toBeInTheDocument();
+    expect(screen.queryByText('?��??�票')).not.toBeInTheDocument();
   });
 
   it('focuses on search input when opened', () => {
     render(<AddStockForm {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     expect(searchInput).toHaveFocus();
   });
 
@@ -53,7 +53,7 @@ describe('AddStockForm Component', () => {
     (stockService.searchStock as any).mockResolvedValue(mockStockResult);
     
     render(<AddStockForm {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     
     fireEvent.change(searchInput, { target: { value: '2330' } });
     
@@ -66,7 +66,7 @@ describe('AddStockForm Component', () => {
     (stockService.searchStock as any).mockResolvedValue(mockStockResult);
     
     render(<AddStockForm {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     
     fireEvent.change(searchInput, { target: { value: '2330' } });
     
@@ -78,12 +78,12 @@ describe('AddStockForm Component', () => {
 
   it('shows error message for invalid stock code format', async () => {
     render(<AddStockForm {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     
     fireEvent.change(searchInput, { target: { value: 'INVALID' } });
     
     await waitFor(() => {
-      expect(screen.getByText(/請輸入有效的股票代碼格式/)).toBeInTheDocument();
+      expect(screen.getByText(/請輸?��??��??�票�?��?��?/)).toBeInTheDocument();
     });
   });
 
@@ -91,12 +91,12 @@ describe('AddStockForm Component', () => {
     (stockService.searchStock as any).mockResolvedValue(null);
     
     render(<AddStockForm {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     
     fireEvent.change(searchInput, { target: { value: '9999' } });
     
     await waitFor(() => {
-      expect(screen.getByText(/找不到股票代碼 9999 的資訊/)).toBeInTheDocument();
+      expect(screen.getByText(/?��??�股票代�?9999 ?��?�?)).toBeInTheDocument();
     });
   });
 
@@ -106,7 +106,7 @@ describe('AddStockForm Component', () => {
     );
     
     render(<AddStockForm {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     
     fireEvent.change(searchInput, { target: { value: '2330' } });
     
@@ -122,7 +122,7 @@ describe('AddStockForm Component', () => {
     (stockService.searchStock as any).mockResolvedValue(mockStockResult);
     
     render(<AddStockForm {...defaultProps} />);
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     
     fireEvent.change(searchInput, { target: { value: '2330' } });
     
@@ -138,14 +138,14 @@ describe('AddStockForm Component', () => {
     render(<AddStockForm {...defaultProps} />);
     
     // Search for stock first
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     fireEvent.change(searchInput, { target: { value: '2330' } });
     
     await waitFor(() => {
-      expect(screen.getByText('2330 - 台積電')).toBeInTheDocument();
+      expect(screen.getByText('2330 - ?��???)).toBeInTheDocument();
     });
     
-    const submitButton = screen.getByText('新增');
+    const submitButton = screen.getByText('?��?');
     expect(submitButton).toBeDisabled();
   });
 
@@ -155,18 +155,18 @@ describe('AddStockForm Component', () => {
     render(<AddStockForm {...defaultProps} />);
     
     // Search for stock
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     fireEvent.change(searchInput, { target: { value: '2330' } });
     
     await waitFor(() => {
-      expect(screen.getByText('2330 - 台積電')).toBeInTheDocument();
+      expect(screen.getByText('2330 - ?��???)).toBeInTheDocument();
     });
     
     // Fill required fields
-    const sharesInput = screen.getByPlaceholderText('例如: 1000');
+    const sharesInput = screen.getByPlaceholderText('例�?: 1000');
     fireEvent.change(sharesInput, { target: { value: '1000' } });
     
-    const submitButton = screen.getByText('新增');
+    const submitButton = screen.getByText('?��?');
     expect(submitButton).not.toBeDisabled();
   });
 
@@ -176,27 +176,27 @@ describe('AddStockForm Component', () => {
     render(<AddStockForm {...defaultProps} />);
     
     // Search for stock
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     fireEvent.change(searchInput, { target: { value: '2330' } });
     
     await waitFor(() => {
-      expect(screen.getByText('2330 - 台積電')).toBeInTheDocument();
+      expect(screen.getByText('2330 - ?��???)).toBeInTheDocument();
     });
     
     // Fill form
-    const sharesInput = screen.getByPlaceholderText('例如: 1000');
+    const sharesInput = screen.getByPlaceholderText('例�?: 1000');
     fireEvent.change(sharesInput, { target: { value: '1000' } });
     
     const costPriceInput = screen.getByDisplayValue('580');
     fireEvent.change(costPriceInput, { target: { value: '575' } });
     
     // Submit form
-    const submitButton = screen.getByText('新增');
+    const submitButton = screen.getByText('?��?');
     fireEvent.click(submitButton);
     
     expect(defaultProps.onSubmit).toHaveBeenCalledWith({
       symbol: '2330',
-      name: '台積電',
+      name: '?��???,
       price: 580,
       shares: '1000',
       costPrice: '575',
@@ -209,7 +209,7 @@ describe('AddStockForm Component', () => {
   it('calls onClose when cancel button is clicked', () => {
     render(<AddStockForm {...defaultProps} />);
     
-    const cancelButton = screen.getByText('取消');
+    const cancelButton = screen.getByText('?��?');
     fireEvent.click(cancelButton);
     
     expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
@@ -220,7 +220,7 @@ describe('AddStockForm Component', () => {
     
     // Open modal and enter some data
     rerender(<AddStockForm {...defaultProps} isOpen={true} />);
-    const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     fireEvent.change(searchInput, { target: { value: '2330' } });
     
     // Close and reopen modal
@@ -228,7 +228,7 @@ describe('AddStockForm Component', () => {
     rerender(<AddStockForm {...defaultProps} isOpen={true} />);
     
     // Form should be reset
-    const newSearchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+    const newSearchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
     expect(newSearchInput).toHaveValue('');
   });
 
@@ -242,7 +242,7 @@ describe('AddStockForm Component', () => {
       (stockService.searchStock as any).mockResolvedValue(testCase.valid ? mockStockResult : null);
       
       const { unmount } = render(<AddStockForm {...defaultProps} />);
-      const searchInput = screen.getByPlaceholderText(/例如: 2330、0050、00646、00679B/);
+      const searchInput = screen.getByPlaceholderText(/例�?: 2330??050??0646??0679B/);
       
       fireEvent.change(searchInput, { target: { value: testCase.code } });
       
@@ -253,7 +253,7 @@ describe('AddStockForm Component', () => {
       } else {
         await waitFor(() => {
           if (testCase.code.length >= 3) {
-            expect(screen.getByText(/請輸入有效的股票代碼格式/)).toBeInTheDocument();
+            expect(screen.getByText(/請輸?��??��??�票�?��?��?/)).toBeInTheDocument();
           }
         });
       }
