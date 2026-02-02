@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>證交所 MIS API 精準測試 - v1.0.2.0358</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #f9fafb;
+        }
+        .test-section h3 {
+            color: #1f2937;
+            margin-top: 0;
+        }
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stock-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+        }
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .stock-symbol {
+            font-weight: bold;
+            color: #1f2937;
+        }
+        .market-type {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .market-tse {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+        }
+        .market-otc {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+        .price-info {
+            margin: 8px 0;
+        }
+        .price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #059669;
+        }
+        .change {
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .change.positive {
+            color: #dc2626;
+        }
+        .change.negative {
+            color: #059669;
+        }
+        .api-info {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+        .loading {
+            color: #6b7280;
+            font-style: italic;
+        }
+        .error {
+            color: #dc2626;
+            font-size: 12px;
+        }
+        .success {
+            color: #059669;
+            font-size: 12px;
+        }
+        .test-controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+        .log-section {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #1f2937;
+            color: #f9fafb;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .key-points {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .key-points h4 {
+            color: #92400e;
+            margin-top: 0;
+        }
+        .key-points ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .key-points li {
+            margin: 5px 0;
+            color: #78350f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 證交所 MIS API 精準測試</h1>
+        <p style="text-align: center; color: #6b7280;">
+            基於用戶詳細指導：精準市場路徑 + 即時價格陷阱處理 + 買進價備援機制
+        </p>
+
+        <div class="key-points">
+            <h4>🔑 關鍵測試要點</h4>
+            <ul>
+                <li><strong>精準市場路徑</strong>：上市用 tse，上櫃用 otc，走錯路抓不到資料</li>
+                <li><strong>即時價格陷阱</strong>：z(成交價) 是橫槓 - 時，改抓 b(買進價)</li>
+                <li><strong>用途定位</strong>：GitHub Pages 即時監控專用，配股配息用 FinMind</li>
+                <li><strong>⚠️ CORS 限制</strong>：本機端測試會被 CORS 阻擋，需在 GitHub Pages 環境測試</li>
+            </ul>
+        </div>
+
+        <div class="key-points" style="background-color: #fef2f2; border-color: #f87171;">
+            <h4 style="color: #dc2626;">⚠️ 重要說明：CORS 限制</h4>
+            <ul>
+                <li style="color: #991b1b;"><strong>本機端測試</strong>：會遇到 CORS 錯誤，這是正常現象</li>
+                <li style="color: #991b1b;"><strong>雲端環境測試</strong>：在 GitHub Pages 上可正常運行</li>
+                <li style="color: #991b1b;"><strong>設計原理</strong>：證交所 API 專為雲端環境設計，本機端用後端代理</li>
+                <li style="color: #991b1b;"><strong>測試建議</strong>：部署到 GitHub Pages 後進行實際測試</li>
+            </ul>
+        </div>
+
+        <div class="test-controls">
+            <button onclick="testAllStocks()">🚀 開始測試</button>
+            <button onclick="clearResults()">🧹 清除結果</button>
+            <button onclick="testSingleStock()">🎯 測試單一股票</button>
+            <button onclick="simulateTest()">🎭 模擬測試（無CORS）</button>
+            <button onclick="checkCORS()">🔍 檢查CORS狀態</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 上市股票測試 (TSE)</h3>
+            <p>測試 tse_XXXX.tw 路徑是否正確</p>
+            <div class="stock-grid" id="tse-stocks">
+                <!-- 上市股票測試結果 -->
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📈 上櫃股票測試 (OTC)</h3>
+            <p>測試 otc_XXXX.tw 路徑是否正確，特別是 5314 世紀</p>
+            <div class="stock-grid" id="otc-stocks">
+                <!-- 上櫃股票測試結果 -->
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🏦 ETF 測試</h3>
+            <p>測試 ETF 使用 tse 路徑</p>
+            <div class="stock-grid" id="etf-stocks">
+                <!-- ETF 測試結果 -->
+            </div>
+        </div>
+
+        <div class="log-section" id="log-output">
+            <div>📝 測試日誌將顯示在這裡...</div>
+        </div>
+    </div>
+
+    <script>
+        // 測試股票清單
+        const testStocks = {
+            tse: [
+                { symbol: '2330', name: '台積電', expected: 'tse_2330.tw' },
+                { symbol: '2881', name: '富邦金', expected: 'tse_2881.tw' },
+                { symbol: '2886', name: '兆豐金', expected: 'tse_2886.tw' },
+                { symbol: '2317', name: '鴻海', expected: 'tse_2317.tw' }
+            ],
+            otc: [
+                { symbol: '5314', name: '世紀', expected: 'otc_5314.tw' },
+                { symbol: '6188', name: '廣明', expected: 'otc_6188.tw' },
+                { symbol: '4585', name: '達明', expected: 'otc_4585.tw' },
+                { symbol: '3008', name: '大立光', expected: 'otc_3008.tw' }
+            ],
+            etf: [
+                { symbol: '0050', name: '元大台灣50', expected: 'tse_0050.tw' },
+                { symbol: '00940', name: '元大台灣價值高息', expected: 'tse_00940.tw' },
+                { symbol: '00679B', name: '元大美債20年', expected: 'tse_00679B.tw' }
+            ]
+        };
+
+        let logOutput = document.getElementById('log-output');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: '#f9fafb',
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.style.color = colors[type];
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logOutput.appendChild(logEntry);
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        // 判斷市場類型（複製實際邏輯）
+        function getMarketTypeForTWSE(symbol) {
+            const code = parseInt(symbol.substring(0, 4));
+            
+            // ETF 通常在上市 (tse)
+            if (symbol.match(/^00\d+/)) {
+                return 'tse';
+            }
+            
+            // 上市股票 (1000-2999) → tse
+            if (code >= 1000 && code <= 2999) {
+                return 'tse';
+            }
+            
+            // 上櫃股票 (3000-8999) → otc
+            if (code >= 3000 && code <= 8999) {
+                return 'otc';
+            }
+            
+            // 預設上市 (tse)
+            return 'tse';
+        }
+
+        // 測試單一股票
+        async function testStock(symbol, name, expectedPath, marketType) {
+            const market = getMarketTypeForTWSE(symbol);
+            const apiUrl = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${market}_${symbol}.tw&json=1`;
+            
+            log(`🔍 測試 ${symbol} ${name}：預期路徑 ${expectedPath}，實際路徑 ${market}_${symbol}.tw`);
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.msgArray || data.msgArray.length === 0) {
+                    throw new Error('無資料或股票代碼錯誤');
+                }
+
+                const info = data.msgArray[0];
+                
+                // 處理即時價格陷阱
+                let currentPrice = 0;
+                let priceSource = '';
+                
+                if (info.z && info.z !== '-' && !isNaN(parseFloat(info.z))) {
+                    currentPrice = parseFloat(info.z);
+                    priceSource = '成交價';
+                } else if (info.b && info.b !== '-') {
+                    // b 格式通常為 "價格_張數_"，取第一個底線前的內容
+                    const buyPrices = info.b.split('_');
+                    const buyPrice = buyPrices[0];
+                    if (buyPrice && !isNaN(parseFloat(buyPrice))) {
+                        currentPrice = parseFloat(buyPrice);
+                        priceSource = '買進價';
+                    } else {
+                        throw new Error(`買進價格式錯誤: b=${info.b}`);
+                    }
+                } else {
+                    throw new Error(`無有效價格：z=${info.z}, b=${info.b}`);
+                }
+                
+                const yesterdayPrice = parseFloat(info.y) || currentPrice;
+                const change = currentPrice - yesterdayPrice;
+                const changePercent = yesterdayPrice > 0 ? (change / yesterdayPrice) * 100 : 0;
+
+                log(`✅ ${symbol} 成功：${currentPrice} (${priceSource})，漲跌 ${change.toFixed(2)} (${changePercent.toFixed(2)}%)`, 'success');
+                
+                return {
+                    success: true,
+                    symbol,
+                    name: info.n || name,
+                    price: currentPrice,
+                    change,
+                    changePercent,
+                    priceSource,
+                    market,
+                    time: info.t,
+                    volume: info.v,
+                    apiUrl
+                };
+
+            } catch (error) {
+                log(`❌ ${symbol} 失敗：${error.message}`, 'error');
+                return {
+                    success: false,
+                    symbol,
+                    name,
+                    error: error.message,
+                    market,
+                    apiUrl
+                };
+            }
+        }
+
+        // 渲染股票卡片
+        function renderStockCard(result, containerId) {
+            const container = document.getElementById(containerId);
+            const card = document.createElement('div');
+            card.className = 'stock-card';
+            
+            if (result.success) {
+                const changeClass = result.change >= 0 ? 'positive' : 'negative';
+                const changeSymbol = result.change >= 0 ? '+' : '';
+                
+                card.innerHTML = `
+                    <div class="stock-header">
+                        <span class="stock-symbol">${result.symbol} ${result.name}</span>
+                        <span class="market-type market-${result.market}">${result.market.toUpperCase()}</span>
+                    </div>
+                    <div class="price-info">
+                        <span class="price">$${result.price.toFixed(2)}</span>
+                        <span class="change ${changeClass}">
+                            ${changeSymbol}${result.change.toFixed(2)} (${changeSymbol}${result.changePercent.toFixed(2)}%)
+                        </span>
+                    </div>
+                    <div class="api-info">
+                        <div class="success">✅ 價格來源: ${result.priceSource}</div>
+                        <div>時間: ${result.time || 'N/A'}</div>
+                        <div>成交量: ${result.volume || 'N/A'}</div>
+                        <div style="font-size: 10px; margin-top: 5px; word-break: break-all;">
+                            API: ${result.apiUrl}
+                        </div>
+                    </div>
+                `;
+            } else {
+                card.innerHTML = `
+                    <div class="stock-header">
+                        <span class="stock-symbol">${result.symbol} ${result.name}</span>
+                        <span class="market-type market-${result.market}">${result.market.toUpperCase()}</span>
+                    </div>
+                    <div class="error">❌ ${result.error}</div>
+                    <div class="api-info">
+                        <div style="font-size: 10px; margin-top: 5px; word-break: break-all;">
+                            API: ${result.apiUrl}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.appendChild(card);
+        }
+
+        // 測試所有股票
+        async function testAllStocks() {
+            log('🚀 開始測試所有股票...', 'info');
+            clearResults();
+            
+            // 測試上市股票
+            log('📊 測試上市股票 (TSE)...', 'info');
+            for (const stock of testStocks.tse) {
+                const result = await testStock(stock.symbol, stock.name, stock.expected, 'tse');
+                renderStockCard(result, 'tse-stocks');
+                await new Promise(resolve => setTimeout(resolve, 500)); // 避免請求過於頻繁
+            }
+            
+            // 測試上櫃股票
+            log('📈 測試上櫃股票 (OTC)...', 'info');
+            for (const stock of testStocks.otc) {
+                const result = await testStock(stock.symbol, stock.name, stock.expected, 'otc');
+                renderStockCard(result, 'otc-stocks');
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // 測試 ETF
+            log('🏦 測試 ETF...', 'info');
+            for (const stock of testStocks.etf) {
+                const result = await testStock(stock.symbol, stock.name, stock.expected, 'etf');
+                renderStockCard(result, 'etf-stocks');
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            log('✅ 所有測試完成！', 'success');
+        }
+
+        // 清除結果
+        function clearResults() {
+            document.getElementById('tse-stocks').innerHTML = '';
+            document.getElementById('otc-stocks').innerHTML = '';
+            document.getElementById('etf-stocks').innerHTML = '';
+            logOutput.innerHTML = '<div>📝 測試日誌已清除...</div>';
+        }
+
+        // 測試單一股票
+        async function testSingleStock() {
+            const symbol = prompt('請輸入股票代碼 (例如: 5314)：');
+            if (!symbol) return;
+            
+            const name = prompt('請輸入股票名稱 (可選)：') || '未知';
+            
+            log(`🎯 測試單一股票：${symbol} ${name}`, 'info');
+            
+            const market = getMarketTypeForTWSE(symbol);
+            const expectedPath = `${market}_${symbol}.tw`;
+            
+            const result = await testStock(symbol, name, expectedPath, market);
+            
+            // 根據市場類型渲染到對應區域
+            let containerId = 'tse-stocks';
+            if (market === 'otc') containerId = 'otc-stocks';
+            else if (symbol.match(/^00\d+/)) containerId = 'etf-stocks';
+            
+            renderStockCard(result, containerId);
+        }
+
+        // 檢查 CORS 狀態
+        function checkCORS() {
+            const isLocalFile = window.location.protocol === 'file:';
+            const isLocalhost = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1';
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            
+            log('🔍 環境檢測結果：', 'info');
+            log(`  協議: ${window.location.protocol}`, 'info');
+            log(`  主機: ${window.location.hostname}`, 'info');
+            log(`  完整URL: ${window.location.href}`, 'info');
+            
+            if (isLocalFile) {
+                log('⚠️ 本機檔案環境：證交所API會被CORS阻擋', 'warning');
+                log('💡 建議：部署到GitHub Pages或使用本機服務器', 'info');
+            } else if (isLocalhost) {
+                log('🏠 本機服務器環境：證交所API會被CORS阻擋', 'warning');
+                log('💡 建議：使用後端代理或部署到GitHub Pages', 'info');
+            } else if (isGitHubPages) {
+                log('✅ GitHub Pages環境：證交所API應該可以正常使用', 'success');
+            } else {
+                log('🌐 其他雲端環境：證交所API可能可以使用', 'info');
+            }
+        }
+
+        // 模擬測試（無CORS限制）
+        function simulateTest() {
+            log('🎭 開始模擬測試（展示邏輯，無實際API調用）...', 'info');
+            clearResults();
+            
+            // 模擬測試資料
+            const mockResults = [
+                // 上市股票
+                { symbol: '2330', name: '台積電', price: 1760, change: 15, market: 'tse', priceSource: '成交價', success: true },
+                { symbol: '2881', name: '富邦金', price: 111.5, change: 3.0, market: 'tse', priceSource: '成交價', success: true },
+                { symbol: '2886', name: '兆豐金', price: 40.55, change: -0.45, market: 'tse', priceSource: '買進價', success: true },
+                { symbol: '2317', name: '鴻海', price: 120.5, change: 2.5, market: 'tse', priceSource: '成交價', success: true },
+                
+                // 上櫃股票
+                { symbol: '5314', name: '世紀', price: 85.2, change: -1.8, market: 'otc', priceSource: '買進價', success: true },
+                { symbol: '6188', name: '廣明', price: 109, change: 4.5, market: 'otc', priceSource: '成交價', success: true },
+                { symbol: '4585', name: '達明', price: 338, change: -5.0, market: 'otc', priceSource: '成交價', success: true },
+                { symbol: '3008', name: '大立光', price: 2850, change: 50, market: 'otc', priceSource: '成交價', success: true },
+                
+                // ETF
+                { symbol: '0050', name: '元大台灣50', price: 172.6, change: 1.2, market: 'tse', priceSource: '成交價', success: true },
+                { symbol: '00940', name: '元大台灣價值高息', price: 9.79, change: 0.05, market: 'tse', priceSource: '買進價', success: true },
+                { symbol: '00679B', name: '元大美債20年', price: 27.19, change: -0.15, market: 'tse', priceSource: '成交價', success: true }
+            ];
+            
+            // 模擬逐一處理
+            let index = 0;
+            const processNext = () => {
+                if (index >= mockResults.length) {
+                    log('✅ 模擬測試完成！展示了完整的邏輯流程', 'success');
+                    return;
+                }
+                
+                const result = mockResults[index];
+                const changePercent = result.price > 0 ? (result.change / (result.price - result.change)) * 100 : 0;
+                
+                log(`🎭 模擬 ${result.symbol} ${result.name}：${result.market}_${result.symbol}.tw`, 'info');
+                log(`✅ ${result.symbol} 模擬成功：${result.price} (${result.priceSource})，漲跌 ${result.change.toFixed(2)} (${changePercent.toFixed(2)}%)`, 'success');
+                
+                // 渲染模擬結果
+                const mockResult = {
+                    success: true,
+                    symbol: result.symbol,
+                    name: result.name,
+                    price: result.price,
+                    change: result.change,
+                    changePercent: changePercent,
+                    priceSource: result.priceSource,
+                    market: result.market,
+                    time: '13:30:00',
+                    volume: '12,345',
+                    apiUrl: `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${result.market}_${result.symbol}.tw&json=1`
+                };
+                
+                // 根據市場類型渲染到對應區域
+                let containerId = 'tse-stocks';
+                if (result.market === 'otc') containerId = 'otc-stocks';
+                else if (result.symbol.match(/^00\d+/)) containerId = 'etf-stocks';
+                
+                renderStockCard(mockResult, containerId);
+                
+                index++;
+                setTimeout(processNext, 800); // 模擬API延遲
+            };
+            
+            processNext();
+        }
+
+        // 頁面載入時的說明
+        log('🎯 證交所 MIS API 精準測試工具已載入', 'info');
+        log('📋 測試重點：', 'info');
+        log('  1. 精準市場路徑：上市(tse) vs 上櫃(otc)', 'info');
+        log('  2. 即時價格陷阱：成交價(-) → 買進價', 'info');
+        log('  3. 特別關注：5314 世紀必須用 otc_5314.tw', 'warning');
+        log('⚠️ CORS 提醒：本機端測試會被阻擋，請使用「模擬測試」或部署到 GitHub Pages', 'warning');
+        log('🚀 點擊「檢查CORS狀態」了解當前環境！', 'info');
+        
+        // 自動檢查環境
+        setTimeout(() => {
+            checkCORS();
+        }, 1000);
+    </script>
+</body>
+</html>

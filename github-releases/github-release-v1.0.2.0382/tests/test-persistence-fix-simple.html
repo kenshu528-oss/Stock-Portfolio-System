@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>持久化修復驗證 - v1.0.2.0383</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .test-result.success { background: #d4edda; border-color: #c3e6cb; }
+        .test-result.error { background: #f8d7da; border-color: #f5c6cb; }
+        .test-result.info { background: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 持久化修復驗證 - v1.0.2.0383</h1>
+        
+        <div class="test-result info">
+            <h3>📋 測試步驟</h3>
+            <ol>
+                <li><strong>開啟主應用</strong>：<a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+                <li><strong>執行批量更新</strong>：點擊右上角「🔄 更新股價」按鈕</li>
+                <li><strong>觀察版本標識</strong>：Console 應顯示 "v1.0.2.0383-PERSISTENCE-FIX"</li>
+                <li><strong>等待自動重新載入</strong>：1秒後頁面自動重新載入</li>
+                <li><strong>檢查股價是否保持</strong>：重新載入後股價應該顯示更新後的數值</li>
+                <li><strong>點擊下方按鈕</strong>：驗證持久化狀態</li>
+            </ol>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <button onclick="quickCheck()">🔍 快速檢查持久化</button>
+            <button onclick="clearAndReload()">🗑️ 清除並重載</button>
+        </div>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        function quickCheck() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<h3>🔍 持久化檢查結果</h3>';
+            
+            try {
+                // 檢查 localStorage
+                const storageKey = 'stock-portfolio-storage-v8';
+                const rawData = localStorage.getItem(storageKey);
+                
+                if (!rawData) {
+                    results.innerHTML += '<div class="test-result error">❌ 找不到持久化數據</div>';
+                    return;
+                }
+                
+                const parsedData = JSON.parse(rawData);
+                results.innerHTML += '<div class="test-result success">✅ 找到持久化數據</div>';
+                
+                if (parsedData.state && parsedData.state.stocks) {
+                    const stocks = parsedData.state.stocks;
+                    results.innerHTML += `<div class="test-result info">📊 股票數量: ${stocks.length}</div>`;
+                    
+                    // 檢查前3支股票的股價欄位
+                    let priceCount = 0;
+                    let sourceCount = 0;
+                    
+                    stocks.slice(0, 3).forEach((stock, index) => {
+                        if (stock.currentPrice && stock.currentPrice > 0) priceCount++;
+                        if (stock.priceSource) sourceCount++;
+                        
+                        results.innerHTML += `
+                            <div class="test-result ${stock.currentPrice ? 'success' : 'error'}">
+                                股票 ${index + 1}: ${stock.symbol}<br>
+                                currentPrice: ${stock.currentPrice || 'undefined'}<br>
+                                priceSource: ${stock.priceSource || 'undefined'}
+                            </div>
+                        `;
+                    });
+                    
+                    if (priceCount > 0 && sourceCount > 0) {
+                        results.innerHTML += '<div class="test-result success">🎉 持久化修復成功！股價數據正確保存</div>';
+                    } else {
+                        results.innerHTML += '<div class="test-result error">❌ 持久化仍有問題：股價數據未正確保存</div>';
+                    }
+                } else {
+                    results.innerHTML += '<div class="test-result error">❌ 持久化數據結構異常</div>';
+                }
+                
+            } catch (error) {
+                results.innerHTML += `<div class="test-result error">❌ 檢查失敗: ${error.message}</div>`;
+            }
+        }
+        
+        function clearAndReload() {
+            if (confirm('確定要清除所有 localStorage 數據並重新載入嗎？')) {
+                ['stock-portfolio-storage-v6', 'stock-portfolio-storage-v7', 'stock-portfolio-storage-v8'].forEach(key => {
+                    localStorage.removeItem(key);
+                });
+                alert('已清除 localStorage，即將重新載入主應用');
+                window.open('http://localhost:5173', '_blank');
+            }
+        }
+        
+        window.onload = function() {
+            console.log('🔧 持久化修復驗證頁面已載入 - v1.0.2.0383');
+        };
+    </script>
+</body>
+</html>

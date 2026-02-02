@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>即時股價調試測試</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        .test-section {
+            background: #334155;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        .result {
+            background: #0f172a;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { border-left: 4px solid #10b981; }
+        .error { border-left: 4px solid #ef4444; }
+        .warning { border-left: 4px solid #f59e0b; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+    </style>
+</head>
+<body>
+    <h1>🔍 即時股價調試測試</h1>
+    <p>診斷如何獲取即時股價而非收盤價</p>
+
+    <div class="test-section">
+        <h2>測試 1：直接測試 Yahoo Finance API</h2>
+        <button onclick="testYahooDirectly()">直接測試 Yahoo Finance API (4585)</button>
+        <div id="yahoo-direct-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>測試 2：測試不同的 Yahoo Finance 端點</h2>
+        <button onclick="testDifferentYahooEndpoints()">測試不同端點獲取即時價格</button>
+        <div id="yahoo-endpoints-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>測試 3：測試 Vercel API 的不同參數</h2>
+        <button onclick="testVercelWithParams()">測試 Vercel API 不同參數</button>
+        <div id="vercel-params-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>測試 4：比較本機端 vs 雲端股價</h2>
+        <button onclick="compareLocalVsCloud()">比較本機端與雲端股價</button>
+        <div id="compare-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>測試 5：測試證交所即時 API</h2>
+        <button onclick="testTWSERealtimeAPI()">測試證交所即時股價 API</button>
+        <div id="twse-result" class="result"></div>
+    </div>
+
+    <script>
+        // 測試 1：直接測試 Yahoo Finance API
+        async function testYahooDirectly() {
+            const resultDiv = document.getElementById('yahoo-direct-result');
+            resultDiv.textContent = '正在直接測試 Yahoo Finance API...';
+            
+            try {
+                // 測試不同的後綴
+                const symbols = ['4585.TW', '4585.TWO'];
+                const results = [];
+                
+                for (const symbol of symbols) {
+                    try {
+                        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+                        const response = await fetch(url, {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            const result = data?.chart?.result?.[0];
+                            
+                            if (result?.meta) {
+                                results.push({
+                                    symbol,
+                                    regularMarketPrice: result.meta.regularMarketPrice,
+                                    previousClose: result.meta.previousClose,
+                                    marketState: result.meta.marketState,
+                                    exchangeTimezoneName: result.meta.exchangeTimezoneName,
+                                    regularMarketTime: result.meta.regularMarketTime,
+                                    currentTradingPeriod: result.meta.currentTradingPeriod
+                                });
+                            }
+                        }
+                    } catch (error) {
+                        results.push({
+                            symbol,
+                            error: error.message
+                        });
+                    }
+                }
+                
+                resultDiv.textContent = `Yahoo Finance API 直接測試結果：
+${results.map(r => `
+${r.symbol}:
+${r.error ? `錯誤: ${r.error}` : `
+  即時價格: ${r.regularMarketPrice}
+  收盤價: ${r.previousClose}
+  市場狀態: ${r.marketState}
+  時區: ${r.exchangeTimezoneName}
+  市場時間: ${new Date(r.regularMarketTime * 1000).toLocaleString()}
+  交易時段: ${JSON.stringify(r.currentTradingPeriod, null, 2)}`}
+`).join('\n')}
+
+分析：
+- regularMarketPrice 應該是即時價格
+- marketState 顯示市場狀態 (REGULAR, CLOSED, PRE, POST)
+- 如果 regularMarketPrice = previousClose，可能市場已收盤`;
+                
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.textContent = `Yahoo Finance API 直接測試錯誤: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // 測試 2：測試不同的 Yahoo Finance 端點
+        async function testDifferentYahooEndpoints() {
+            const resultDiv = document.getElementById('yahoo-endpoints-result');
+            resultDiv.textContent = '正在測試不同的 Yahoo Finance 端點...';
+            
+            const endpoints = [
+                {
+                    name: 'Chart API (v8)',
+                    url: 'https://query1.finance.yahoo.com/v8/finance/chart/4585.TW'
+                },
+                {
+                    name: 'Quote API (v7)',
+                    url: 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=4585.TW'
+                },
+                {
+                    name: 'Spark API',
+                    url: 'https://query1.finance.yahoo.com/v7/finance/spark?symbols=4585.TW'
+                }
+            ];
+            
+            const results = [];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        results.push({
+                            name: endpoint.name,
+                            success: true,
+                            data: JSON.stringify(data, null, 2).substring(0, 500) + '...'
+                        });
+                    } else {
+                        results.push({
+                            name: endpoint.name,
+                            success: false,
+                            error: `HTTP ${response.status}`
+                        });
+                    }
+                } catch (error) {
+                    results.push({
+                        name: endpoint.name,
+                        success: false,
+                        error: error.message
+                    });
+                }
+            }
+            
+            resultDiv.textContent = `不同 Yahoo Finance 端點測試結果：
+${results.map(r => `
+${r.name}:
+${r.success ? `成功 - 數據預覽:\n${r.data}` : `失敗 - ${r.error}`}
+`).join('\n')}`;
+            
+            resultDiv.className = 'result success';
+        }
+
+        // 測試 3：測試 Vercel API 的不同參數
+        async function testVercelWithParams() {
+            const resultDiv = document.getElementById('vercel-params-result');
+            resultDiv.textContent = '正在測試 Vercel API 不同參數...';
+            
+            const testCases = [
+                {
+                    name: '基本調用',
+                    url: 'https://vercel-stock-api.vercel.app/api/stock-price?symbol=4585'
+                },
+                {
+                    name: '強制刷新',
+                    url: `https://vercel-stock-api.vercel.app/api/stock-price?symbol=4585&_t=${Date.now()}`
+                },
+                {
+                    name: '指定後綴 .TW',
+                    url: 'https://vercel-stock-api.vercel.app/api/stock-price?symbol=4585.TW'
+                },
+                {
+                    name: '指定後綴 .TWO',
+                    url: 'https://vercel-stock-api.vercel.app/api/stock-price?symbol=4585.TWO'
+                }
+            ];
+            
+            const results = [];
+            
+            for (const testCase of testCases) {
+                try {
+                    const response = await fetch(testCase.url);
+                    const data = await response.json();
+                    
+                    results.push({
+                        name: testCase.name,
+                        success: response.ok,
+                        price: data.price,
+                        source: data.source,
+                        timestamp: data.timestamp,
+                        fullSymbol: data.fullSymbol,
+                        error: data.error
+                    });
+                } catch (error) {
+                    results.push({
+                        name: testCase.name,
+                        success: false,
+                        error: error.message
+                    });
+                }
+            }
+            
+            resultDiv.textContent = `Vercel API 不同參數測試結果：
+${results.map(r => `
+${r.name}:
+${r.success ? `
+  價格: ${r.price}
+  來源: ${r.source}
+  完整代號: ${r.fullSymbol}
+  時間戳: ${r.timestamp}` : `
+  錯誤: ${r.error}`}
+`).join('\n')}
+
+分析：
+- 檢查不同後綴是否影響價格
+- 檢查時間戳參數是否強制刷新
+- 比較價格差異`;
+            
+            resultDiv.className = 'result success';
+        }
+
+        // 測試 4：比較本機端 vs 雲端股價
+        async function compareLocalVsCloud() {
+            const resultDiv = document.getElementById('compare-result');
+            resultDiv.textContent = '正在比較本機端與雲端股價...';
+            
+            try {
+                // 測試本機端 API（如果可用）
+                let localResult = null;
+                try {
+                    const localResponse = await fetch('http://localhost:3001/api/stock/4585');
+                    if (localResponse.ok) {
+                        localResult = await localResponse.json();
+                    }
+                } catch (error) {
+                    localResult = { error: '本機端 API 不可用' };
+                }
+                
+                // 測試雲端 API
+                const cloudResponse = await fetch('https://vercel-stock-api.vercel.app/api/stock-price?symbol=4585');
+                const cloudResult = await cloudResponse.json();
+                
+                resultDiv.textContent = `本機端 vs 雲端股價比較：
+
+本機端結果:
+${localResult.error ? `錯誤: ${localResult.error}` : `
+  價格: ${localResult.price}
+  來源: ${localResult.source}
+  時間戳: ${localResult.timestamp}`}
+
+雲端結果:
+${cloudResult.error ? `錯誤: ${cloudResult.error}` : `
+  價格: ${cloudResult.price}
+  來源: ${cloudResult.source}
+  時間戳: ${cloudResult.timestamp}`}
+
+分析:
+${!localResult.error && !cloudResult.error ? `
+  價格差異: ${Math.abs(localResult.price - cloudResult.price).toFixed(2)}
+  本機端更新: ${localResult.price > cloudResult.price ? '較新' : '較舊'}
+  ${localResult.price === cloudResult.price ? '✅ 價格一致' : '⚠️ 價格不一致'}` : '無法比較'}`;
+                
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.textContent = `比較測試錯誤: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // 測試 5：測試證交所即時 API
+        async function testTWSERealtimeAPI() {
+            const resultDiv = document.getElementById('twse-result');
+            resultDiv.textContent = '正在測試證交所即時股價 API...';
+            
+            try {
+                // 證交所即時股價 API
+                const twseUrl = 'https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_4585.tw';
+                
+                const response = await fetch(twseUrl, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'Referer': 'https://mis.twse.com.tw/'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.msgArray && data.msgArray.length > 0) {
+                        const stockData = data.msgArray[0];
+                        
+                        resultDiv.textContent = `證交所即時 API 結果：
+股票代號: ${stockData.c}
+股票名稱: ${stockData.n}
+現價: ${stockData.z}
+開盤價: ${stockData.o}
+最高價: ${stockData.h}
+最低價: ${stockData.l}
+昨收價: ${stockData.y}
+漲跌: ${stockData.z - stockData.y}
+漲跌幅: ${((stockData.z - stockData.y) / stockData.y * 100).toFixed(2)}%
+成交量: ${stockData.v}
+時間: ${stockData.t}
+
+原始數據:
+${JSON.stringify(stockData, null, 2)}
+
+分析:
+- 這是證交所的即時數據
+- z 欄位是現價（即時價格）
+- y 欄位是昨收價
+- 如果 z = y，表示股價沒有變動或市場未開盤`;
+                        
+                        resultDiv.className = 'result success';
+                    } else {
+                        resultDiv.textContent = '證交所 API 返回空數據';
+                        resultDiv.className = 'result warning';
+                    }
+                } else {
+                    resultDiv.textContent = `證交所 API 錯誤: HTTP ${response.status}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.textContent = `證交所 API 測試錯誤: ${error.message}
+                
+注意: 證交所 API 可能有 CORS 限制，在瀏覽器中無法直接調用`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // 頁面載入時顯示當前時間和市場狀態
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            const currentTime = hour * 60 + minute;
+            const marketOpen = 9 * 60; // 09:00
+            const marketClose = 13 * 60 + 30; // 13:30
+            const isMarketHours = currentTime >= marketOpen && currentTime <= marketClose;
+            const isWeekday = now.getDay() >= 1 && now.getDay() <= 5;
+            const isMarketOpen = isMarketHours && isWeekday;
+            
+            console.log('即時股價調試測試頁面已載入');
+            console.log('當前時間:', now.toLocaleString());
+            console.log('市場狀態:', isMarketOpen ? '開盤中' : '休市中');
+            
+            // 在頁面頂部顯示市場狀態
+            const statusDiv = document.createElement('div');
+            statusDiv.style.cssText = 'background: #1e40af; color: white; padding: 10px; margin-bottom: 20px; border-radius: 4px; text-align: center;';
+            statusDiv.textContent = `當前時間: ${now.toLocaleString()} | 市場狀態: ${isMarketOpen ? '🟢 開盤中' : '🔴 休市中'}`;
+            document.body.insertBefore(statusDiv, document.body.firstChild);
+        });
+    </script>
+</body>
+</html>

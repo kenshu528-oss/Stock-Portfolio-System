@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo ""
+echo "🔍 執行提交前檢查..."
+echo ""
+
+# 執行完整檢查
+npm run check:all
+
+# 如果檢查失敗，阻止提交
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ 檢查失敗！請修復上述錯誤後再提交。"
+  echo ""
+  echo "💡 提示："
+  echo "   - 執行 npm run check:svg 檢查 SVG 格式"
+  echo "   - 執行 npm run check:version 檢查版本號"
+  echo "   - 執行 npm run check:state 檢查狀態管理"
+  echo "   - 執行 npm run check:rights 檢查除權息計算"
+  echo ""
+  exit 1
+fi
+
+echo ""
+echo "✅ 所有檢查通過！可以提交。"
+echo ""

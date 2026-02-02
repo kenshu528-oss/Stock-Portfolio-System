@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>持久化調試測試 - v1.0.2.0382</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            overflow-x: auto; 
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            font-size: 12px;
+            max-height: 400px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        .critical {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .debug-output {
+            background: #1e1e1e;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 持久化調試測試 - v1.0.2.0382</h1>
+        
+        <div class="critical">
+            <h2>🚨 關鍵問題診斷</h2>
+            <p><strong>問題描述：</strong>批量股價更新成功，但頁面重新載入後股價消失</p>
+            <p><strong>懷疑原因：</strong>currentPrice 和 priceSource 沒有正確持久化到 localStorage</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 持久化測試步驟</h2>
+            <div class="status info">
+                <h4>請按照以下步驟進行測試：</h4>
+                <ol>
+                    <li><strong>開啟主應用</strong>：<a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+                    <li><strong>執行批量更新</strong>：點擊「🔄 更新股價」按鈕</li>
+                    <li><strong>等待自動重新載入</strong>：觀察股價是否消失</li>
+                    <li><strong>回到此頁面</strong>：點擊下方按鈕檢查持久化狀態</li>
+                </ol>
+            </div>
+            
+            <button onclick="checkPersistenceState()">🔍 檢查持久化狀態</button>
+            <button onclick="checkStockPrices()">💰 檢查股價數據</button>
+            <button onclick="simulateBatchUpdate()">🚀 模擬批量更新</button>
+            <button onclick="clearStorage()">🗑️ 清除 localStorage</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 調試輸出</h2>
+            <div id="debugOutput" class="debug-output">
+                等待測試結果...
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 預期發現</h2>
+            <div class="status warning">
+                <h4>如果持久化有問題，我們應該看到：</h4>
+                <ul>
+                    <li>✅ 批量更新成功：Console 顯示股價更新成功</li>
+                    <li>❌ 持久化失敗：localStorage 中沒有 currentPrice 和 priceSource</li>
+                    <li>❌ 重新載入後：股價回到舊值或顯示為 0</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let debugOutput = document.getElementById('debugOutput');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            debugOutput.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            debugOutput.scrollTop = debugOutput.scrollHeight;
+            console.log(`${prefix} ${message}`);
+        }
+        
+        function checkPersistenceState() {
+            log('開始檢查持久化狀態...', 'info');
+            
+            try {
+                // 檢查 localStorage 中的數據
+                const storageKey = 'stock-portfolio-storage-v8';
+                const rawData = localStorage.getItem(storageKey);
+                
+                if (!rawData) {
+                    log('❌ 找不到持久化數據！', 'error');
+                    return;
+                }
+                
+                const parsedData = JSON.parse(rawData);
+                log(`✅ 找到持久化數據，版本: ${parsedData.version || 'unknown'}`, 'success');
+                
+                // 檢查 state 結構
+                if (!parsedData.state) {
+                    log('❌ 持久化數據缺少 state 欄位！', 'error');
+                    return;
+                }
+                
+                const state = parsedData.state;
+                log(`📊 帳戶數量: ${state.accounts?.length || 0}`, 'info');
+                log(`📊 股票數量: ${state.stocks?.length || 0}`, 'info');
+                
+                // 檢查股票的股價欄位
+                if (state.stocks && state.stocks.length > 0) {
+                    log('🔍 檢查前3支股票的股價欄位...', 'info');
+                    
+                    state.stocks.slice(0, 3).forEach((stock, index) => {
+                        log(`股票 ${index + 1}: ${stock.symbol}`, 'info');
+                        log(`  - currentPrice: ${stock.currentPrice || 'undefined'}`, stock.currentPrice ? 'success' : 'error');
+                        log(`  - priceSource: ${stock.priceSource || 'undefined'}`, stock.priceSource ? 'success' : 'error');
+                        log(`  - lastUpdated: ${stock.lastUpdated || 'undefined'}`, 'info');
+                    });
+                } else {
+                    log('❌ 沒有股票數據！', 'error');
+                }
+                
+                // 檢查 partialize 函數是否正確
+                log('🔧 檢查 partialize 函數配置...', 'info');
+                log('✅ 根據代碼，partialize 應該包含 currentPrice 和 priceSource', 'success');
+                
+            } catch (error) {
+                log(`❌ 檢查持久化狀態失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        function checkStockPrices() {
+            log('開始檢查當前股價數據...', 'info');
+            
+            try {
+                // 嘗試訪問主應用的 window 對象
+                const mainWindow = window.parent || window;
+                
+                if (mainWindow.useAppStore) {
+                    const state = mainWindow.useAppStore.getState();
+                    log(`✅ 成功訪問主應用狀態`, 'success');
+                    log(`📊 當前股票數量: ${state.stocks?.length || 0}`, 'info');
+                    
+                    if (state.stocks && state.stocks.length > 0) {
+                        log('💰 檢查前3支股票的當前股價...', 'info');
+                        
+                        state.stocks.slice(0, 3).forEach((stock, index) => {
+                            log(`股票 ${index + 1}: ${stock.symbol}`, 'info');
+                            log(`  - 內存中 currentPrice: ${stock.currentPrice || 'undefined'}`, stock.currentPrice ? 'success' : 'error');
+                            log(`  - 內存中 priceSource: ${stock.priceSource || 'undefined'}`, stock.priceSource ? 'success' : 'error');
+                            log(`  - 內存中 lastUpdated: ${stock.lastUpdated || 'undefined'}`, 'info');
+                        });
+                    }
+                } else {
+                    log('❌ 無法訪問主應用狀態，請確保主應用已開啟', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ 檢查股價數據失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        function simulateBatchUpdate() {
+            log('開始模擬批量更新...', 'info');
+            
+            try {
+                const mainWindow = window.parent || window;
+                
+                if (mainWindow.useAppStore) {
+                    const state = mainWindow.useAppStore.getState();
+                    
+                    if (state.stocks && state.stocks.length > 0) {
+                        log('🚀 模擬更新前3支股票的股價...', 'info');
+                        
+                        // 模擬股價更新
+                        const updates = state.stocks.slice(0, 3).map((stock, index) => {
+                            const mockPrice = 100 + Math.random() * 50; // 隨機股價
+                            const mockSource = 'Mock API';
+                            
+                            log(`更新 ${stock.symbol}: ${mockPrice.toFixed(2)} (${mockSource})`, 'info');
+                            
+                            // 直接更新狀態
+                            mainWindow.useAppStore.setState((currentState) => ({
+                                ...currentState,
+                                stocks: currentState.stocks.map(s => 
+                                    s.id === stock.id ? {
+                                        ...s,
+                                        currentPrice: mockPrice,
+                                        priceSource: mockSource,
+                                        lastUpdated: new Date()
+                                    } : s
+                                ),
+                                lastPriceUpdate: new Date(),
+                                forceRender: Math.random()
+                            }));
+                            
+                            return { symbol: stock.symbol, price: mockPrice, source: mockSource };
+                        });
+                        
+                        log('✅ 模擬更新完成', 'success');
+                        log('⏳ 等待3秒後檢查持久化...', 'info');
+                        
+                        setTimeout(() => {
+                            log('🔍 檢查更新後的持久化狀態...', 'info');
+                            checkPersistenceState();
+                        }, 3000);
+                        
+                    } else {
+                        log('❌ 沒有股票數據可以更新', 'error');
+                    }
+                } else {
+                    log('❌ 無法訪問主應用狀態', 'error');
+                }
+                
+            } catch (error) {
+                log(`❌ 模擬批量更新失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearStorage() {
+            log('開始清除 localStorage...', 'warning');
+            
+            try {
+                const keys = ['stock-portfolio-storage-v6', 'stock-portfolio-storage-v7', 'stock-portfolio-storage-v8'];
+                
+                keys.forEach(key => {
+                    if (localStorage.getItem(key)) {
+                        localStorage.removeItem(key);
+                        log(`✅ 已清除: ${key}`, 'success');
+                    } else {
+                        log(`ℹ️ 不存在: ${key}`, 'info');
+                    }
+                });
+                
+                log('✅ localStorage 清除完成', 'success');
+                log('⚠️ 請重新載入主應用以重置狀態', 'warning');
+                
+            } catch (error) {
+                log(`❌ 清除 localStorage 失敗: ${error.message}`, 'error');
+            }
+        }
+        
+        window.onload = function() {
+            log('🔍 持久化調試測試頁面已載入 - v1.0.2.0382', 'success');
+            log('📍 請先開啟主應用：http://localhost:5173', 'info');
+            log('🎯 然後執行批量更新，再回到此頁面檢查結果', 'info');
+        };
+    </script>
+</body>
+</html>

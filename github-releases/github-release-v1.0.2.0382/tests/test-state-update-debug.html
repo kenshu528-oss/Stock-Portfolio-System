@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狀態更新調試測試</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px;
+        }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; font-weight: bold; }
+        .warning { color: #ffc107; font-weight: bold; }
+        pre { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            overflow-x: auto; 
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            font-size: 12px;
+            max-height: 300px;
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            cursor: pointer; 
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            font-size: 14px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; border: 1px solid #bee5eb; }
+        .highlight {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 狀態更新調試測試</h1>
+        
+        <div class="highlight">
+            <h3>🎯 調試目標</h3>
+            <p><strong>問題</strong>：批量股價更新成功，但 UI 沒有重新渲染</p>
+            <p><strong>調試</strong>：檢查 Zustand 狀態更新是否正確觸發 React 重新渲染</p>
+            <p><strong>方法</strong>：直接在瀏覽器中測試狀態更新和 UI 重新渲染</p>
+        </div>
+        
+        <div class="grid">
+            <div class="test-section">
+                <h2>📊 當前狀態檢查</h2>
+                <button onclick="checkCurrentState()">檢查當前狀態</button>
+                <div id="state-result"></div>
+            </div>
+            
+            <div class="test-section">
+                <h2>🔄 手動狀態更新測試</h2>
+                <button onclick="testManualUpdate()">手動更新股價</button>
+                <div id="manual-result"></div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 批量更新模擬</h2>
+            <button onclick="simulateBatchUpdate()">模擬批量更新</button>
+            <div id="batch-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔍 狀態訂閱測試</h2>
+            <button onclick="testStateSubscription()">測試狀態訂閱</button>
+            <button onclick="stopStateSubscription()">停止訂閱</button>
+            <div id="subscription-result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>💡 調試建議</h2>
+            <div id="debug-suggestions">
+                <div class="status info">
+                    <h4>🔧 調試步驟：</h4>
+                    <ol>
+                        <li><strong>檢查當前狀態</strong>：確認股票數據是否存在</li>
+                        <li><strong>手動更新測試</strong>：直接調用 updateStock 看是否觸發重新渲染</li>
+                        <li><strong>批量更新模擬</strong>：模擬批量更新邏輯</li>
+                        <li><strong>狀態訂閱測試</strong>：監聽狀態變化</li>
+                        <li><strong>檢查主應用</strong>：在主應用中觀察是否有變化</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stateSubscription = null;
+        
+        // 檢查當前狀態
+        function checkCurrentState() {
+            const resultDiv = document.getElementById('state-result');
+            resultDiv.innerHTML = '<div class="status info">🔍 檢查中...</div>';
+            
+            try {
+                // 檢查是否有 debugAppStore
+                if (typeof window.debugAppStore === 'undefined') {
+                    resultDiv.innerHTML = `
+                        <div class="status error">
+                            <div class="error">❌ debugAppStore 未找到</div>
+                            <pre>請先開啟主應用 http://localhost:5173
+然後在 Console 中確認 debugAppStore 已載入</pre>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const state = window.debugAppStore.getState();
+                const stocks = state.stocks || [];
+                
+                resultDiv.innerHTML = `
+                    <div class="status success">
+                        <div class="success">✅ 狀態檢查完成</div>
+                        <pre>股票數量: ${stocks.length}
+最後更新: ${state.lastPriceUpdate ? new Date(state.lastPriceUpdate).toLocaleString() : '未更新'}
+更新中: ${state.isUpdatingPrices ? '是' : '否'}
+
+前5支股票:
+${stocks.slice(0, 5).map(stock => 
+  `${stock.symbol}: $${stock.currentPrice || 0} (${stock.priceSource || '無來源'})`
+).join('\n')}</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        <div class="error">❌ 狀態檢查失敗</div>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+        
+        // 手動狀態更新測試
+        function testManualUpdate() {
+            const resultDiv = document.getElementById('manual-result');
+            resultDiv.innerHTML = '<div class="status info">🔍 測試中...</div>';
+            
+            try {
+                if (typeof window.debugAppStore === 'undefined') {
+                    resultDiv.innerHTML = `
+                        <div class="status error">
+                            <div class="error">❌ debugAppStore 未找到</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const state = window.debugAppStore.getState();
+                const stocks = state.stocks || [];
+                
+                if (stocks.length === 0) {
+                    resultDiv.innerHTML = `
+                        <div class="status warning">
+                            <div class="warning">⚠️ 沒有股票數據</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 選擇第一支股票進行測試
+                const testStock = stocks[0];
+                const originalPrice = testStock.currentPrice;
+                const newPrice = originalPrice + Math.random() * 10;
+                
+                console.log('🧪 手動更新測試:', {
+                    symbol: testStock.symbol,
+                    originalPrice,
+                    newPrice
+                });
+                
+                // 手動更新股價
+                state.updateStock(testStock.id, {
+                    currentPrice: newPrice,
+                    lastUpdated: new Date(),
+                    priceSource: 'Manual Test'
+                });
+                
+                // 檢查更新後的狀態
+                const updatedState = window.debugAppStore.getState();
+                const updatedStock = updatedState.stocks.find(s => s.id === testStock.id);
+                
+                resultDiv.innerHTML = `
+                    <div class="status success">
+                        <div class="success">✅ 手動更新完成</div>
+                        <pre>測試股票: ${testStock.symbol}
+原始價格: $${originalPrice}
+新價格: $${updatedStock.currentPrice}
+更新成功: ${updatedStock.currentPrice === newPrice ? '是' : '否'}
+時間戳: ${new Date().toLocaleString()}
+
+請檢查主應用 UI 是否更新！</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        <div class="error">❌ 手動更新失敗</div>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+        
+        // 模擬批量更新
+        function simulateBatchUpdate() {
+            const resultDiv = document.getElementById('batch-result');
+            resultDiv.innerHTML = '<div class="status info">🔍 模擬中...</div>';
+            
+            try {
+                if (typeof window.debugAppStore === 'undefined') {
+                    resultDiv.innerHTML = `
+                        <div class="status error">
+                            <div class="error">❌ debugAppStore 未找到</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const state = window.debugAppStore.getState();
+                const stocks = state.stocks || [];
+                
+                if (stocks.length === 0) {
+                    resultDiv.innerHTML = `
+                        <div class="status warning">
+                            <div class="warning">⚠️ 沒有股票數據</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                console.log('🧪 批量更新模擬開始');
+                
+                // 模擬批量更新邏輯
+                const updates = [];
+                
+                stocks.slice(0, 3).forEach(stock => {
+                    const newPrice = stock.currentPrice + Math.random() * 20 - 10;
+                    
+                    // 使用與實際批量更新相同的邏輯
+                    const updatedStocks = state.stocks.map(s => 
+                        s.id === stock.id ? {
+                            ...s,
+                            currentPrice: Math.max(0.01, newPrice),
+                            lastUpdated: new Date(),
+                            priceSource: 'Batch Test'
+                        } : s
+                    );
+                    
+                    // 直接更新狀態
+                    window.debugAppStore.setState({
+                        stocks: updatedStocks,
+                        lastPriceUpdate: new Date(),
+                        forceRender: Math.random()
+                    });
+                    
+                    updates.push({
+                        symbol: stock.symbol,
+                        oldPrice: stock.currentPrice,
+                        newPrice: Math.max(0.01, newPrice)
+                    });
+                });
+                
+                console.log('🧪 批量更新模擬完成:', updates);
+                
+                resultDiv.innerHTML = `
+                    <div class="status success">
+                        <div class="success">✅ 批量更新模擬完成</div>
+                        <pre>更新股票數: ${updates.length}
+
+更新詳情:
+${updates.map(update => 
+  `${update.symbol}: $${update.oldPrice.toFixed(2)} → $${update.newPrice.toFixed(2)}`
+).join('\n')}
+
+時間戳: ${new Date().toLocaleString()}
+
+請檢查主應用 UI 是否更新！</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        <div class="error">❌ 批量更新模擬失敗</div>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+        
+        // 測試狀態訂閱
+        function testStateSubscription() {
+            const resultDiv = document.getElementById('subscription-result');
+            
+            try {
+                if (typeof window.debugAppStore === 'undefined') {
+                    resultDiv.innerHTML = `
+                        <div class="status error">
+                            <div class="error">❌ debugAppStore 未找到</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 停止之前的訂閱
+                if (stateSubscription) {
+                    stateSubscription();
+                    stateSubscription = null;
+                }
+                
+                let changeCount = 0;
+                const startTime = Date.now();
+                
+                // 訂閱狀態變化
+                stateSubscription = window.debugAppStore.subscribe((state) => {
+                    changeCount++;
+                    const now = Date.now();
+                    
+                    console.log(`🔔 狀態變化 #${changeCount}:`, {
+                        timestamp: new Date().toLocaleString(),
+                        elapsed: `${now - startTime}ms`,
+                        stockCount: state.stocks?.length || 0,
+                        lastUpdate: state.lastPriceUpdate,
+                        forceRender: state.forceRender
+                    });
+                    
+                    resultDiv.innerHTML = `
+                        <div class="status info">
+                            <div class="info">🔔 狀態訂閱活躍中</div>
+                            <pre>變化次數: ${changeCount}
+最後變化: ${new Date().toLocaleString()}
+股票數量: ${state.stocks?.length || 0}
+最後更新: ${state.lastPriceUpdate ? new Date(state.lastPriceUpdate).toLocaleString() : '未更新'}
+
+請在主應用中執行股價更新，觀察此處的變化！</pre>
+                        </div>
+                    `;
+                });
+                
+                resultDiv.innerHTML = `
+                    <div class="status success">
+                        <div class="success">✅ 狀態訂閱已啟動</div>
+                        <pre>開始時間: ${new Date().toLocaleString()}
+變化次數: 0
+
+請在主應用中執行股價更新，觀察狀態變化！</pre>
+                    </div>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        <div class="error">❌ 狀態訂閱失敗</div>
+                        <pre>${error.message}</pre>
+                    </div>
+                `;
+            }
+        }
+        
+        // 停止狀態訂閱
+        function stopStateSubscription() {
+            if (stateSubscription) {
+                stateSubscription();
+                stateSubscription = null;
+                
+                document.getElementById('subscription-result').innerHTML = `
+                    <div class="status info">
+                        <div class="info">🔇 狀態訂閱已停止</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // 頁面載入時執行
+        window.onload = function() {
+            console.log('🔍 狀態更新調試測試頁面已載入');
+            console.log('📍 請確保主應用已開啟：http://localhost:5173');
+            
+            // 自動檢查狀態
+            setTimeout(() => {
+                checkCurrentState();
+            }, 1000);
+        };
+        
+        // 頁面卸載時清理訂閱
+        window.onbeforeunload = function() {
+            stopStateSubscription();
+        };
+    </script>
+</body>
+</html>

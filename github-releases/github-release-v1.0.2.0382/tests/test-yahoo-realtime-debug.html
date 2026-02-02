@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yahoo Finance 即時股價調試</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .warning { color: orange; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; max-height: 400px; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .highlight { background-color: yellow; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Yahoo Finance 即時股價調試</h1>
+    <p class="info">當前時間：<span id="current-time"></span></p>
+    <p class="info">台股交易時間：09:00-13:30（週一至週五）</p>
+    
+    <div class="test-section">
+        <h2>測試股票</h2>
+        <button onclick="testStock('2330')">測試台積電 (2330)</button>
+        <button onclick="testStock('0050')">測試元大台灣50 (0050)</button>
+        <button onclick="testStock('2886')">測試兆豐金 (2886)</button>
+        <button onclick="testStock('6188')">測試廣明 (6188)</button>
+        <div id="test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Yahoo Finance API 完整回應</h2>
+        <div id="full-response"></div>
+    </div>
+
+    <script>
+        // 更新當前時間
+        function updateCurrentTime() {
+            const now = new Date();
+            const taiwanTime = new Date(now.toLocaleString("en-US", {timeZone: "Asia/Taipei"}));
+            document.getElementById('current-time').textContent = taiwanTime.toLocaleString('zh-TW');
+            
+            // 判斷是否在交易時間
+            const hour = taiwanTime.getHours();
+            const minute = taiwanTime.getMinutes();
+            const isWeekday = taiwanTime.getDay() >= 1 && taiwanTime.getDay() <= 5;
+            const isMarketHours = isWeekday && 
+                ((hour === 9 && minute >= 0) || (hour >= 10 && hour <= 12) || (hour === 13 && minute <= 30));
+            
+            if (isMarketHours) {
+                document.getElementById('current-time').className = 'highlight';
+                document.getElementById('current-time').title = '台股交易時間中';
+            } else {
+                document.getElementById('current-time').className = 'warning';
+                document.getElementById('current-time').title = '台股非交易時間';
+            }
+        }
+        
+        // 獲取股票後綴
+        function getStockSuffixes(symbol) {
+            const code = parseInt(symbol.substring(0, 4));
+            const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+            const isETF = /^00\d{2,3}[A-Z]?$/i.test(symbol);
+            
+            if (isBondETF || isETF) {
+                return ['.TWO', '.TW'];
+            } else if (code >= 3000 && code <= 8999) {
+                return ['.TWO', '.TW'];
+            } else {
+                return ['.TW', '.TWO'];
+            }
+        }
+        
+        // 測試股票
+        async function testStock(symbol) {
+            const resultDiv = document.getElementById('test-result');
+            const fullResponseDiv = document.getElementById('full-response');
+            
+            resultDiv.innerHTML = `<div class="info">正在測試 ${symbol}...</div>`;
+            fullResponseDiv.innerHTML = '';
+            
+            try {
+                const suffixes = getStockSuffixes(symbol);
+                let bestResult = null;
+                let allResponses = [];
+                
+                for (const suffix of suffixes) {
+                    const yahooSymbol = `${symbol}${suffix}`;
+                    
+                    try {
+                        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`;
+                        
+                        // 使用 CORS 代理
+                        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                        
+                        const response = await fetch(proxyUrl);
+                        const proxyData = await response.json();
+                        const data = JSON.parse(proxyData.contents);
+                        
+                        allResponses.push({
+                            symbol: yahooSymbol,
+                            data: data
+                        });
+                        
+                        if (data?.chart?.result?.[0]?.meta) {
+                            const meta = data.chart.result[0].meta;
+                            
+                            // 分析所有可能的價格欄位
+                            const priceFields = {
+                                regularMarketPrice: meta.regularMarketPrice,
+                                previousClose: meta.previousClose,
+                                currentPrice: meta.currentPrice,
+                                price: meta.price,
+                                lastPrice: meta.lastPrice
+                            };
+                            
+                            // 獲取最新的價格資料
+                            const quotes = data.chart.result[0].indicators?.quote?.[0];
+                            const timestamps = data.chart.result[0].timestamp;
+                            
+                            let latestPrice = null;
+                            if (quotes && timestamps && timestamps.length > 0) {
+                                const latestIndex = timestamps.length - 1;
+                                latestPrice = quotes.close?.[latestIndex] || quotes.open?.[latestIndex];
+                            }
+                            
+                            const result = {
+                                symbol: yahooSymbol,
+                                success: true,
+                                priceFields: priceFields,
+                                latestPrice: latestPrice,
+                                marketState: meta.marketState,
+                                exchangeTimezoneName: meta.exchangeTimezoneName,
+                                regularMarketTime: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toLocaleString('zh-TW') : null,
+                                gmtoffset: meta.gmtoffset,
+                                fullMeta: meta
+                            };
+                            
+                            if (!bestResult || (result.priceFields.regularMarketPrice > 0)) {
+                                bestResult = result;
+                            }
+                        }
+                        
+                    } catch (error) {
+                        allResponses.push({
+                            symbol: yahooSymbol,
+                            error: error.message
+                        });
+                    }
+                }
+                
+                // 顯示結果
+                if (bestResult) {
+                    const currentPrice = bestResult.latestPrice || bestResult.priceFields.regularMarketPrice || bestResult.priceFields.previousClose;
+                    const previousClose = bestResult.priceFields.previousClose;
+                    const change = currentPrice - previousClose;
+                    const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">✅ ${symbol} 股價獲取成功</div>
+                        <div><strong>股票代號：</strong>${bestResult.symbol}</div>
+                        <div><strong>當前價格：</strong>${currentPrice}</div>
+                        <div><strong>昨收價格：</strong>${previousClose}</div>
+                        <div><strong>漲跌：</strong>${change.toFixed(2)} (${changePercent.toFixed(2)}%)</div>
+                        <div><strong>市場狀態：</strong>${bestResult.marketState}</div>
+                        <div><strong>交易所時區：</strong>${bestResult.exchangeTimezoneName}</div>
+                        <div><strong>最後更新：</strong>${bestResult.regularMarketTime}</div>
+                        <div><strong>價格欄位分析：</strong></div>
+                        <pre>${JSON.stringify(bestResult.priceFields, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ ${symbol} 所有後綴都失敗</div>`;
+                }
+                
+                // 顯示完整回應
+                fullResponseDiv.innerHTML = `
+                    <h3>完整 API 回應</h3>
+                    <pre>${JSON.stringify(allResponses, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ 測試失敗</div>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+        
+        // 初始化
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+    </script>
+</body>
+</html>
