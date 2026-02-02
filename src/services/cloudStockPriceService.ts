@@ -1,7 +1,7 @@
 /**
- * 雲端環境股價獲取服務 - 修復版本，優先使用證交所即時 API
- * 專門針對 GitHub Pages 等雲端環境優化的股價獲取策略
- * v1.0.2.0381: 添加證交所即時 API 作為第一優先級，獲取真正的即時價格
+ * 雲端環境股價獲取服務 - 遵循 api-standards.md 股價專精原則
+ * 專門針對 GitHub Pages 等雲端環境，只使用 Vercel Edge Functions
+ * v1.0.2.0383: 移除證交所API，完全遵循股價專精原則
  */
 
 import { logger } from '../utils/logger';
@@ -20,7 +20,7 @@ class CloudStockPriceService {
   private readonly CACHE_DURATION = 2 * 60 * 1000; // 縮短為2分鐘快取，確保即時性
 
   /**
-   * 獲取股價 - 修復版本，優先使用證交所即時 API
+   * 獲取股價 - 遵循 api-standards.md 股價專精原則，只使用 Vercel Edge Functions
    */
   async getStockPrice(symbol: string, maxRetries: number = 2, forceRefresh: boolean = false): Promise<StockPrice | null> {
     // 🔧 修復：支援強制刷新，跳過快取
@@ -37,41 +37,21 @@ class CloudStockPriceService {
       logger.debug('stock', `強制刷新，已清除 ${symbol} 快取`);
     }
 
-    // 🔧 修復：優先使用證交所即時 API 獲取真正的即時價格
+    // 🔧 遵循 api-standards.md 股價專精原則：只使用 Vercel Edge Functions
     let lastError: Error | null = null;
     
     for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
       try {
-        logger.debug('stock', `嘗試獲取 ${symbol} 即時股價 (第${attempt}次)${forceRefresh ? ' [強制刷新]' : ''}`);
+        logger.debug('stock', `嘗試獲取 ${symbol} 股價 (第${attempt}次)${forceRefresh ? ' [強制刷新]' : ''}`);
         
-        // 1. 優先嘗試證交所即時 API
-        const twseResult = await Promise.race([
-          this.fetchFromTWSE(symbol),
-          this.createTimeoutPromise(8000) // 8秒超時
-        ]);
-
-        if (twseResult && twseResult.price > 0) {
-          logger.info('stock', `證交所即時 API 獲取成功`, { 
-            symbol, 
-            price: twseResult.price,
-            source: twseResult.source,
-            attempt,
-            forceRefresh
-          });
-          
-          // 快取結果
-          this.setCachedPrice(symbol, twseResult);
-          return twseResult;
-        }
-        
-        // 2. 證交所失敗時使用 Vercel Edge Functions 作為備援
+        // 只使用 Vercel Edge Functions - 遵循股價專精原則
         const vercelResult = await Promise.race([
           this.fetchFromVercel(symbol, forceRefresh),
           this.createTimeoutPromise(10000) // 10秒超時
         ]);
 
         if (vercelResult && vercelResult.price > 0) {
-          logger.info('stock', `Vercel Edge Functions 備援獲取成功`, { 
+          logger.info('stock', `Vercel 股價獲取成功`, { 
             symbol, 
             price: vercelResult.price,
             source: vercelResult.source,
@@ -113,78 +93,8 @@ class CloudStockPriceService {
   }
 
   /**
-   * 證交所即時 API 股價獲取 - 新增，獲取真正的即時價格
-   * v1.0.2.0381 - 第一優先級，最即時的解決方案
-   */
-  private async fetchFromTWSE(symbol: string): Promise<StockPrice | null> {
-    try {
-      // 判斷股票所屬市場
-      const code = parseInt(symbol.substring(0, 4));
-      const isOTC = code >= 3000 && code <= 8999; // 上櫃股票
-      const exchange = isOTC ? 'otc' : 'tse';
-      const exchangeSymbol = isOTC ? `${symbol}.tw` : `${symbol}.tw`;
-      
-      const url = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${exchange}_${exchangeSymbol}`;
-      
-      logger.debug('stock', `證交所即時 API 請求: ${symbol}`, { url, exchange });
-      
-      const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/json',
-          'Referer': 'https://mis.twse.com.tw/',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`證交所 API HTTP ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (!data.msgArray || data.msgArray.length === 0) {
-        logger.warn('stock', `證交所 API 無資料: ${symbol}`);
-        return null;
-      }
-      
-      const stockData = data.msgArray[0];
-      const currentPrice = parseFloat(stockData.z); // z = 現價
-      const previousClose = parseFloat(stockData.y); // y = 昨收價
-      
-      if (!currentPrice || currentPrice <= 0) {
-        logger.warn('stock', `證交所 API 無效價格: ${symbol}`, { currentPrice });
-        return null;
-      }
-      
-      const change = currentPrice - previousClose;
-      const changePercent = previousClose > 0 ? (change / previousClose) * 100 : 0;
-      
-      const result: StockPrice = {
-        price: parseFloat(currentPrice.toFixed(2)),
-        change: parseFloat(change.toFixed(2)),
-        changePercent: parseFloat(changePercent.toFixed(2)),
-        source: `證交所即時 (${exchange.toUpperCase()})`,
-        timestamp: new Date().toISOString()
-      };
-      
-      logger.success('stock', `${symbol} 證交所即時獲取成功`, {
-        price: result.price,
-        source: result.source,
-        exchange,
-        time: stockData.t // 交易時間
-      });
-      
-      return result;
-      
-    } catch (error) {
-      logger.error('stock', `證交所即時 API 錯誤: ${symbol}`, error instanceof Error ? error.message : error);
-      return null;
-    }
-  }
-
-  /**
-   * Vercel Edge Functions 股價獲取 - 修復版本，作為備援
-   * v1.0.2.0381 - 第二優先級，備援解決方案
+   * Vercel Edge Functions 股價獲取 - 遵循 api-standards.md 股價專精原則
+   * 唯一的股價來源，無 CORS 限制
    */
   private async fetchFromVercel(symbol: string, forceRefresh: boolean = false): Promise<StockPrice | null> {
     try {

@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 382, // 【雲端即時股價修復】修復雲端獲取前一天收盤價問題，與本機端邏輯一致
+  PATCH: 383, // 【雲端股價服務修復】修復雲端環境仍調用證交所API導致CORS錯誤，改為優先使用Vercel Edge Functions
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

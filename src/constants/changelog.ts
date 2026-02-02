@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0383',
+    date: '2026-02-02',
+    type: 'hotfix',
+    title: '遵循規格文件：移除證交所API，完全使用Vercel Edge Functions',
+    description: '用戶指出我沒有遵循api-standards.md規格文件，反而把事情搞複雜了。規格明確規定股價專精原則：移除證交所API，只使用Vercel Edge Functions。立即修正：完全移除cloudStockPriceService中的證交所API調用，只保留Vercel Edge Functions，遵循規格文件要求。',
+    changes: [
+      '🔧 完全移除證交所API：遵循api-standards.md股價專精原則',
+      '✅ 只使用Vercel Edge Functions：唯一的股價來源',
+      '🚫 移除CORS錯誤源頭：不再調用會被阻擋的證交所API',
+      '📋 遵循規格文件：嚴格按照api-standards.md執行',
+      '🎯 簡化邏輯：移除不必要的複雜性，專注Vercel API',
+      '📝 更新註釋：明確標示遵循股價專精原則'
+    ],
+    fixes: [
+      '修復不遵循規格文件的問題',
+      '修復雲端環境證交所API CORS錯誤',
+      '修復過度複雜的API選擇邏輯',
+      '確保完全符合股價專精原則要求'
+    ]
+  },
+  {
     version: '1.0.2.0382',
     date: '2026-02-02',
     type: 'hotfix',
