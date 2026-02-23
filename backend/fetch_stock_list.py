@@ -64,6 +64,13 @@ if not MY_TOKEN:
     print("[SOLUTION] 請在 .env 檔案中添加：")
     print("  FINMIND_TOKEN=your_finmind_token_here")
     print("[INFO] 可從 https://finmind.github.io/ 申請免費 Token")
+    print("[DEBUG] 當前環境變數:")
+    for key in ['FINMIND_TOKEN', 'VITE_FINMIND_TOKEN']:
+        value = os.environ.get(key, '')
+        if value:
+            print(f"  {key} = {value[:20]}... (長度: {len(value)})")
+        else:
+            print(f"  {key} = (未設定)")
     sys.exit(1)
 
 def get_today_filename():
@@ -72,6 +79,13 @@ def get_today_filename():
     root_dir = os.path.dirname(os.path.abspath(__file__))  # backend 目錄
     parent_dir = os.path.dirname(root_dir)  # 專案根目錄
     return os.path.join(parent_dir, 'public', 'stock_list.json')
+
+def get_dated_filename():
+    """獲取帶日期的股票清單檔案名稱（用於 GitHub Actions）"""
+    root_dir = os.path.dirname(os.path.abspath(__file__))  # backend 目錄
+    parent_dir = os.path.dirname(root_dir)  # 專案根目錄
+    today = datetime.now().strftime('%Y-%m-%d')
+    return os.path.join(parent_dir, f'stock_list_{today}.json')
 
 def check_today_file_exists():
     """檢查股票清單檔案是否需要更新"""
@@ -149,18 +163,26 @@ def fetch_stock_list():
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(stock_data, f, ensure_ascii=False, indent=2)
         
+        # 7. 同時儲存帶日期的檔案（用於 GitHub Actions）
+        dated_filename = get_dated_filename()
+        print(f"[INFO] 正在儲存帶日期檔案: {dated_filename}")
+        
+        with open(dated_filename, 'w', encoding='utf-8') as f:
+            json.dump(stock_data, f, ensure_ascii=False, indent=2)
+        
         print(f"[OK] 下載成功！總共抓取 {len(df)} 支標的。")
         print(f"[INFO] 統一檔案已存為: {filename}")
-        print(f"[INFO] 本機端和雲端共用此檔案")
+        print(f"[INFO] 帶日期檔案已存為: {dated_filename}")
+        print(f"[INFO] 本機端和雲端共用統一檔案")
         
-        # 7. 預覽前 5 筆資料
+        # 8. 預覽前 5 筆資料
         print("\n[INFO] 資料預覽：")
         for i, (stock_id, stock_info) in enumerate(stock_data['stocks'].items()):
             if i >= 5:
                 break
             print(f"  {stock_id}: {stock_info['name']} ({stock_info['industry']})")
         
-        # 8. 清理根目錄的舊檔案
+        # 9. 清理根目錄的舊檔案（保留今天的）
         cleanup_old_files()
         
         return True
@@ -173,7 +195,7 @@ def fetch_stock_list():
         return False
 
 def cleanup_old_files():
-    """清理根目錄的舊 stock_list_*.json 檔案"""
+    """清理根目錄的舊 stock_list_*.json 檔案（保留今天的）"""
     try:
         import glob
         
@@ -181,20 +203,27 @@ def cleanup_old_files():
         root_dir = os.path.dirname(os.path.abspath(__file__))  # backend 目錄
         parent_dir = os.path.dirname(root_dir)  # 專案根目錄
         
+        # 今天的日期
+        today = datetime.now().strftime('%Y-%m-%d')
+        today_file = f'stock_list_{today}.json'
+        
         # 找到根目錄中所有舊的股票清單檔案
         pattern = os.path.join(parent_dir, 'stock_list_*.json')
         files = glob.glob(pattern)
         
-        if files:
+        # 過濾掉今天的檔案
+        old_files = [f for f in files if os.path.basename(f) != today_file]
+        
+        if old_files:
             print(f"\n[INFO] 清理根目錄舊檔案...")
-            for file in files:
+            for file in old_files:
                 try:
                     os.remove(file)
                     filename = os.path.basename(file)
                     print(f"  清理舊檔案: {filename}")
                 except OSError as e:
                     print(f"  清理檔案失敗 {file}: {e}")
-            print(f"[OK] 清理完成，現在統一使用 public/stock_list.json")
+            print(f"[OK] 清理完成，保留今天的檔案: {today_file}")
         else:
             print(f"[INFO] 根目錄無舊檔案需要清理")
                 
