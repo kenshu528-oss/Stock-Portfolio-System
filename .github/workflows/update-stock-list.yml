@@ -45,27 +45,47 @@ jobs:
     - name: Fetch stock list
       if: env.SKIP_UPDATE != 'true'
       env:
-        FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+        FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN || secrets.VITE_FINMIND_TOKEN }}
       run: |
         # 檢查環境變數
+        echo "🔍 檢查 FINMIND_TOKEN 環境變數..."
         if [ -z "$FINMIND_TOKEN" ]; then
-          echo "⚠️ 找不到 FINMIND_TOKEN secret，使用腳本內建的 Token"
-          echo "💡 如需使用自定義 Token，請在 GitHub 倉庫設定中添加 FINMIND_TOKEN secret"
-          echo "🔧 腳本會自動使用內建的 Token，無需擔心"
+          echo "❌ 錯誤：找不到 FINMIND_TOKEN 或 VITE_FINMIND_TOKEN secret"
+          echo ""
+          echo "📋 修復步驟："
+          echo "1. 前往 GitHub 倉庫設定"
+          echo "2. Settings → Secrets and variables → Actions"
+          echo "3. 新增 Repository secret："
+          echo "   Name: FINMIND_TOKEN"
+          echo "   Secret: 你的 FinMind Token"
+          echo ""
+          echo "💡 詳細說明請參考: docs/guides/GITHUB_STOCK_LIST_FIX.md"
+          echo ""
+          echo "⚠️ Workflow 將會失敗，請設定 Secret 後重新執行"
+          exit 1
         else
-          echo "✅ 使用 GitHub secret 中的 FINMIND_TOKEN"
+          echo "✅ 使用 GitHub secret 中的 FinMind Token"
+          echo "📏 Token 長度: ${#FINMIND_TOKEN} 字元"
         fi
         
         # 執行股票清單抓取腳本（強制更新）
+        echo ""
         echo "🚀 開始執行股票清單更新..."
         cd backend
-        python fetch_stock_list.py --force
         
-        # 檢查腳本執行結果
-        if [ $? -eq 0 ]; then
+        # 執行 Python 腳本並捕獲輸出
+        if python fetch_stock_list.py --force; then
+          echo ""
           echo "✅ 股票清單抓取成功"
         else
+          echo ""
           echo "❌ 股票清單抓取失敗"
+          echo "📋 可能的原因："
+          echo "1. FinMind Token 無效或過期"
+          echo "2. FinMind API 服務異常"
+          echo "3. 網路連線問題"
+          echo ""
+          echo "💡 請檢查上方的詳細錯誤訊息"
           exit 1
         fi
         
