@@ -68,10 +68,25 @@ jobs:
           echo "📏 Token 長度: ${#FINMIND_TOKEN} 字元"
         fi
         
+        # 檢查 Python 和依賴
+        echo ""
+        echo "🔍 檢查 Python 環境..."
+        python --version
+        echo ""
+        echo "🔍 檢查已安裝的套件..."
+        pip list | grep -i finmind || echo "⚠️ FinMind 未安裝"
+        pip list | grep -i pandas || echo "⚠️ pandas 未安裝"
+        pip list | grep -i tqdm || echo "⚠️ tqdm 未安裝"
+        
         # 執行股票清單抓取腳本（強制更新）
         echo ""
         echo "🚀 開始執行股票清單更新..."
+        echo "📂 當前目錄: $(pwd)"
+        echo "📂 backend 目錄內容:"
+        ls -la backend/ || echo "backend 目錄不存在"
+        
         cd backend
+        echo "📂 切換到 backend 目錄: $(pwd)"
         
         # 執行 Python 腳本並捕獲輸出
         if python fetch_stock_list.py --force; then
@@ -84,6 +99,7 @@ jobs:
           echo "1. FinMind Token 無效或過期"
           echo "2. FinMind API 服務異常"
           echo "3. 網路連線問題"
+          echo "4. Python 依賴未正確安裝"
           echo ""
           echo "💡 請檢查上方的詳細錯誤訊息"
           exit 1
