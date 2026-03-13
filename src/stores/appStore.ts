@@ -455,79 +455,67 @@ export const useAppStore = create<AppState & AppActions>()(
           let failCount = 0;
           
           try {
-            logger.info('stock', `開始更新股價: ${stocks.length} 支股票`);
+            logger.info('stock', `開始批量更新股價: ${stocks.length} 支股票`);
             
-            // 🔄 恢復到穩定的序列更新方式
+            // 🚀 使用批量更新服務
+            const { batchUpdateService } = await import('../services/batchUpdateService');
+            
+            const result = await batchUpdateService.batchUpdateStockPrices(
+              stocks,
+              (progress) => {
+                // 更新進度
+                state.setPriceUpdateProgress(progress.current, progress.total);
+                
+                logger.debug('stock', `批量更新進度: ${progress.current}/${progress.total}`, {
+                  batch: `${progress.currentBatch}/${progress.totalBatches}`,
+                  success: progress.successCount,
+                  fail: progress.failCount
+                });
+              }
+            );
+            
+            // 處理批量更新結果
+            successCount = result.successCount;
+            failCount = result.failCount;
+            
+            // 更新股價資料
+            result.results.forEach((priceData, symbol) => {
+              const stock = stocks.find(s => s.symbol === symbol);
+              if (stock && priceData.price > 0) {
+                state.updateStock(stock.id, {
+                  currentPrice: priceData.price,
+                  lastUpdated: new Date(),
+                  priceSource: priceData.source || 'API'
+                });
+              }
+            });
+            
+            // 🔧 批量處理除權息（減少 API 調用）
+            logger.info('dividend', `開始批量處理除權息: ${stocks.length} 支股票`);
+            
             for (let i = 0; i < stocks.length; i++) {
               const stock = stocks[i];
               
               try {
-                state.setPriceUpdateProgress(i + 1, stocks.length);
-                
-                // 使用穩定的股價服務
-                let priceData = null;
-                
-                try {
-                  // 檢查是否使用後端代理
-                  const { shouldUseBackendProxy } = await import('../config/api');
-                  
-                  if (shouldUseBackendProxy()) {
-                    // 本機端：使用後端代理服務
-                    const { StockPriceService } = await import('../services/stockPriceService');
-                    const stockPriceService = new StockPriceService();
-                    priceData = await stockPriceService.getStockPrice(stock.symbol);
-                  } else {
-                    // 雲端環境：使用雲端股價服務
-                    const { cloudStockPriceService } = await import('../services/cloudStockPriceService');
-                    priceData = await cloudStockPriceService.getStockPrice(stock.symbol);
-                  }
-                } catch (error) {
-                  logger.warn('stock', `${stock.symbol} 股價獲取失敗`, error.message);
-                }
-                
-                if (priceData && priceData.price > 0) {
-                  // 更新股價資料
-                  state.updateStock(stock.id, {
-                    currentPrice: priceData.price,
-                    lastUpdated: new Date(),
-                    priceSource: priceData.source || 'API'
-                  });
-                  
-                  successCount++;
-                  logger.debug('stock', `${stock.symbol} 股價更新成功: ${priceData.price}`);
-                } else {
-                  failCount++;
-                  logger.warn('stock', `${stock.symbol} 無法獲取股價資料`);
-                }
-                
-                // 🔧 修復：除權息處理失敗不應該影響股價更新
-                // 將除權息處理放在獨立的 try-catch 中
-                try {
-                  await updateStockDividendData(stock, state, true);
-                } catch (dividendError) {
-                  logger.warn('dividend', `${stock.symbol} 除權息處理失敗，但不影響股價更新`, dividendError.message);
-                  // 不影響主要的更新流程
-                }
-                
-                // 避免過於頻繁的請求
-                if (i < stocks.length - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 200));
-                }
-                
-              } catch (error) {
-                failCount++;
-                logger.error('stock', `${stock.symbol} 更新失敗`, error.message);
+                await updateStockDividendData(stock, state, true);
+              } catch (dividendError) {
+                logger.warn('dividend', `${stock.symbol} 除權息處理失敗`, dividendError.message);
+              }
+              
+              // 除權息處理之間稍微延遲
+              if (i < stocks.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 100));
               }
             }
             
-            logger.info('stock', `股價更新完成`, { 
+            logger.info('stock', `批量更新完成`, { 
               success: successCount, 
               fail: failCount,
               total: stocks.length 
             });
             
           } catch (error) {
-            logger.error('stock', '股價更新失敗', error);
+            logger.error('stock', '批量更新失敗', error);
           } finally {
             state.setUpdatingPrices(false);
             state.setPriceUpdateProgress(0, 0);

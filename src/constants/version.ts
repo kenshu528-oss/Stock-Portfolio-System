@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 386, // 【文字修復+編碼修復+專案清理】修復statusConfig文字不一致、Python編碼問題、清理93個冗餘檔案
+  PATCH: 387, // 【批量更新優化】實作本機端分批股價更新，減少API使用次數，提升更新效率
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

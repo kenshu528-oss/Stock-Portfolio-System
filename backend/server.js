@@ -509,6 +509,7 @@ app.post('/api/stocks/batch', async (req, res) => {
     
     if (!symbols || !Array.isArray(symbols) || symbols.length === 0) {
       return res.status(400).json({
+        success: false,
         error: 'Invalid symbols',
         message: '請提供有效的股票代號陣列'
       });
@@ -516,6 +517,7 @@ app.post('/api/stocks/batch', async (req, res) => {
     
     if (symbols.length > 50) {
       return res.status(400).json({
+        success: false,
         error: 'Too many symbols',
         message: '一次最多查詢50支股票'
       });
@@ -523,7 +525,8 @@ app.post('/api/stocks/batch', async (req, res) => {
     
     console.log(`📊 批量股價查詢: ${symbols.length} 支股票 - ${symbols.slice(0, 5).join(', ')}${symbols.length > 5 ? '...' : ''}`);
     
-    const results = [];
+    const results = {};
+    const errors = {};
     const BATCH_SIZE = 5; // 控制並發數量
     
     // 分批處理避免過載
@@ -542,7 +545,7 @@ app.post('/api/stocks/batch', async (req, res) => {
           const cached = stockCache.get(cacheKey);
           if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
             console.log(`📊 ${upperSymbol}: 使用快取`);
-            return { symbol: upperSymbol, ...cached.data };
+            return { symbol: upperSymbol, data: cached.data, cached: true };
           }
           
           // 獲取股價（使用現有邏輯）
@@ -566,7 +569,7 @@ app.post('/api/stocks/batch', async (req, res) => {
               });
               
               console.log(`📊 ${upperSymbol}: Yahoo Finance 成功 (${stockData.price})`);
-              return stockData;
+              return { symbol: upperSymbol, data: stockData, cached: false };
             }
           } catch (error) {
             console.log(`📊 ${upperSymbol}: Yahoo Finance 失敗 - ${error.message}`);
@@ -581,7 +584,7 @@ app.post('/api/stocks/batch', async (req, res) => {
                 timestamp: Date.now()
               });
               console.log(`📊 ${upperSymbol}: FinMind 成功 (${stockData.price})`);
-              return stockData;
+              return { symbol: upperSymbol, data: stockData, cached: false };
             }
           } catch (error) {
             console.log(`📊 ${upperSymbol}: FinMind 失敗 - ${error.message}`);
@@ -596,7 +599,7 @@ app.post('/api/stocks/batch', async (req, res) => {
                 timestamp: Date.now()
               });
               console.log(`📊 ${upperSymbol}: TWSE 成功 (${stockData.price})`);
-              return stockData;
+              return { symbol: upperSymbol, data: stockData, cached: false };
             }
           } catch (error) {
             console.log(`📊 ${upperSymbol}: TWSE 失敗 - ${error.message}`);
@@ -606,10 +609,7 @@ app.post('/api/stocks/batch', async (req, res) => {
           return {
             symbol: upperSymbol,
             error: 'All APIs failed',
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            source: 'Failed'
+            data: null
           };
           
         } catch (error) {
@@ -617,10 +617,7 @@ app.post('/api/stocks/batch', async (req, res) => {
           return {
             symbol: symbol.toUpperCase(),
             error: error.message,
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            source: 'Error'
+            data: null
           };
         }
       });
@@ -631,17 +628,16 @@ app.post('/api/stocks/batch', async (req, res) => {
       // 收集結果
       batchResults.forEach((result, index) => {
         if (result.status === 'fulfilled' && result.value) {
-          results.push(result.value);
+          const { symbol, data, error } = result.value;
+          if (data && data.price > 0) {
+            results[symbol] = data;
+          } else {
+            errors[symbol] = { message: error || 'No data available' };
+          }
         } else {
           // Promise 被拒絕的情況
-          results.push({
-            symbol: batch[index].toUpperCase(),
-            error: 'Promise rejected',
-            price: 0,
-            change: 0,
-            changePercent: 0,
-            source: 'Rejected'
-          });
+          const symbol = batch[index].toUpperCase();
+          errors[symbol] = { message: 'Promise rejected' };
         }
       });
       
@@ -651,19 +647,25 @@ app.post('/api/stocks/batch', async (req, res) => {
       }
     }
     
-    const successCount = results.filter(r => r.price > 0).length;
-    console.log(`📊 批量查詢完成: ${successCount}/${symbols.length} 成功`);
+    const successCount = Object.keys(results).length;
+    const failCount = Object.keys(errors).length;
     
-    // 添加批量查詢統計到響應頭
-    res.set('X-Batch-Total', symbols.length.toString());
-    res.set('X-Batch-Success', successCount.toString());
-    res.set('X-Batch-Failed', (symbols.length - successCount).toString());
+    console.log(`📊 批量查詢完成: ${successCount}/${symbols.length} 成功, ${failCount} 失敗`);
     
-    res.json(results);
+    // 返回結構化的結果
+    res.json({
+      success: true,
+      total: symbols.length,
+      successCount,
+      failCount,
+      results,
+      errors
+    });
     
   } catch (error) {
     console.error('📊 批量股價API錯誤:', error);
     res.status(500).json({
+      success: false,
       error: 'Batch fetch failed',
       message: '批量獲取股價失敗',
       details: error.message
