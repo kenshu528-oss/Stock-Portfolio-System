@@ -195,8 +195,15 @@ class GitHubGistService {
         return { success: false, error: '沒有找到投資組合資料' };
       }
       
-      // 使用第一個找到的投資組合 Gist
-      const gist = gists[0];
+      // 🔧 修復：選擇最新更新的 Gist（按 updated_at 排序）
+      const sortedGists = gists.sort((a, b) => {
+        const dateA = new Date(a.updated_at).getTime();
+        const dateB = new Date(b.updated_at).getTime();
+        return dateB - dateA; // 降序排列，最新的在前面
+      });
+      
+      const gist = sortedGists[0];
+      console.log(`📥 選擇最新的 Gist (${gist.id})，更新時間: ${new Date(gist.updated_at).toLocaleString()}`);
       
       // 下載資料
       const data = await this.downloadFromGist({
