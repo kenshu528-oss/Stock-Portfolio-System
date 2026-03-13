@@ -11,33 +11,61 @@ import sys
 from datetime import datetime
 from FinMind.data import DataLoader
 
+# 設定 Windows 控制台輸出編碼為 UTF-8
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
 # --- 設定區 ---
-# 🔧 修復：直接讀取 .env 文件
+# 🔧 修復：直接讀取 .env 文件（支援多種編碼）
 def load_env_file():
-    """載入 .env 文件中的環境變數"""
+    """載入 .env 文件中的環境變數（支援 UTF-8、CP950、GBK 等編碼）"""
     env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '.env')
     
-    if os.path.exists(env_path):
-        print(f"[INFO] 找到 .env 文件: {env_path}")
-        with open(env_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
-                    key = key.strip()
-                    value = value.strip()
-                    # 移除引號
-                    if value.startswith('"') and value.endswith('"'):
-                        value = value[1:-1]
-                    elif value.startswith("'") and value.endswith("'"):
-                        value = value[1:-1]
-                    
-                    # 設定環境變數（如果尚未設定）
-                    if key not in os.environ:
-                        os.environ[key] = value
-                        print(f"[INFO] 從 .env 載入: {key} = {value[:10]}...")
-    else:
+    if not os.path.exists(env_path):
         print(f"[WARNING] 找不到 .env 文件: {env_path}")
+        return
+    
+    print(f"[INFO] 找到 .env 文件: {env_path}")
+    
+    # 嘗試多種編碼格式（Windows 中文環境常見的編碼）
+    encodings = ['utf-8', 'utf-8-sig', 'cp950', 'gbk', 'big5']
+    content = None
+    used_encoding = None
+    
+    for encoding in encodings:
+        try:
+            with open(env_path, 'r', encoding=encoding) as f:
+                content = f.read()
+                used_encoding = encoding
+                print(f"[INFO] 成功使用 {encoding} 編碼讀取 .env 文件")
+                break
+        except (UnicodeDecodeError, LookupError):
+            continue
+    
+    if content is None:
+        print(f"[ERROR] 無法讀取 .env 文件，嘗試了以下編碼: {', '.join(encodings)}")
+        return
+    
+    # 解析環境變數
+    for line in content.splitlines():
+        line = line.strip()
+        if line and not line.startswith('#') and '=' in line:
+            key, value = line.split('=', 1)
+            key = key.strip()
+            value = value.strip()
+            
+            # 移除引號
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1]
+            elif value.startswith("'") and value.endswith("'"):
+                value = value[1:-1]
+            
+            # 設定環境變數（如果尚未設定）
+            if key not in os.environ:
+                os.environ[key] = value
+                print(f"[INFO] 從 .env 載入: {key} = {value[:10]}...")
 
 # 載入 .env 文件
 load_env_file()

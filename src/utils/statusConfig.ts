@@ -16,7 +16,7 @@ export interface StatusInfo {
 export const STATUS_CONFIG: Record<ConnectionStatus, StatusInfo> = {
   idle: {
     status: 'idle',
-    text: '未連線',
+    text: '尚未連線',
     color: 'text-slate-400', // Gray for idle state
     icon: DisconnectedIcon
   },

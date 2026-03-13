@@ -8,7 +8,7 @@ import { ConnectedIcon, DisconnectedIcon, ErrorIcon } from './Icons';
 const STATUS_CONFIG = {
   idle: {
     status: 'idle' as const,
-    text: '未連線',
+    text: '尚未連線',
     color: 'text-slate-400',
     icon: DisconnectedIcon
   },

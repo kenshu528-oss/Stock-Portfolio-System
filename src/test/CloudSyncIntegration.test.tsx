@@ -144,10 +144,10 @@ describe('CloudSync Integration Tests', () => {
       );
 
       // Should show idle status by default (no token)
-      expect(screen.getByText('未連線')).toBeInTheDocument();
+      expect(screen.getByText('尚未連線')).toBeInTheDocument();
       
       // Should show disconnected icon (gray)
-      const statusIcon = screen.getByText('未連線').parentElement?.querySelector('svg');
+      const statusIcon = screen.getByText('尚未連線').parentElement?.querySelector('svg');
       expect(statusIcon).toBeInTheDocument();
       expect(statusIcon).toHaveClass('text-slate-400');
     });
@@ -207,7 +207,7 @@ describe('CloudSync Integration Tests', () => {
 
       // Title bar should be present
       expect(screen.getByText('雲端同步')).toBeInTheDocument();
-      expect(screen.getByText('未連線')).toBeInTheDocument();
+      expect(screen.getByText('尚未連線')).toBeInTheDocument();
 
       // Close button should be functional
       const closeButton = screen.getByLabelText('關閉');
@@ -278,7 +278,7 @@ describe('CloudSync Integration Tests', () => {
       );
 
       // Step 1: Initial state should be idle
-      expect(screen.getByText('未連線')).toBeInTheDocument();
+      expect(screen.getByText('尚未連線')).toBeInTheDocument();
       const tokenInput = screen.getByPlaceholderText('請輸入 GitHub Token');
       expect(tokenInput).toHaveValue('');
 
@@ -326,7 +326,7 @@ describe('CloudSync Integration Tests', () => {
 
       // Test modal in idle state
       expect(screen.getByText('雲端同步')).toBeInTheDocument();
-      expect(screen.getByText('未連線')).toBeInTheDocument();
+      expect(screen.getByText('尚未連線')).toBeInTheDocument();
 
       // Test that all main sections are present
       expect(screen.getByText('GitHub Token')).toBeInTheDocument();

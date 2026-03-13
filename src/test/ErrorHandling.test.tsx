@@ -153,7 +153,7 @@ describe('Error Handling Tests', () => {
       const statusInfo = getStatusInfo(null);
       
       expect(statusInfo.status).toBe('idle');
-      expect(statusInfo.text).toBe('未連線');
+      expect(statusInfo.text).toBe('尚未連線');
       expect(statusInfo.color).toBe('text-slate-400');
     });
 
@@ -161,7 +161,7 @@ describe('Error Handling Tests', () => {
       const statusInfo = getStatusInfo(undefined);
       
       expect(statusInfo.status).toBe('idle');
-      expect(statusInfo.text).toBe('未連線');
+      expect(statusInfo.text).toBe('尚未連線');
       expect(statusInfo.color).toBe('text-slate-400');
     });
 
@@ -170,7 +170,7 @@ describe('Error Handling Tests', () => {
       const statusInfo = getStatusInfo(invalidStatus);
       
       expect(statusInfo.status).toBe('idle');
-      expect(statusInfo.text).toBe('未連線');
+      expect(statusInfo.text).toBe('尚未連線');
       expect(statusInfo.color).toBe('text-slate-400');
     });
 
@@ -232,10 +232,10 @@ describe('Error Handling Tests', () => {
       );
 
       // Should show default idle status even with potential invalid internal state
-      expect(screen.getByText('未連線')).toBeInTheDocument();
+      expect(screen.getByText('尚未連線')).toBeInTheDocument();
       
       // Status icon should be present and have correct class
-      const statusIcon = screen.getByText('未連線').parentElement?.querySelector('svg');
+      const statusIcon = screen.getByText('尚未連線').parentElement?.querySelector('svg');
       expect(statusIcon).toBeInTheDocument();
       expect(statusIcon).toHaveClass('text-slate-400');
     });
@@ -440,10 +440,10 @@ describe('Error Handling Tests', () => {
 
       // Component should render without throwing
       expect(screen.getByText('雲端同步')).toBeInTheDocument();
-      expect(screen.getByText('未連線')).toBeInTheDocument();
+      expect(screen.getByText('尚未連線')).toBeInTheDocument();
       
       // Status icon should be present
-      const statusElement = screen.getByText('未連線').parentElement;
+      const statusElement = screen.getByText('尚未連線').parentElement;
       expect(statusElement?.querySelector('svg')).toBeInTheDocument();
     });
   });
