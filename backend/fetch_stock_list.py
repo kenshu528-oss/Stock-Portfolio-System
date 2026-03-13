@@ -49,6 +49,7 @@ def load_env_file():
         return
     
     # 解析環境變數
+    loaded_count = 0
     for line in content.splitlines():
         line = line.strip()
         if line and not line.startswith('#') and '=' in line:
@@ -62,10 +63,12 @@ def load_env_file():
             elif value.startswith("'") and value.endswith("'"):
                 value = value[1:-1]
             
-            # 設定環境變數（如果尚未設定）
-            if key not in os.environ:
-                os.environ[key] = value
-                print(f"[INFO] 從 .env 載入: {key} = {value[:10]}...")
+            # 設定環境變數（總是設定，覆蓋舊值）
+            os.environ[key] = value
+            loaded_count += 1
+            print(f"[INFO] 從 .env 載入: {key} = {value[:10]}...")
+    
+    print(f"[INFO] 成功載入 {loaded_count} 個環境變數")
 
 # 載入 .env 文件
 load_env_file()
