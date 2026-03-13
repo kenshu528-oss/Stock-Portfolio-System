@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>測試 Gist 下載修復</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .container {
+      background: #2a2a2a;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #333;
+      border-radius: 5px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background: #444;
+      border: 1px solid #555;
+      color: #fff;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #1a1a1a;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .success {
+      color: #4CAF50;
+    }
+    .error {
+      color: #f44336;
+    }
+    .info {
+      color: #2196F3;
+    }
+    .warning {
+      color: #ff9800;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 測試 Gist 下載修復</h1>
+    
+    <div class="section">
+      <h3>問題說明</h3>
+      <p>之前的問題：下載時選擇了舊的 Gist，而不是最新上傳的那個</p>
+      <p class="success">✅ 修復：現在會按 updated_at 排序，選擇最新更新的 Gist</p>
+    </div>
+
+    <div class="section">
+      <h3>測試步驟</h3>
+      <label>GitHub Token:</label>
+      <input type="password" id="tokenInput" placeholder="輸入您的 GitHub Token">
+      
+      <div style="margin-top: 15px;">
+        <button onclick="listGists()">1. 列出所有 Gists</button>
+        <button onclick="downloadLatest()">2. 下載最新 Gist</button>
+        <button onclick="clearResult()">清除結果</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>測試結果</h3>
+      <div id="result" class="result">等待測試...</div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://api.github.com';
+    
+    function log(message, type = 'info') {
+      const result = document.getElementById('result');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type;
+      result.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+      result.scrollTop = result.scrollHeight;
+    }
+    
+    function clearResult() {
+      document.getElementById('result').innerHTML = '等待測試...\n';
+    }
+    
+    async function listGists() {
+      const token = document.getElementById('tokenInput').value;
+      if (!token) {
+        log('❌ 請先輸入 GitHub Token', 'error');
+        return;
+      }
+      
+      clearResult();
+      log('📋 開始列出所有 Gists...', 'info');
+      
+      try {
+        const response = await fetch(`${API_BASE}/gists`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const gists = await response.json();
+        
+        // 過濾投資組合相關的 Gists
+        const portfolioGists = gists.filter(gist => 
+          gist.description?.includes('Stock Portfolio') ||
+          gist.files['portfolio-data.json']
+        );
+        
+        log(`✅ 找到 ${portfolioGists.length} 個投資組合 Gists`, 'success');
+        log('', 'info');
+        
+        // 按更新時間排序（新到舊）
+        const sortedGists = portfolioGists.sort((a, b) => {
+          const dateA = new Date(a.updated_at).getTime();
+          const dateB = new Date(b.updated_at).getTime();
+          return dateB - dateA;
+        });
+        
+        sortedGists.forEach((gist, index) => {
+          const updateTime = new Date(gist.updated_at).toLocaleString();
+          const createTime = new Date(gist.created_at).toLocaleString();
+          const isLatest = index === 0 ? ' ⭐ 最新' : '';
+          
+          log(`${index + 1}. Gist ID: ${gist.id}${isLatest}`, 'info');
+          log(`   描述: ${gist.description}`, 'info');
+          log(`   創建時間: ${createTime}`, 'info');
+          log(`   更新時間: ${updateTime}`, 'warning');
+          log(`   URL: ${gist.html_url}`, 'info');
+          
+          // 檢查檔案內容
+          const dataFile = gist.files['portfolio-data.json'];
+          if (dataFile) {
+            log(`   檔案大小: ${(dataFile.size / 1024).toFixed(2)} KB`, 'info');
+            log(`   是否截斷: ${dataFile.truncated ? '是 ⚠️' : '否 ✅'}`, dataFile.truncated ? 'warning' : 'success');
+          }
+          log('', 'info');
+        });
+        
+        if (sortedGists.length > 0) {
+          log('🎯 修復後會自動選擇第一個（最新更新的）Gist', 'success');
+        }
+        
+      } catch (error) {
+        log(`❌ 錯誤: ${error.message}`, 'error');
+      }
+    }
+    
+    async function downloadLatest() {
+      const token = document.getElementById('tokenInput').value;
+      if (!token) {
+        log('❌ 請先輸入 GitHub Token', 'error');
+        return;
+      }
+      
+      clearResult();
+      log('📥 開始下載最新 Gist...', 'info');
+      
+      try {
+        // 步驟 1: 列出所有 Gists
+        log('步驟 1: 獲取 Gists 列表...', 'info');
+        const listResponse = await fetch(`${API_BASE}/gists`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!listResponse.ok) {
+          throw new Error(`HTTP ${listResponse.status}`);
+        }
+        
+        const gists = await listResponse.json();
+        const portfolioGists = gists.filter(gist => 
+          gist.description?.includes('Stock Portfolio') ||
+          gist.files['portfolio-data.json']
+        );
+        
+        if (portfolioGists.length === 0) {
+          log('❌ 沒有找到投資組合 Gists', 'error');
+          return;
+        }
+        
+        // 步驟 2: 按更新時間排序
+        log('步驟 2: 按更新時間排序...', 'info');
+        const sortedGists = portfolioGists.sort((a, b) => {
+          const dateA = new Date(a.updated_at).getTime();
+          const dateB = new Date(b.updated_at).getTime();
+          return dateB - dateA;
+        });
+        
+        const latestGist = sortedGists[0];
+        log(`✅ 選擇最新的 Gist: ${latestGist.id}`, 'success');
+        log(`   更新時間: ${new Date(latestGist.updated_at).toLocaleString()}`, 'info');
+        log('', 'info');
+        
+        // 步驟 3: 下載 Gist 內容
+        log('步驟 3: 下載 Gist 內容...', 'info');
+        const gistResponse = await fetch(`${API_BASE}/gists/${latestGist.id}`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+        
+        if (!gistResponse.ok) {
+          throw new Error(`HTTP ${gistResponse.status}`);
+        }
+        
+        const gist = await gistResponse.json();
+        const dataFile = gist.files['portfolio-data.json'];
+        
+        if (!dataFile) {
+          log('❌ Gist 中找不到 portfolio-data.json', 'error');
+          return;
+        }
+        
+        // 步驟 4: 處理可能的截斷
+        let content = dataFile.content;
+        
+        if (dataFile.truncated) {
+          log('⚠️ 內容被截斷，使用 raw_url 獲取完整內容...', 'warning');
+          const rawResponse = await fetch(dataFile.raw_url);
+          if (!rawResponse.ok) {
+            throw new Error(`無法獲取完整內容 (${rawResponse.status})`);
+          }
+          content = await rawResponse.text();
+          log('✅ 已獲取完整內容', 'success');
+        }
+        
+        const data = JSON.parse(content);
+        
+        // 步驟 5: 顯示結果
+        log('', 'info');
+        log('📊 下載結果:', 'success');
+        log(`   Gist ID: ${gist.id}`, 'info');
+        log(`   帳戶數量: ${data.accounts?.length || 0}`, 'success');
+        log(`   股票數量: ${data.stocks?.length || 0}`, 'success');
+        log(`   版本: ${data.version || 'N/A'}`, 'info');
+        log(`   匯出時間: ${data.exportDate ? new Date(data.exportDate).toLocaleString() : 'N/A'}`, 'info');
+        log('', 'info');
+        log('✅ 測試完成！如果股票數量正確，說明修復成功！', 'success');
+        
+      } catch (error) {
+        log(`❌ 錯誤: ${error.message}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

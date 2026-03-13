@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 384, // 【Vercel API 強化修復】強制獲取最新成交價，多重策略確保獲取今天的股價而非前一天收盤價
+  PATCH: 385, // 【雲端同步修復】修復 Gist 下載選擇舊版本問題，按更新時間排序選擇最新的 Gist
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

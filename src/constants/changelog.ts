@@ -12,6 +12,27 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0385',
+    date: '2026-03-13',
+    type: 'hotfix',
+    title: '雲端同步修復：修復 Gist 下載選擇舊版本問題，按更新時間排序選擇最新的 Gist',
+    description: '修復用戶反映的雲端下載問題：上傳顯示 80 筆股票成功，但下載只有 36 筆。根本原因：downloadData 方法使用 gists[0]（第一個），但 GitHub API 返回的列表順序不確定，導致下載到舊的 Gist 而非最新上傳的。修復：按 updated_at 排序，確保總是選擇最新更新的 Gist。同時創建 Gist 管理工具，方便用戶清理舊版本。',
+    changes: [
+      '🔧 修復 downloadData 方法：按 updated_at 降序排序，選擇最新的 Gist',
+      '📊 添加詳細日誌：記錄選擇的 Gist ID 和更新時間',
+      '🧪 創建測試工具：test-gist-download-fix.html 驗證修復效果',
+      '🗂️ 創建管理工具：test-gist-manager.html 幫助用戶清理舊 Gists',
+      '✅ 測試驗證：確認能正確下載完整的 80 筆股票資料',
+      '📋 提供批量操作：支援一鍵開啟所有舊 Gists 進行清理'
+    ],
+    fixes: [
+      '修復雲端下載選擇舊 Gist 導致資料不完整的問題',
+      '修復上傳 80 筆但下載只有 36 筆的資料不一致問題',
+      '確保總是下載最新上傳的投資組合資料',
+      '提供 Gist 管理工具，方便清理累積的舊版本'
+    ]
+  },
+  {
     version: '1.0.2.0384',
     date: '2026-02-02',
     type: 'hotfix',
