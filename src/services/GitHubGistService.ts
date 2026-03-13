@@ -118,7 +118,21 @@ class GitHubGistService {
         throw new Error('Gist 中找不到投資組合資料檔案');
       }
 
-      const data = JSON.parse(dataFile.content);
+      // 🔧 修復：處理大文件截斷問題
+      let content = dataFile.content;
+      
+      // 如果內容被截斷，使用 raw_url 獲取完整內容
+      if (dataFile.truncated) {
+        console.log('⚠️ Gist 內容被截斷，使用 raw_url 獲取完整內容...');
+        const rawResponse = await fetch(dataFile.raw_url);
+        if (!rawResponse.ok) {
+          throw new Error(`無法獲取完整內容 (${rawResponse.status})`);
+        }
+        content = await rawResponse.text();
+        console.log('✅ 已獲取完整內容');
+      }
+
+      const data = JSON.parse(content);
       console.log('Gist 下載成功:', gist.html_url);
       
       return {
