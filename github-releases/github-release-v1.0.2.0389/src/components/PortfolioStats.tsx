@@ -1,0 +1,294 @@
+import React from 'react';
+import { useAppStore } from '../stores/appStore';
+import { getTransactionTaxRate } from '../services/bondETFService';
+import { RightsAdjustmentService } from '../services/rightsAdjustmentService';
+import { logger } from '../utils/logger';
+import type { StockRecord, PortfolioStats as PortfolioStatsType } from '../types';
+
+interface PortfolioStatsProps {
+  stocks: StockRecord[];
+  currentAccountId: string;
+  isPrivacyMode: boolean;
+  className?: string;
+}
+
+const PortfolioStats: React.FC<PortfolioStatsProps> = ({
+  stocks,
+  currentAccountId,
+  isPrivacyMode,
+  className = ''
+}) => {
+  // 獲取股價更新狀態和帳戶資訊
+  const { lastPriceUpdate, isUpdatingPrices, accounts, rightsAdjustmentMode } = useAppStore();
+  
+  // 過濾當前帳戶的股票（使用原始記錄，不合併）
+  const currentAccountStocks = stocks.filter(stock => stock.accountId === currentAccountId);
+  
+  // 🔍 調試：檢查是否有重複的股票代碼（DEBUG 等級）
+  if (process.env.NODE_ENV === 'development') {
+    const stockSymbols = currentAccountStocks.map(s => s.symbol);
+    const uniqueSymbols = new Set(stockSymbols);
+    if (stockSymbols.length !== uniqueSymbols.size) {
+      // console.debug('PortfolioStats: 發現重複股票代碼（合併記錄）', {
+      //   total: stockSymbols.length,
+      //   unique: uniqueSymbols.size,
+      //   symbols: stockSymbols
+      // });
+      logger.debug('portfolio', '發現重複股票代碼（合併記錄）', {
+        total: stockSymbols.length,
+        unique: uniqueSymbols.size,
+        symbols: stockSymbols
+      });
+    }
+  }
+
+  // 格式化最後更新時間
+  const formatLastUpdateTime = (date: Date | null): string => {
+    if (!date) return '尚未更新';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    
+    if (diffMins < 1) return '剛剛更新';
+    if (diffMins < 60) return `${diffMins}分鐘前更新`;
+    
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}小時前更新`;
+    
+    return `${date.toLocaleDateString('zh-TW')} 更新`;
+  };
+
+  // 計算投資組合統計
+  const calculateStats = (): PortfolioStatsType => {
+    if (currentAccountStocks.length === 0) {
+      return {
+        totalMarketValue: 0,
+        totalCost: 0,
+        totalGainLoss: 0,
+        totalGainLossPercent: 0,
+        totalDividend: 0,
+        totalReturn: 0,
+        todayChange: 0,
+        todayChangePercent: 0
+      };
+    }
+
+    // 獲取帳戶資訊以取得手續費率
+    const account = accounts.find(acc => acc.id === currentAccountId);
+    const brokerageFeeRate = account?.brokerageFee ?? 0.1425;
+    const transactionTaxRate = account?.transactionTax ?? 0.3;
+
+    // 計算總市值（毛額）
+    const totalMarketValue = currentAccountStocks.reduce((sum, stock) => 
+      sum + (stock.shares * stock.currentPrice), 0
+    );
+
+    // 計算總買入成本（包含買入手續費，考慮最低手續費20元）
+    const totalBuyCost = currentAccountStocks.reduce((sum, stock) => {
+      const costBasis = stock.adjustedCostPrice || stock.costPrice;
+      const grossCost = stock.shares * costBasis;
+      const buyBrokerageFee = Math.max(20, Math.round(grossCost * (brokerageFeeRate / 100)));
+      return sum + grossCost + buyBrokerageFee;
+    }, 0);
+
+    // 計算總賣出收入（扣除賣出手續費和證交稅，考慮債券ETF稅率）
+    const totalNetSellValue = currentAccountStocks.reduce((sum, stock) => {
+      const grossSellValue = stock.shares * stock.currentPrice;
+      const sellBrokerageFee = Math.max(20, Math.round(grossSellValue * (brokerageFeeRate / 100)));
+      
+      // 根據股票類型計算正確的證交稅率
+      const actualTaxRate = stock.transactionTaxRate ?? getTransactionTaxRate(stock.symbol, stock.name);
+      const sellTransactionTax = Math.round(grossSellValue * (actualTaxRate / 100));
+      
+      return sum + grossSellValue - sellBrokerageFee - sellTransactionTax;
+    }, 0);
+
+    // 計算總損益：根據除權息模式決定計算方式
+    const totalGainLoss = currentAccountStocks.reduce((sum, stock) => {
+      // 使用統一的除權息計算服務
+      const gainLoss = RightsAdjustmentService.calculateGainLossWithRights(
+        stock, 
+        rightsAdjustmentMode, // 使用當前的除權息模式
+        brokerageFeeRate,
+        transactionTaxRate
+      );
+      
+      return sum + gainLoss;
+    }, 0);
+
+    // 計算總股息收入（向後相容處理）
+    const totalDividend = currentAccountStocks.reduce((sum, stock) => {
+      return sum + RightsAdjustmentService.getTotalCashDividend(stock);
+    }, 0);
+
+    // 計算總損益率
+    const totalGainLossPercent = totalBuyCost > 0 ? (totalGainLoss / totalBuyCost) * 100 : 0;
+
+    // 計算總報酬（損益 + 股息）
+    const totalReturn = totalGainLoss + totalDividend;
+
+    // TODO: 實作今日變化計算（需要昨日收盤價資料）
+    const todayChange = 0;
+    const todayChangePercent = 0;
+
+    return {
+      totalMarketValue,
+      totalCost: totalBuyCost,
+      totalGainLoss,
+      totalGainLossPercent,
+      totalDividend,
+      totalReturn,
+      todayChange,
+      todayChangePercent
+    };
+  };
+
+  const stats = calculateStats();
+
+  // 格式化金額顯示
+  const formatCurrency = (amount: number): string => {
+    if (isPrivacyMode) {
+      return '****';
+    }
+    return `$${amount.toLocaleString('zh-TW', { 
+      minimumFractionDigits: 0, 
+      maximumFractionDigits: 0 
+    })}`;
+  };
+
+  // 格式化百分比顯示
+  const formatPercent = (percent: number): string => {
+    if (isPrivacyMode) {
+      return '**%';
+    }
+    if (typeof percent !== 'number' || isNaN(percent)) {
+      return '0.00%';
+    }
+    return `${(percent || 0) >= 0 ? '+' : ''}${(percent || 0).toFixed(2)}%`;
+  };
+
+  // 獲取損益顏色
+  const getGainLossColor = (value: number): string => {
+    if (value > 0) return 'text-green-400';
+    if (value < 0) return 'text-red-400';
+    return 'text-slate-300';
+  };
+
+  return (
+    <div className={`bg-slate-800 border border-slate-700 rounded-lg p-2 md:p-4 max-w-full ${className}`}>
+      <div className="flex items-center justify-between mb-2 md:mb-3">
+        <h3 className="text-sm md:text-base font-semibold text-white">投資組合統計</h3>
+        
+        {/* 股價更新狀態顯示 */}
+        <div className="flex items-center space-x-2 text-xs">
+          {isUpdatingPrices ? (
+            <div className="flex items-center text-blue-400">
+              <svg className="w-3 h-3 animate-spin mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>更新中...</span>
+            </div>
+          ) : (
+            <div className="text-slate-400">
+              {formatLastUpdateTime(lastPriceUpdate)}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {currentAccountStocks.length === 0 ? (
+        <div className="text-center py-6">
+          <div className="text-slate-400">
+            <svg 
+              className="mx-auto h-10 w-10 text-slate-500 mb-3" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={1} 
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" 
+              />
+            </svg>
+            <p className="text-lg font-medium mb-2">尚無投資資料</p>
+            <p className="text-sm text-slate-500">
+              新增股票後即可查看投資組合統計
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+          {/* 總市值 */}
+          <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 md:p-4 min-h-[80px] md:min-h-[100px] flex flex-col justify-between">
+            <div className="text-slate-400 text-xs md:text-sm mb-2">總市值</div>
+            <div className="text-white text-lg md:text-xl font-bold font-mono text-right">
+              {isPrivacyMode ? '****' : formatCurrency(stats.totalMarketValue, 0)}
+            </div>
+          </div>
+
+          {/* 總成本 */}
+          <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 md:p-4 min-h-[80px] md:min-h-[100px] flex flex-col justify-between">
+            <div className="text-slate-400 text-xs md:text-sm mb-2">總成本</div>
+            <div className="text-white text-lg md:text-xl font-bold font-mono text-right">
+              {isPrivacyMode ? '****' : formatCurrency(stats.totalCost, 0)}
+            </div>
+          </div>
+
+          {/* 總損益 */}
+          <div className={`
+            rounded-lg p-3 md:p-4 min-h-[80px] md:min-h-[100px] flex flex-col justify-between
+            ${stats.totalGainLoss >= 0 
+              ? 'bg-green-900/10 border border-green-500/30' 
+              : 'bg-red-900/10 border border-red-500/30'
+            }
+          `}>
+            <div className="text-slate-400 text-xs md:text-sm mb-2">總損益</div>
+            <div className={`
+              text-lg md:text-xl font-bold font-mono text-right
+              ${stats.totalGainLoss >= 0 ? 'text-green-400' : 'text-red-400'}
+            `}>
+              {isPrivacyMode ? '****' : `${formatCurrency(stats.totalGainLoss, 0)} (${formatPercent(stats.totalGainLossPercent)})`}
+            </div>
+          </div>
+
+          {/* 股息收入 */}
+          <div className="bg-slate-800 border border-slate-600 rounded-lg p-3 md:p-4 min-h-[80px] md:min-h-[100px] flex flex-col justify-between">
+            <div className="text-slate-400 text-xs md:text-sm mb-2">股息收入</div>
+            <div className="text-green-400 text-lg md:text-xl font-bold font-mono text-right">
+              {isPrivacyMode ? '****' : formatCurrency(stats.totalDividend, 0)}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 詳細統計 */}
+      {currentAccountStocks.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-slate-700">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-400">持股檔數:</span>
+              <span className="text-white font-medium">{currentAccountStocks.length} 檔</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">總報酬率:</span>
+              <span className={`font-medium ${getGainLossColor(stats.totalReturn)}`}>
+                {isPrivacyMode ? '**%' : `${(stats.totalReturn || 0) >= 0 ? '+' : ''}${stats.totalCost > 0 ? (((stats.totalReturn || 0) / stats.totalCost) * 100).toFixed(2) : '0.00'}%`}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">含息報酬:</span>
+              <span className={`font-medium ${getGainLossColor(stats.totalReturn)}`}>
+                {isPrivacyMode ? '****' : `${stats.totalReturn >= 0 ? '+' : ''}${(stats.totalReturn || 0).toFixed(0)}`}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default PortfolioStats;

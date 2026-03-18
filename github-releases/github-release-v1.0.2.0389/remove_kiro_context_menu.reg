@@ -1,0 +1,5 @@
+Windows Registry Editor Version 5.00
+
+; 移除 Kiro 右鍵選單
+[-HKEY_CLASSES_ROOT\Directory\shell\OpenWithKiro]
+[-HKEY_CLASSES_ROOT\Directory\Background\shell\OpenWithKiro]
