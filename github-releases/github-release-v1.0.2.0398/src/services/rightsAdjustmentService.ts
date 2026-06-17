@@ -1,0 +1,211 @@
+// 除權息計算服務
+import type { StockRecord, DividendRecord } from '../types';
+import { getTransactionTaxRate } from './bondETFService';
+
+export type GainLossCalculationMode = 
+  | 'excluding_rights'    // 不含除權息
+  | 'cash_dividend_only'  // 只含現金股利
+  | 'full_rights'         // 含完整除權息（現金+配股）
+  | 'adjusted_cost_only'; // 只用調整成本價
+
+export class RightsAdjustmentService {
+  
+  /**
+   * 計算除權息後的調整成本價和持股數
+   * 公式：調整成本價 = (除權息前成本價 × 除權息前股數 - 現金股利) ÷ 除權息後股數
+   */
+  static calculateAdjustedCostPrice(
+    originalCostPrice: number,
+    sharesBeforeRight: number,
+    cashDividendPerShare: number,
+    stockDividendRatio: number = 0
+  ): { adjustedCostPrice: number; sharesAfterRight: number; stockDividendShares: number } {
+    
+    // 計算配股數量（每1000股配X股）
+    const stockDividendShares = Math.floor(sharesBeforeRight * stockDividendRatio / 1000);
+    const sharesAfterRight = sharesBeforeRight + stockDividendShares;
+    
+    // 計算總現金股利
+    const totalCashDividend = sharesBeforeRight * cashDividendPerShare;
+    
+    // 計算調整後成本價
+    const totalCostBeforeRight = originalCostPrice * sharesBeforeRight;
+    let adjustedCostPrice: number;
+    
+    if (sharesAfterRight > 0) {
+      adjustedCostPrice = (totalCostBeforeRight - totalCashDividend) / sharesAfterRight;
+    } else {
+      adjustedCostPrice = originalCostPrice;
+    }
+    
+    // 確保調整後成本價不為負數
+    adjustedCostPrice = Math.max(0, adjustedCostPrice);
+    
+    return {
+      adjustedCostPrice,
+      sharesAfterRight,
+      stockDividendShares
+    };
+  }
+  
+  /**
+   * 處理除權息事件（安全的疊加式處理）
+   */
+  static processRightsAdjustment(
+    stockRecord: StockRecord,
+    dividendRecord: DividendRecord
+  ): StockRecord {
+    
+    // ⚠️ 重要：使用 dividendRecord 中已經計算好的調整後成本價
+    // 因為 convertApiRecordToDividendRecord 已經基於當前的 adjustedCostPrice 計算過了
+    const adjustedCostPrice = dividendRecord.costPriceAfterRight;
+    const sharesAfterRight = dividendRecord.sharesAfterRight;
+    
+    // 安全的疊加式更新，保持原有資料不變
+    return {
+      ...stockRecord,
+      shares: sharesAfterRight,
+      adjustedCostPrice: adjustedCostPrice,
+      dividendRecords: [...(stockRecord.dividendRecords || []), dividendRecord]
+    };
+  }
+  
+  /**
+   * 計算不同模式下的損益（考慮交易成本）
+   */
+  static calculateGainLossWithRights(
+    stock: StockRecord, 
+    mode: GainLossCalculationMode,
+    brokerageFeeRate: number = 0.1425,
+    transactionTaxRate: number = 0.3
+  ): number {
+    
+    // 計算賣出收入（固定使用現在持股數，因為賣出時持有全部股票）
+    const grossSellValue = stock.shares * stock.currentPrice;
+    const sellBrokerageFee = Math.max(20, Math.round(grossSellValue * (brokerageFeeRate / 100)));
+    // 稅率優先順序：stock 欄位 > 依代碼動態判斷（ETF 0.1%、一般 0.3%）> 帳戶設定
+    const actualTaxRate = stock.transactionTaxRate ?? getTransactionTaxRate(stock.symbol, stock.name);
+    const sellTransactionTax = Math.round(grossSellValue * (actualTaxRate / 100));
+    const netSellValue = grossSellValue - sellBrokerageFee - sellTransactionTax;
+
+    // 計算交易成本的通用邏輯（使用指定的買入股數和成本價）
+    const calculateWithTransactionCosts = (costPrice: number, buyShares: number = stock.shares): number => {
+      // 計算買入成本（包含買入手續費）
+      const grossBuyCost = buyShares * costPrice;
+      const buyBrokerageFee = Math.max(20, Math.round(grossBuyCost * (brokerageFeeRate / 100)));
+      const totalBuyCost = grossBuyCost + buyBrokerageFee;
+      
+      return netSellValue - totalBuyCost;
+    };
+    
+    switch (mode) {
+      case 'excluding_rights': {
+        // 不含除權息模式：買入成本只計算「原始買入股數 × 原始成本價」
+        // 配股是免費得到的，不應計入買入成本
+        // 原始買入股數 = 現在持股數 - 歷史配股總數
+        const totalStockDividendShares = this.getTotalStockDividend(stock);
+        const originalShares = stock.shares - totalStockDividendShares;
+        return calculateWithTransactionCosts(stock.costPrice, originalShares);
+      }
+        
+      case 'cash_dividend_only': {
+        // 只含現金股利：原始買入股數 × 原始成本價 + 現金股利
+        const totalStockDividendSharesCash = this.getTotalStockDividend(stock);
+        const originalSharesCash = stock.shares - totalStockDividendSharesCash;
+        const totalCashDividend = this.getTotalCashDividend(stock);
+        return calculateWithTransactionCosts(stock.costPrice, originalSharesCash) + totalCashDividend;
+      }
+        
+      case 'full_rights': {
+        // 含完整除權息：使用調整後成本價 × 現在持股數（調整成本價已含配股稀釋效果）
+        const adjustedCostPrice = stock.adjustedCostPrice || stock.costPrice;
+        return calculateWithTransactionCosts(adjustedCostPrice, stock.shares);
+      }
+        
+      case 'adjusted_cost_only': {
+        // 只用調整成本價：調整後成本價 × 現在持股數
+        const adjustedCost = stock.adjustedCostPrice || stock.costPrice;
+        return calculateWithTransactionCosts(adjustedCost, stock.shares);
+      }
+        
+      default: {
+        // 預設使用調整成本價（向後相容）
+        const defaultCostPrice = stock.adjustedCostPrice || stock.costPrice;
+        return calculateWithTransactionCosts(defaultCostPrice, stock.shares);
+      }
+    }
+  }
+  
+  /**
+   * 獲取總現金股利（向後相容處理）
+   */
+  static getTotalCashDividend(stock: StockRecord): number {
+    if (!stock.dividendRecords || stock.dividendRecords.length === 0) {
+      return 0;
+    }
+    
+    return stock.dividendRecords.reduce((total, dividend) => {
+      // 優先使用新欄位，向後相容舊欄位
+      const cashDividend = dividend.totalCashDividend ?? dividend.totalDividend ?? 0;
+      return total + cashDividend;
+    }, 0);
+  }
+  
+  /**
+   * 獲取總配股數
+   */
+  static getTotalStockDividend(stock: StockRecord): number {
+    if (!stock.dividendRecords || stock.dividendRecords.length === 0) {
+      return 0;
+    }
+    
+    return stock.dividendRecords.reduce((total, dividend) => {
+      return total + (dividend.stockDividendShares ?? 0);
+    }, 0);
+  }
+  
+  /**
+   * 轉換舊格式股息記錄為新格式（向後相容）
+   */
+  static convertLegacyDividendRecord(
+    oldRecord: any,
+    currentShares: number,
+    currentCostPrice: number
+  ): DividendRecord {
+    return {
+      id: oldRecord.id,
+      stockId: oldRecord.stockId,
+      symbol: oldRecord.symbol,
+      exRightDate: oldRecord.exDividendDate || oldRecord.exRightDate,
+      
+      // 現金股利
+      cashDividendPerShare: oldRecord.dividendPerShare || oldRecord.cashDividendPerShare || 0,
+      totalCashDividend: oldRecord.totalDividend || oldRecord.totalCashDividend || 0,
+      
+      // 股票股利（舊記錄預設為0）
+      stockDividendRatio: oldRecord.stockDividendRatio || 0,
+      stockDividendShares: oldRecord.stockDividendShares || 0,
+      
+      // 持股狀況（舊記錄使用當前值）
+      sharesBeforeRight: oldRecord.shares || currentShares,
+      sharesAfterRight: oldRecord.sharesAfterRight || currentShares,
+      
+      // 成本價（舊記錄使用當前值）
+      costPriceBeforeRight: oldRecord.costPriceBeforeRight || currentCostPrice,
+      costPriceAfterRight: oldRecord.costPriceAfterRight || currentCostPrice,
+      
+      // 其他資訊
+      recordDate: oldRecord.recordDate,
+      paymentDate: oldRecord.paymentDate,
+      type: oldRecord.type || 'cash',
+      
+      // 向後相容欄位
+      exDividendDate: oldRecord.exDividendDate,
+      dividendPerShare: oldRecord.dividendPerShare,
+      totalDividend: oldRecord.totalDividend,
+      shares: oldRecord.shares
+    };
+  }
+}
+
+export default RightsAdjustmentService;
