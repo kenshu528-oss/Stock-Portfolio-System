@@ -148,6 +148,17 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
+        # 清理超過 7 天的舊 stock_list 檔案（保留最近 7 天）
+        echo "🧹 清理超過 7 天的舊 stock_list 檔案..."
+        find . -maxdepth 1 -name "stock_list_2026-*.json" -type f | sort | head -n -7 | while read f; do
+          echo "刪除舊檔案: $f"
+          git rm -f "$f" 2>/dev/null || rm -f "$f"
+        done
+        find ./public -maxdepth 1 -name "stock_list_2026-*.json" -type f | sort | head -n -7 | while read f; do
+          echo "刪除舊 public 檔案: $f"
+          git rm -f "$f" 2>/dev/null || rm -f "$f"
+        done
+        
         # 添加所有股票清單相關檔案
         git add public/stock_list*.json
         git add stock_list_*.json
