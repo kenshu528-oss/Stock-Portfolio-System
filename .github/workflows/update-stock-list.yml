@@ -27,8 +27,6 @@ jobs:
       run: |
         TODAY=$(date +%Y-%m-%d)
         if [ -f "public/stock_list_$TODAY.json" ]; then
-          echo "📝 今日股票清單已存在，檢查是否需要更新"
-          # 檢查檔案是否是今天創建的
           FILE_DATE=$(jq -r '.date' "public/stock_list_$TODAY.json" 2>/dev/null || echo "")
           if [ "$FILE_DATE" = "$TODAY" ]; then
             echo "✅ 今日股票清單已是最新，跳過更新"
@@ -47,61 +45,19 @@ jobs:
       env:
         FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN || secrets.VITE_FINMIND_TOKEN }}
       run: |
-        # 檢查環境變數
         echo "🔍 檢查 FINMIND_TOKEN 環境變數..."
         if [ -z "$FINMIND_TOKEN" ]; then
-          echo "❌ 錯誤：找不到 FINMIND_TOKEN 或 VITE_FINMIND_TOKEN secret"
-          echo ""
-          echo "📋 修復步驟："
-          echo "1. 前往 GitHub 倉庫設定"
-          echo "2. Settings → Secrets and variables → Actions"
-          echo "3. 新增 Repository secret："
-          echo "   Name: FINMIND_TOKEN"
-          echo "   Secret: 你的 FinMind Token"
-          echo ""
-          echo "💡 詳細說明請參考: docs/guides/GITHUB_STOCK_LIST_FIX.md"
-          echo ""
-          echo "⚠️ Workflow 將會失敗，請設定 Secret 後重新執行"
+          echo "❌ 找不到 FINMIND_TOKEN 或 VITE_FINMIND_TOKEN secret"
           exit 1
         else
-          echo "✅ 使用 GitHub secret 中的 FinMind Token"
-          echo "📏 Token 長度: ${#FINMIND_TOKEN} 字元"
+          echo "✅ Token 長度: ${#FINMIND_TOKEN} 字元"
         fi
         
-        # 檢查 Python 和依賴
-        echo ""
-        echo "🔍 檢查 Python 環境..."
-        python --version
-        echo ""
-        echo "🔍 檢查已安裝的套件..."
-        pip list | grep -i finmind || echo "⚠️ FinMind 未安裝"
-        pip list | grep -i pandas || echo "⚠️ pandas 未安裝"
-        pip list | grep -i tqdm || echo "⚠️ tqdm 未安裝"
-        
-        # 執行股票清單抓取腳本（強制更新）
-        echo ""
-        echo "🚀 開始執行股票清單更新..."
-        echo "📂 當前目錄: $(pwd)"
-        echo "📂 backend 目錄內容:"
-        ls -la backend/ || echo "backend 目錄不存在"
-        
         cd backend
-        echo "📂 切換到 backend 目錄: $(pwd)"
-        
-        # 執行 Python 腳本並捕獲輸出
         if python fetch_stock_list.py --force; then
-          echo ""
           echo "✅ 股票清單抓取成功"
         else
-          echo ""
           echo "❌ 股票清單抓取失敗"
-          echo "📋 可能的原因："
-          echo "1. FinMind Token 無效或過期"
-          echo "2. FinMind API 服務異常"
-          echo "3. 網路連線問題"
-          echo "4. Python 依賴未正確安裝"
-          echo ""
-          echo "💡 請檢查上方的詳細錯誤訊息"
           exit 1
         fi
         
@@ -111,34 +67,19 @@ jobs:
         mkdir -p public
         TODAY=$(date +%Y-%m-%d)
         
-        echo "🔍 檢查今日股票清單檔案..."
-        echo "當前目錄: $(pwd)"
-        echo "backend 目錄內容:"
-        ls -la backend/ || echo "backend 目錄不存在"
-        echo "根目錄股票清單檔案:"
-        ls -la stock_list_*.json || echo "沒有找到股票清單檔案"
-        
-        # 尋找今日的股票清單檔案（優先從根目錄）
         if [ -f "stock_list_$TODAY.json" ]; then
           cp "stock_list_$TODAY.json" public/stock_list.json
           cp "stock_list_$TODAY.json" "public/stock_list_$TODAY.json"
-          echo "✅ 股票清單已複製: stock_list_$TODAY.json"
-          
-          # 顯示統計資訊
           STOCK_COUNT=$(jq '.count' public/stock_list.json)
-          echo "📊 股票總數: $STOCK_COUNT"
+          echo "✅ 股票清單已複製，共 $STOCK_COUNT 支"
         elif [ -f "backend/stock_list_$TODAY.json" ]; then
           cp "backend/stock_list_$TODAY.json" public/stock_list.json
           cp "backend/stock_list_$TODAY.json" "public/stock_list_$TODAY.json"
-          echo "✅ 從 backend 目錄複製股票清單: stock_list_$TODAY.json"
-          
-          # 顯示統計資訊
           STOCK_COUNT=$(jq '.count' public/stock_list.json)
-          echo "📊 股票總數: $STOCK_COUNT"
+          echo "✅ 從 backend 複製，共 $STOCK_COUNT 支"
         else
           echo "❌ 找不到今日股票清單: stock_list_$TODAY.json"
-          echo "📋 可用的檔案:"
-          find . -name "stock_list_*.json" -type f || echo "沒有股票清單檔案"
+          find . -name "stock_list_*.json" -type f
           exit 1
         fi
         
@@ -148,27 +89,60 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # 清理超過 7 天的舊 stock_list 檔案（保留最近 7 天）
-        echo "🧹 清理超過 7 天的舊 stock_list 檔案..."
-        find . -maxdepth 1 -name "stock_list_2026-*.json" -type f | sort | head -n -7 | while read f; do
-          echo "刪除舊檔案: $f"
+        # 只保留最近 3 天的 stock_list 日期檔案
+        echo "🧹 清理舊 stock_list 檔案（只保留最近 3 天）..."
+        find . -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
+          echo "  刪除: $f"
           git rm -f "$f" 2>/dev/null || rm -f "$f"
         done
-        find ./public -maxdepth 1 -name "stock_list_2026-*.json" -type f | sort | head -n -7 | while read f; do
-          echo "刪除舊 public 檔案: $f"
+        find ./public -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
+          echo "  刪除: $f"
           git rm -f "$f" 2>/dev/null || rm -f "$f"
         done
         
-        # 添加所有股票清單相關檔案
         git add public/stock_list*.json
         git add stock_list_*.json
         
-        # 檢查是否有變更
         if git diff --staged --quiet; then
-          echo "📝 股票清單無變更，跳過提交"
+          echo "📝 無變更，跳過提交"
         else
           TODAY=$(date +%Y-%m-%d)
           git commit -m "🤖 自動更新股票清單 $TODAY"
           git push
-          echo "✅ 股票清單已更新並推送到倉庫"
+          echo "✅ 已更新並推送"
         fi
+
+  # 失敗通知 job（只在 update-stock-list 失敗時執行）
+  notify-on-failure:
+    runs-on: ubuntu-latest
+    needs: update-stock-list
+    if: failure()
+    
+    steps:
+    - name: Send failure notification email
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 465
+        secure: true
+        username: ${{ secrets.NOTIFY_EMAIL_USER }}
+        password: ${{ secrets.NOTIFY_EMAIL_PASSWORD }}
+        subject: "❌ Stock List 自動更新失敗 - ${{ github.run_id }}"
+        to: ${{ secrets.NOTIFY_EMAIL_TO }}
+        from: Stock Portfolio System
+        body: |
+          Stock List 自動更新失敗！
+          
+          時間：${{ github.event.head_commit.timestamp || 'N/A' }}
+          執行 ID：${{ github.run_id }}
+          倉庫：${{ github.repository }}
+          
+          請前往以下連結查看詳細錯誤：
+          https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          可能原因：
+          1. FinMind Token 過期或無效
+          2. FinMind API 服務異常
+          3. 網路連線問題
+          
+          請手動檢查並修復後，可至 Actions 頁面手動重新執行。

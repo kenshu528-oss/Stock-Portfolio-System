@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0401',
+    date: '2026-07-31',
+    type: 'patch',
+    title: '版本更新：系統版本升級至 v1.0.2.0401',
+    description: '例行版本升級，同步更新 package.json、version.ts、changelog.ts 三個版本號檔案，確保版本一致性。',
+    changes: [
+      '🔢 更新 package.json 版本號至 1.0.2.0401',
+      '🔢 更新 src/constants/version.ts PATCH 至 401',
+      '📝 更新 src/constants/changelog.ts 新增版本記錄',
+    ],
+  },
+  {
     version: '1.0.2.0400',
     date: '2026-06-23',
     type: 'minor',
