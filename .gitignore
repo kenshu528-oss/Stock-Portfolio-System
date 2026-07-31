@@ -94,3 +94,7 @@ export/
 
 # Vite cache
 .vite/
+
+# 忽略 github-releases 歸檔資料夾裡的 stock_list 日期檔案（由 GitHub Actions 產生）
+github-releases/**/stock_list_2026-*.json
+github-releases/**/public/stock_list_2026-*.json
