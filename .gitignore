@@ -98,3 +98,6 @@ export/
 # 忽略 github-releases 歸檔資料夾裡的 stock_list 日期檔案（由 GitHub Actions 產生）
 github-releases/**/stock_list_2026-*.json
 github-releases/**/public/stock_list_2026-*.json
+
+# 根目錄不應有帶日期的 stock_list（統一放在 public/）
+stock_list_2*-*.json

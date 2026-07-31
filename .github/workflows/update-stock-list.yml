@@ -89,19 +89,20 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         
-        # 只保留最近 3 天的 stock_list 日期檔案
+        # 只保留最近 3 天的 stock_list 日期檔案（只在 public/）
         echo "🧹 清理舊 stock_list 檔案（只保留最近 3 天）..."
-        find . -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
-          echo "  刪除: $f"
-          git rm -f "$f" 2>/dev/null || rm -f "$f"
-        done
         find ./public -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
           echo "  刪除: $f"
           git rm -f "$f" 2>/dev/null || rm -f "$f"
         done
         
+        # 清理根目錄的帶日期檔案（不應該存在）
+        find . -maxdepth 1 -name "stock_list_2*-*.json" -type f | while read f; do
+          echo "  刪除根目錄舊檔: $f"
+          git rm -f "$f" 2>/dev/null || rm -f "$f"
+        done
+        
         git add public/stock_list*.json
-        git add stock_list_*.json
         
         if git diff --staged --quiet; then
           echo "📝 無變更，跳過提交"

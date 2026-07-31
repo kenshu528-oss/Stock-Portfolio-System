@@ -112,11 +112,11 @@ def get_today_filename():
     return os.path.join(parent_dir, 'public', 'stock_list.json')
 
 def get_dated_filename():
-    """獲取帶日期的股票清單檔案名稱（用於 GitHub Actions）"""
+    """獲取帶日期的股票清單檔案名稱（存放在 public 目錄）"""
     root_dir = os.path.dirname(os.path.abspath(__file__))  # backend 目錄
     parent_dir = os.path.dirname(root_dir)  # 專案根目錄
     today = datetime.now().strftime('%Y-%m-%d')
-    return os.path.join(parent_dir, f'stock_list_{today}.json')
+    return os.path.join(parent_dir, 'public', f'stock_list_{today}.json')
 
 def check_today_file_exists():
     """檢查股票清單檔案是否需要更新"""
@@ -226,37 +226,44 @@ def fetch_stock_list():
         return False
 
 def cleanup_old_files():
-    """清理根目錄的舊 stock_list_*.json 檔案（保留今天的）"""
+    """清理 public 目錄的舊 stock_list_*.json 檔案（只保留最近 3 天）"""
     try:
         import glob
         
-        # 獲取專案根目錄
         root_dir = os.path.dirname(os.path.abspath(__file__))  # backend 目錄
         parent_dir = os.path.dirname(root_dir)  # 專案根目錄
+        public_dir = os.path.join(parent_dir, 'public')
         
-        # 今天的日期
-        today = datetime.now().strftime('%Y-%m-%d')
-        today_file = f'stock_list_{today}.json'
+        # 找到 public 目錄中所有帶日期的股票清單檔案
+        pattern = os.path.join(public_dir, 'stock_list_2*-*.json')
+        files = sorted(glob.glob(pattern))  # 按名稱排序（日期）
         
-        # 找到根目錄中所有舊的股票清單檔案
-        pattern = os.path.join(parent_dir, 'stock_list_*.json')
-        files = glob.glob(pattern)
+        # 只保留最新 3 個，刪除其餘
+        files_to_delete = files[:-3] if len(files) > 3 else []
         
-        # 過濾掉今天的檔案
-        old_files = [f for f in files if os.path.basename(f) != today_file]
-        
-        if old_files:
-            print(f"\n[INFO] 清理根目錄舊檔案...")
-            for file in old_files:
+        if files_to_delete:
+            print(f"\n[INFO] 清理 public 目錄舊檔案（只保留最近 3 天）...")
+            for file in files_to_delete:
                 try:
                     os.remove(file)
-                    filename = os.path.basename(file)
-                    print(f"  清理舊檔案: {filename}")
+                    print(f"  刪除: {os.path.basename(file)}")
                 except OSError as e:
-                    print(f"  清理檔案失敗 {file}: {e}")
-            print(f"[OK] 清理完成，保留今天的檔案: {today_file}")
+                    print(f"  刪除失敗 {file}: {e}")
+            print(f"[OK] 清理完成")
         else:
-            print(f"[INFO] 根目錄無舊檔案需要清理")
+            print(f"[INFO] public 目錄無需清理")
+
+        # 同時清理根目錄的舊帶日期檔案（歷史遺留）
+        root_pattern = os.path.join(parent_dir, 'stock_list_2*-*.json')
+        root_files = glob.glob(root_pattern)
+        if root_files:
+            print(f"\n[INFO] 清理根目錄歷史遺留檔案...")
+            for file in root_files:
+                try:
+                    os.remove(file)
+                    print(f"  刪除: {os.path.basename(file)}")
+                except OSError as e:
+                    print(f"  刪除失敗 {file}: {e}")
                 
     except Exception as e:
         print(f"清理舊檔案時發生錯誤: {e}")
