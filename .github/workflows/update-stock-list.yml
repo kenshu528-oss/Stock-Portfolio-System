@@ -124,8 +124,11 @@ jobs:
         echo "查看詳情：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
     - name: Send failure notification email
-      if: ${{ secrets.NOTIFY_EMAIL_USER != '' && secrets.NOTIFY_EMAIL_TO != '' }}
+      if: env.NOTIFY_EMAIL_USER != '' && env.NOTIFY_EMAIL_TO != ''
       uses: dawidd6/action-send-mail@v3
+      env:
+        NOTIFY_EMAIL_USER: ${{ secrets.NOTIFY_EMAIL_USER }}
+        NOTIFY_EMAIL_TO: ${{ secrets.NOTIFY_EMAIL_TO }}
       with:
         server_address: smtp.gmail.com
         server_port: 465
