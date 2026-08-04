@@ -26,17 +26,18 @@ jobs:
     - name: Check if already updated today
       run: |
         TODAY=$(date +%Y-%m-%d)
-        if [ -f "public/stock_list_$TODAY.json" ]; then
-          FILE_DATE=$(jq -r '.date' "public/stock_list_$TODAY.json" 2>/dev/null || echo "")
+        # 檢查 public/stock_list.json 的 date 欄位是否為今天
+        if [ -f "public/stock_list.json" ]; then
+          FILE_DATE=$(jq -r '.date' "public/stock_list.json" 2>/dev/null || echo "")
           if [ "$FILE_DATE" = "$TODAY" ]; then
-            echo "✅ 今日股票清單已是最新，跳過更新"
+            echo "✅ 今日股票清單已是最新（date: $TODAY），跳過更新"
             echo "SKIP_UPDATE=true" >> $GITHUB_ENV
           else
-            echo "⚠️ 檔案存在但日期不符，需要更新"
+            echo "📋 需要更新（目前: $FILE_DATE，今天: $TODAY）"
             echo "SKIP_UPDATE=false" >> $GITHUB_ENV
           fi
         else
-          echo "📋 今日股票清單不存在，需要更新"
+          echo "📋 stock_list.json 不存在，需要建立"
           echo "SKIP_UPDATE=false" >> $GITHUB_ENV
         fi
         
