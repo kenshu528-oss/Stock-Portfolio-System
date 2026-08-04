@@ -68,19 +68,15 @@ jobs:
         mkdir -p public
         TODAY=$(date +%Y-%m-%d)
         
-        if [ -f "stock_list_$TODAY.json" ]; then
-          cp "stock_list_$TODAY.json" public/stock_list.json
-          cp "stock_list_$TODAY.json" "public/stock_list_$TODAY.json"
+        # Python 腳本現在直接存到 public/stock_list_$TODAY.json
+        if [ -f "public/stock_list_$TODAY.json" ]; then
+          cp "public/stock_list_$TODAY.json" public/stock_list.json
           STOCK_COUNT=$(jq '.count' public/stock_list.json)
-          echo "✅ 股票清單已複製，共 $STOCK_COUNT 支"
-        elif [ -f "backend/stock_list_$TODAY.json" ]; then
-          cp "backend/stock_list_$TODAY.json" public/stock_list.json
-          cp "backend/stock_list_$TODAY.json" "public/stock_list_$TODAY.json"
-          STOCK_COUNT=$(jq '.count' public/stock_list.json)
-          echo "✅ 從 backend 複製，共 $STOCK_COUNT 支"
+          echo "✅ 股票清單已就緒，共 $STOCK_COUNT 支"
         else
-          echo "❌ 找不到今日股票清單: stock_list_$TODAY.json"
-          find . -name "stock_list_*.json" -type f
+          echo "❌ 找不到今日股票清單: public/stock_list_$TODAY.json"
+          echo "📋 public/ 目錄現有檔案:"
+          ls -la public/stock_list*.json 2>/dev/null || echo "無任何 stock_list 檔案"
           exit 1
         fi
         
@@ -121,7 +117,14 @@ jobs:
     if: failure()
     
     steps:
+    - name: Log failure (always)
+      run: |
+        echo "❌ Stock List 自動更新失敗！"
+        echo "執行 ID：${{ github.run_id }}"
+        echo "查看詳情：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
     - name: Send failure notification email
+      if: ${{ secrets.NOTIFY_EMAIL_USER != '' && secrets.NOTIFY_EMAIL_TO != '' }}
       uses: dawidd6/action-send-mail@v3
       with:
         server_address: smtp.gmail.com
@@ -135,16 +138,13 @@ jobs:
         body: |
           Stock List 自動更新失敗！
           
-          時間：${{ github.event.head_commit.timestamp || 'N/A' }}
           執行 ID：${{ github.run_id }}
           倉庫：${{ github.repository }}
           
-          請前往以下連結查看詳細錯誤：
+          查看詳情：
           https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           
           可能原因：
           1. FinMind Token 過期或無效
           2. FinMind API 服務異常
           3. 網路連線問題
-          
-          請手動檢查並修復後，可至 Actions 頁面手動重新執行。
