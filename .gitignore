@@ -100,4 +100,4 @@ github-releases/**/stock_list_2026-*.json
 github-releases/**/public/stock_list_2026-*.json
 
 # 根目錄不應有帶日期的 stock_list（統一放在 public/）
-stock_list_2*-*.json
+/stock_list_2*-*.json

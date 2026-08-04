@@ -99,7 +99,7 @@ jobs:
           git rm -f "$f" 2>/dev/null || rm -f "$f"
         done
         
-        git add public/stock_list*.json
+        git add -f public/stock_list*.json
         
         if git diff --staged --quiet; then
           echo "📝 無變更，跳過提交"
