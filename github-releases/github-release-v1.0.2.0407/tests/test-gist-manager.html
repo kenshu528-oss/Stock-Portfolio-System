@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gist 管理工具</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .container {
+      background: #2a2a2a;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #333;
+      border-radius: 5px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      background: #444;
+      border: 1px solid #555;
+      color: #fff;
+      border-radius: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+    .gist-list {
+      margin-top: 20px;
+    }
+    .gist-item {
+      background: #1a1a1a;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+      border-left: 4px solid #666;
+    }
+    .gist-item.latest {
+      border-left-color: #4CAF50;
+      background: #1a2a1a;
+    }
+    .gist-item.old {
+      border-left-color: #f44336;
+      background: #2a1a1a;
+    }
+    .gist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .gist-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .gist-badge {
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .badge-latest {
+      background: #4CAF50;
+      color: white;
+    }
+    .badge-backup {
+      background: #2196F3;
+      color: white;
+    }
+    .badge-old {
+      background: #f44336;
+      color: white;
+    }
+    .gist-info {
+      font-size: 13px;
+      color: #aaa;
+      margin: 5px 0;
+    }
+    .gist-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    .btn-view {
+      background: #2196F3;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .btn-delete {
+      background: #f44336;
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .btn-view:hover {
+      background: #1976D2;
+    }
+    .btn-delete:hover {
+      background: #d32f2f;
+    }
+    .summary {
+      background: #1a1a1a;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    .summary-item {
+      display: inline-block;
+      margin-right: 20px;
+      padding: 8px 15px;
+      background: #333;
+      border-radius: 5px;
+    }
+    .success { color: #4CAF50; }
+    .error { color: #f44336; }
+    .info { color: #2196F3; }
+    .warning { color: #ff9800; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗂️ Gist 管理工具</h1>
+    
+    <div class="section">
+      <h3>GitHub Token</h3>
+      <input type="password" id="tokenInput" placeholder="輸入您的 GitHub Token">
+      <button onclick="loadGists()">載入所有 Gists</button>
+    </div>
+
+    <div id="summary" style="display: none;"></div>
+    <div id="gistList" class="gist-list"></div>
+  </div>
+
+  <script>
+    const API_BASE = 'https://api.github.com';
+    let allGists = [];
+
+    async function loadGists() {
+      const token = document.getElementById('tokenInput').value;
+      if (!token) {
+        alert('請先輸入 GitHub Token');
+        return;
+      }
+
+      const summaryDiv = document.getElementById('summary');
+      const listDiv = document.getElementById('gistList');
+      
+      summaryDiv.style.display = 'none';
+      listDiv.innerHTML = '<p class="info">載入中...</p>';
+
+      try {
+        const response = await fetch(`${API_BASE}/gists`, {
+          headers: {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const gists = await response.json();
+        
+        // 過濾投資組合相關的 Gists
+        allGists = gists.filter(gist => 
+          gist.description?.includes('Stock Portfolio') ||
+          gist.files['portfolio-data.json']
+        );
+
+        if (allGists.length === 0) {
+          listDiv.innerHTML = '<p class="warning">沒有找到投資組合相關的 Gists</p>';
+          return;
+        }
+
+        // 按更新時間排序
+        allGists.sort((a, b) => {
+          const dateA = new Date(a.updated_at).getTime();
+          const dateB = new Date(b.updated_at).getTime();
+          return dateB - dateA;
+        });
+
+        displayGists();
+        
+      } catch (error) {
+        listDiv.innerHTML = `<p class="error">❌ 錯誤: ${error.message}</p>`;
+      }
+    }
+
+    function displayGists() {
+      const summaryDiv = document.getElementById('summary');
+      const listDiv = document.getElementById('gistList');
+      
+      const total = allGists.length;
+      const latest = 1;
+      const backup = 1;
+      const old = total - 2;
+
+      summaryDiv.innerHTML = `
+        <div class="summary">
+          <h3>📊 Gist 統計</h3>
+          <div class="summary-item">
+            <span class="success">總數: ${total}</span>
+          </div>
+          <div class="summary-item">
+            <span class="success">最新: ${latest}</span>
+          </div>
+          <div class="summary-item">
+            <span class="info">備份: ${backup}</span>
+          </div>
+          <div class="summary-item">
+            <span class="error">可刪除: ${old}</span>
+          </div>
+        </div>
+      `;
+      summaryDiv.style.display = 'block';
+
+      let html = '<h3>📋 Gist 列表</h3>';
+      
+      allGists.forEach((gist, index) => {
+        const updateTime = new Date(gist.updated_at).toLocaleString('zh-TW');
+        const createTime = new Date(gist.created_at).toLocaleString('zh-TW');
+        
+        let badge = '';
+        let itemClass = '';
+        let recommendation = '';
+        
+        if (index === 0) {
+          badge = '<span class="gist-badge badge-latest">⭐ 最新</span>';
+          itemClass = 'latest';
+          recommendation = '<span class="success">✅ 建議保留：這是最新的資料</span>';
+        } else if (index === 1) {
+          badge = '<span class="gist-badge badge-backup">💾 備份</span>';
+          itemClass = 'latest';
+          recommendation = '<span class="info">💡 可選保留：作為備份</span>';
+        } else {
+          badge = '<span class="gist-badge badge-old">🗑️ 舊版本</span>';
+          itemClass = 'old';
+          recommendation = '<span class="error">❌ 建議刪除：舊版本資料</span>';
+        }
+
+        const dataFile = gist.files['portfolio-data.json'];
+        const fileSize = dataFile ? (dataFile.size / 1024).toFixed(2) : 'N/A';
+
+        html += `
+          <div class="gist-item ${itemClass}">
+            <div class="gist-header">
+              <div class="gist-title">${index + 1}. ${gist.description || '無描述'}</div>
+              ${badge}
+            </div>
+            <div class="gist-info">🆔 ID: <code>${gist.id}</code></div>
+            <div class="gist-info">📅 創建時間: ${createTime}</div>
+            <div class="gist-info">🔄 更新時間: ${updateTime}</div>
+            <div class="gist-info">📦 檔案大小: ${fileSize} KB</div>
+            <div class="gist-info">${recommendation}</div>
+            <div class="gist-actions">
+              <button class="btn-view" onclick="window.open('${gist.html_url}', '_blank')">
+                👁️ 查看
+              </button>
+              <button class="btn-delete" onclick="openDeletePage('${gist.html_url}')">
+                🗑️ 刪除
+              </button>
+              <button class="btn-view" onclick="copyToClipboard('${gist.html_url}')">
+                📋 複製連結
+              </button>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+        <div class="section">
+          <h3>🔧 批量操作</h3>
+          <p class="info">建議保留最新的 2 個 Gist，刪除其他 ${old} 個舊版本</p>
+          <button onclick="openAllOldGists()">📂 在新分頁開啟所有舊 Gists（方便批量刪除）</button>
+        </div>
+      `;
+
+      listDiv.innerHTML = html;
+    }
+
+    function openDeletePage(url) {
+      // GitHub Gist 的刪除頁面是在 Gist 頁面上點擊 Delete 按鈕
+      window.open(url, '_blank');
+      alert('請在開啟的頁面中：\n1. 點擊右上角的「Delete」按鈕\n2. 確認刪除');
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('✅ 連結已複製到剪貼簿');
+      }).catch(err => {
+        alert('❌ 複製失敗: ' + err);
+      });
+    }
+
+    function openAllOldGists() {
+      if (allGists.length <= 2) {
+        alert('沒有需要刪除的舊 Gists');
+        return;
+      }
+
+      const confirmed = confirm(
+        `即將在新分頁開啟 ${allGists.length - 2} 個舊 Gists\n\n` +
+        '您可以逐一刪除它們。\n\n' +
+        '繼續嗎？'
+      );
+
+      if (confirmed) {
+        // 跳過前 2 個（最新和備份）
+        for (let i = 2; i < allGists.length; i++) {
+          setTimeout(() => {
+            window.open(allGists[i].html_url, '_blank');
+          }, i * 500); // 每 500ms 開啟一個，避免瀏覽器阻擋
+        }
+        
+        alert(
+          '已開啟所有舊 Gists\n\n' +
+          '在每個頁面中：\n' +
+          '1. 點擊右上角的「Delete」按鈕\n' +
+          '2. 確認刪除\n' +
+          '3. 關閉分頁\n\n' +
+          '完成後重新載入此頁面確認'
+        );
+      }
+    }
+  </script>
+</body>
+</html>
