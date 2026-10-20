@@ -12,6 +12,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0409',
+    date: '2026-10-08',
+    type: 'hotfix',
+    title: '修復：含字母 ETF（00937B/00992A 等）雲端除息改走 Vercel API，修正 api/dividend.ts UTC 偏差',
+    description: '1) 雲端環境對含字母的 ETF（如 00937B、00992A）改優先呼叫 Vercel /api/dividend 端點（穩定，無 CORS），因為 FinMind 對這類 ETF 資料不完整；2) api/dividend.ts Vercel Edge Function 的日期轉換也有 UTC 偏差，同步修正為本地時間格式化。',
+    changes: [
+      '🔧 修復 dividendApiService.ts：含字母 ETF（/^00\\d{2,3}[A-Z]$/i）優先使用 Vercel API',
+      '🔧 修復 api/dividend.ts：Yahoo Finance 日期轉換改用本地時間方法',
+      '✅ 00937B、00992A 等含字母 ETF 在雲端執行更新後可透過 Vercel API 取得除息資料',
+    ],
+    fixes: [
+      '修復含字母 ETF 在雲端無法查到除息資料的問題',
+      '修復 Vercel Edge Function 日期轉換 UTC 偏差',
+    ],
+  },
+  {
     version: '1.0.2.0408',
     date: '2026-10-08',
     type: 'hotfix',

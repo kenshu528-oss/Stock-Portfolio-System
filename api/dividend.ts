@@ -104,13 +104,20 @@ export default async function handler(req: NextRequest) {
 
     if (events && Object.keys(events).length > 0) {
       const dividends = Object.values(events as Record<string, { amount: number; date: number }>)
-        .map((div) => ({
-          exDate: new Date(div.date * 1000).toISOString().split('T')[0],
-          amount: Math.round(div.amount * 10000) / 10000,
-          stockDividendRatio: 0,
-          type: 'cash' as const,
-          year: new Date(div.date * 1000).getFullYear(),
-        }))
+        .map((div) => {
+          const d = new Date(div.date * 1000);
+          // 用本地時間格式化，避免 toISOString() UTC 偏差
+          const y = d.getFullYear();
+          const mo = String(d.getMonth() + 1).padStart(2, '0');
+          const da = String(d.getDate()).padStart(2, '0');
+          return {
+            exDate: `${y}-${mo}-${da}`,
+            amount: Math.round(div.amount * 10000) / 10000,
+            stockDividendRatio: 0,
+            type: 'cash' as const,
+            year: d.getFullYear(),
+          };
+        })
         .sort((a, b) => a.exDate.localeCompare(b.exDate));
 
       return NextResponse.json(

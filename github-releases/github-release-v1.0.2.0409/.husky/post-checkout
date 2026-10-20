@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo ""
+echo "🔍 檢查需要注意的 STEERING 規則..."
+echo ""
+
+# 執行開發助手
+npm run dev:assistant
+
+echo ""

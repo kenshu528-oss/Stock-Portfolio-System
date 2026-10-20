@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 408, // 【修復】fetchDividendFromYahoo 日期轉換改用本地時間，修正 UTC 偏差
+  PATCH: 409, // 【修復】債券 ETF 雲端除息改用 Vercel API，修正 api/dividend.ts UTC 偏差
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;
