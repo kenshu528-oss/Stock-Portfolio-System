@@ -12,6 +12,22 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0412',
+    date: '2026-10-21',
+    type: 'hotfix',
+    title: '修復：批量更新 forceRecalculate 時先清除除息快取，確保重新從 API 取得最新資料',
+    description: '批量更新時 forceRecalculate=true，但 DividendApiService 有 24 小時快取。若之前查過一次無資料，快取會存空結果（實際上空結果不快取，但為確保正確性），每次 forceRecalculate 前先呼叫 clearCache() 清除該股票的快取，確保一定重新向 FinMind API 查詢最新除息資料。',
+    changes: [
+      '🔧 修復 appStore.ts：updateStockDividendData 在 forceRecalculate 時先呼叫 DividendApiService.clearCache()',
+      '🔧 修復 appStore.ts：新增 DividendApiService import',
+      '✅ 確保批量更新時每支股票都重新查詢最新除息資料，不使用舊快取',
+    ],
+    fixes: [
+      '修復批量更新後 adjustedCostPrice 未更新的問題',
+      '確保 forceRecalculate 真的強制重新計算',
+    ],
+  },
+  {
     version: '1.0.2.0411',
     date: '2026-10-21',
     type: 'hotfix',

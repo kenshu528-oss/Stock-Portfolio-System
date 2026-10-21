@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 411, // 【修復】FinMind getDividendData end_date 延後1個月，確保近期公告的除息資料（如 00992A 10/19）不被截斷
+  PATCH: 412, // 【修復】批量更新時 forceRecalculate 先清除除息快取，確保拿到最新 API 資料
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

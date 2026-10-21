@@ -3,12 +3,19 @@ import { devtools, persist } from 'zustand/middleware';
 import type { Account, StockRecord } from '../types';
 import { logger } from '../utils/logger';
 import { RightsEventService } from '../services/rightsEventService';
+import DividendApiService from '../services/dividendApiService';
 
 // 除權息資料更新函數（統一使用 RightsEventService，確保與個股內更新邏輯完全一致）
 const updateStockDividendData = async (stock: StockRecord, state: any, forceRecalculate: boolean = false) => {
   try {
     // 🔧 修復：添加詳細的錯誤處理，避免除權息處理失敗影響股價更新
     logger.debug('dividend', `開始處理 ${stock.symbol} 的除權息資料`);
+    
+    // 🔧 forceRecalculate 時先清除快取，確保拿到最新資料
+    if (forceRecalculate) {
+      DividendApiService.clearCache(stock.symbol);
+      logger.debug('dividend', `${stock.symbol} 強制更新，已清除快取`);
+    }
     
     // 使用靜態導入的服務
     const updatedStock = await RightsEventService.processStockRightsEvents(
