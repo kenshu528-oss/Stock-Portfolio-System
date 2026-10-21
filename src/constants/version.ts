@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 410, // 【修復】00992A 等含字母 ETF 除息改走 FinMind，移除錯誤的第三方 Vercel API 分叉邏輯
+  PATCH: 411, // 【修復】FinMind getDividendData end_date 延後1個月，確保近期公告的除息資料（如 00992A 10/19）不被截斷
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

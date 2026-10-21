@@ -12,6 +12,20 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0411',
+    date: '2026-10-21',
+    type: 'hotfix',
+    title: '修復：FinMind getDividendData end_date 延後1個月，確保近期公告除息資料不被截斷',
+    description: 'FinMind TaiwanStockDividend 的 date 欄位是「宣告日」而非「除息日」。例如 00992A 在 10/19 除息，但 FinMind 的宣告日是 10/25，若 end_date 限定為今天（10/21），該筆資料就被排除在查詢範圍外，導致查不到近期的除息記錄。修復：end_date 往後延一個月，確保近期剛公告的除息資料能被正確取得。',
+    changes: [
+      '🔧 修復 finMindAPI.ts：getDividendData 的 end_date 改為今天 +1 個月',
+      '✅ 00992A（購買日 2026-10-13）的 10/19 除息 $0.85 現在可正確查到',
+    ],
+    fixes: [
+      '修復近期除息資料（宣告日晚於今天）被截斷查不到的問題',
+    ],
+  },
+  {
     version: '1.0.2.0410',
     date: '2026-10-21',
     type: 'hotfix',

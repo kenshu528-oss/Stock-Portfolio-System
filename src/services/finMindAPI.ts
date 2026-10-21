@@ -311,10 +311,13 @@ export class FinMindAPIProvider implements APIProvider {
    */
   async getDividendData(symbol: string): Promise<any[] | null> {
     try {
-      // 獲取日期範圍（過去3年的資料）
+      // 獲取日期範圍（過去3年到未來1個月，確保能抓到近期公告的除息資料）
+      // 注意：TaiwanStockDividend 的 date 欄位是「宣告日」而非「除息日」
+      // 除息日可能比宣告日早，所以 end_date 需要延伸到未來才能拿到近期除息記錄
       const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + 1); // 往後延1個月
       const startDate = new Date();
-      startDate.setFullYear(endDate.getFullYear() - 3);
+      startDate.setFullYear(startDate.getFullYear() - 3);
       
       // 構建 FinMind API URL
       const finmindUrl = new URL(FINMIND_CONFIG.baseUrl);
