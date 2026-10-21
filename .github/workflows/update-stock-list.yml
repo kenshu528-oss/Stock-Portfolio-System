@@ -2,194 +2,79 @@ name: Update Stock List
 
 on:
   schedule:
-    # 每日台灣時間 6:07 執行（UTC 22:07 前一天）- 避開整點高峰，GitHub 整點負載高易被跳過
     - cron: '7 22 * * *'
-  workflow_dispatch: # 允許手動觸發
+  workflow_dispatch:
 
 jobs:
   update-stock-list:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-        
-    - name: Install Python dependencies
-      run: |
-        pip install requests pandas
-        
-    - name: Check if already updated today
-      run: |
-        TODAY=$(date +%Y-%m-%d)
-        if [ -f "public/stock_list.json" ]; then
-          FILE_DATE=$(jq -r '.date' "public/stock_list.json" 2>/dev/null || echo "")
-          if [ "$FILE_DATE" = "$TODAY" ]; then
-            echo "✅ 今日股票清單已是最新（date: $TODAY），跳過更新"
-            echo "SKIP_UPDATE=true" >> $GITHUB_ENV
-          else
-            echo "📋 需要更新（目前: $FILE_DATE，今天: $TODAY）"
-            echo "SKIP_UPDATE=false" >> $GITHUB_ENV
-          fi
-        else
-          echo "📋 stock_list.json 不存在，需要建立"
-          echo "SKIP_UPDATE=false" >> $GITHUB_ENV
-        fi
-        
-    - name: Fetch stock list via FinMind REST API
-      if: env.SKIP_UPDATE != 'true'
-      env:
-        FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN || secrets.VITE_FINMIND_TOKEN }}
-      run: |
-        echo "🔍 檢查 FINMIND_TOKEN 環境變數..."
-        if [ -z "$FINMIND_TOKEN" ]; then
-          echo "❌ 找不到 FINMIND_TOKEN 或 VITE_FINMIND_TOKEN secret"
-          exit 1
-        else
-          echo "✅ Token 長度: ${#FINMIND_TOKEN} 字元"
-        fi
-        
-        python3 - <<'EOF'
-import requests
-import json
-import os
-from datetime import datetime
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-token = os.environ.get('FINMIND_TOKEN', '')
-today = datetime.now().strftime('%Y-%m-%d')
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
-print(f"[INFO] 開始透過 FinMind REST API 抓取股票清單...")
-print(f"[INFO] 日期: {today}")
+      - name: Install Python dependencies
+        run: pip install requests
 
-url = "https://api.finmindtrade.com/api/v4/data"
-params = {
-    "dataset": "TaiwanStockInfo",
-    "token": token
-}
-
-try:
-    response = requests.get(url, params=params, timeout=60)
-    response.raise_for_status()
-    data = response.json()
-    
-    if data.get('msg') != 'success' or not data.get('data'):
-        print(f"[ERROR] API 返回錯誤: {data.get('msg', '未知錯誤')}")
-        print(f"[ERROR] 狀態碼: {data.get('status', 'N/A')}")
-        exit(1)
-    
-    records = data['data']
-    print(f"[OK] 成功取得 {len(records)} 筆股票資料")
-    
-    stocks = {}
-    for item in records:
-        stock_id = item.get('stock_id', '')
-        if stock_id:
-            stocks[stock_id] = {
-                'name': item.get('stock_name', ''),
-                'industry': item.get('industry_category', ''),
-                'market': '台股'
-            }
-    
-    stock_list_data = {
-        'date': today,
-        'timestamp': datetime.now().isoformat(),
-        'count': len(stocks),
-        'stocks': stocks
-    }
-    
-    os.makedirs('public', exist_ok=True)
-    
-    # 寫入主要檔案
-    with open('public/stock_list.json', 'w', encoding='utf-8') as f:
-        json.dump(stock_list_data, f, ensure_ascii=False, indent=2)
-    
-    # 寫入帶日期的備份檔案
-    dated_file = f'public/stock_list_{today}.json'
-    with open(dated_file, 'w', encoding='utf-8') as f:
-        json.dump(stock_list_data, f, ensure_ascii=False, indent=2)
-    
-    print(f"[OK] 已儲存 public/stock_list.json（{len(stocks)} 支股票）")
-    print(f"[OK] 已儲存 {dated_file}")
-
-except requests.exceptions.RequestException as e:
-    print(f"[ERROR] HTTP 請求失敗: {e}")
-    exit(1)
-except Exception as e:
-    import traceback
-    print(f"[ERROR] 發生錯誤: {e}")
-    print(traceback.format_exc())
-    exit(1)
-EOF
-        
-    - name: Cleanup old dated files
-      if: env.SKIP_UPDATE != 'true'
-      run: |
-        # 只保留最近 3 天的帶日期檔案
-        echo "🧹 清理舊 stock_list 日期檔案..."
-        find ./public -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
-          echo "  刪除: $f"
-          git rm -f "$f" 2>/dev/null || rm -f "$f"
-        done
-        
-    - name: Commit and push changes
-      if: env.SKIP_UPDATE != 'true'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        
-        git add -f public/stock_list*.json
-        
-        if git diff --staged --quiet; then
-          echo "📝 無變更，跳過提交"
-        else
+      - name: Check if already updated today
+        run: |
           TODAY=$(date +%Y-%m-%d)
-          git commit -m "🤖 自動更新股票清單 $TODAY"
-          git push
-          echo "✅ 已更新並推送"
-        fi
+          if [ -f "public/stock_list.json" ]; then
+            FILE_DATE=$(jq -r '.date' "public/stock_list.json" 2>/dev/null || echo "")
+            if [ "$FILE_DATE" = "$TODAY" ]; then
+              echo "SKIP_UPDATE=true" >> $GITHUB_ENV
+              echo "今日已是最新 ($TODAY)，跳過更新"
+            else
+              echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+              echo "需要更新（目前: $FILE_DATE，今天: $TODAY）"
+            fi
+          else
+            echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+            echo "stock_list.json 不存在，需要建立"
+          fi
 
-  # 失敗通知 job（只在 update-stock-list 失敗時執行）
+      - name: Fetch stock list
+        if: env.SKIP_UPDATE != 'true'
+        env:
+          FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN || secrets.VITE_FINMIND_TOKEN }}
+        run: python scripts/fetch_stock_list_ci.py
+
+      - name: Cleanup old dated files
+        if: env.SKIP_UPDATE != 'true'
+        run: |
+          find ./public -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
+            echo "刪除舊檔: $f"
+            git rm -f "$f" 2>/dev/null || rm -f "$f"
+          done
+
+      - name: Commit and push changes
+        if: env.SKIP_UPDATE != 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -f public/stock_list*.json
+          if git diff --staged --quiet; then
+            echo "無變更，跳過提交"
+          else
+            TODAY=$(date +%Y-%m-%d)
+            git commit -m "自動更新股票清單 $TODAY"
+            git push
+            echo "已更新並推送"
+          fi
+
   notify-on-failure:
     runs-on: ubuntu-latest
     needs: update-stock-list
     if: failure()
-    
-    steps:
-    - name: Log failure (always)
-      run: |
-        echo "❌ Stock List 自動更新失敗！"
-        echo "執行 ID：${{ github.run_id }}"
-        echo "查看詳情：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-    - name: Send failure notification email
-      if: env.NOTIFY_EMAIL_USER != '' && env.NOTIFY_EMAIL_TO != ''
-      uses: dawidd6/action-send-mail@v3
-      env:
-        NOTIFY_EMAIL_USER: ${{ secrets.NOTIFY_EMAIL_USER }}
-        NOTIFY_EMAIL_TO: ${{ secrets.NOTIFY_EMAIL_TO }}
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        secure: true
-        username: ${{ secrets.NOTIFY_EMAIL_USER }}
-        password: ${{ secrets.NOTIFY_EMAIL_PASSWORD }}
-        subject: "❌ Stock List 自動更新失敗 - ${{ github.run_id }}"
-        to: ${{ secrets.NOTIFY_EMAIL_TO }}
-        from: Stock Portfolio System
-        body: |
-          Stock List 自動更新失敗！
-          
-          執行 ID：${{ github.run_id }}
-          倉庫：${{ github.repository }}
-          
-          查看詳情：
-          https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          
-          可能原因：
-          1. FinMind Token 過期或無效
-          2. FinMind API 服務異常
-          3. 網路連線問題
+    steps:
+      - name: Log failure
+        run: |
+          echo "Stock List 自動更新失敗"
+          echo "執行 ID：${{ github.run_id }}"
+          echo "查看詳情：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
