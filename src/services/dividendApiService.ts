@@ -181,57 +181,23 @@ export class DividendApiService {
         // 1. 優先嘗試 Yahoo Finance（債券 ETF 配息資料最完整）
         // 2. 備用 FinMind API（一般股票）
         
-        // 檢查是否為含字母的 ETF（如 00992A、00937B）
-        const isBondETF = /^00\d{2,3}B$/i.test(symbol);
-        const isLetterETF = /^00\d{2,3}[A-Z]$/i.test(symbol); // 所有字母結尾的 ETF
-        
-        if (isBondETF || isLetterETF) {
-          logger.debug('dividend', `${symbol} 是含字母 ETF，優先使用 Vercel API`);
-          
-          // 🔧 含字母 ETF（如 00992A、00937B）優先使用 Vercel API（穩定，無 CORS 問題）
-          // FinMind 的 TaiwanStockDividend 對主動式 ETF / 債券 ETF 資料不完整
-          try {
-            const vercelUrl = `https://vercel-stock-api.vercel.app/api/dividend?symbol=${encodeURIComponent(symbol)}`;
-            const vercelRes = await fetch(vercelUrl, {
-              headers: { 'Accept': 'application/json' },
-              signal: AbortSignal.timeout(10000),
-            });
-            if (vercelRes.ok) {
-              const vercelData = await vercelRes.json();
-              if (vercelData?.dividends?.length > 0) {
-                logger.info('dividend', `Vercel API 成功獲取 ${symbol} 除息資料`, { count: vercelData.dividends.length });
-                return vercelData.dividends.map((d: any) => ({
-                  symbol,
-                  exDividendDate: d.exDate,
-                  dividendPerShare: d.amount,
-                  stockDividendRatio: d.stockDividendRatio || 0,
-                  year: d.year || new Date(d.exDate).getFullYear(),
-                  type: d.type || 'cash',
-                }));
-              }
-            }
-          } catch (e) {
-            logger.warn('dividend', `${symbol} Vercel API 失敗，改用 Yahoo Finance CORS proxy`, e);
+        // 🔧 所有股票（含字母 ETF 如 00992A、00937B）都先嘗試 FinMind
+        // FinMind 的 TaiwanStockDividend 對大多數 ETF（含主動式、債券）都有資料
+        const finMindProvider = new FinMindAPIProvider();
+        try {
+          const dividendData = await finMindProvider.getDividendData(symbol);
+          if (dividendData && dividendData.length > 0) {
+            logger.info('dividend', `FinMind API 成功獲取 ${symbol} 股息`, { count: dividendData.length });
+            return dividendData.map(item => ({
+              symbol: symbol,
+              exDividendDate: item.exDividendDate,
+              dividendPerShare: item.dividendPerShare,
+              stockDividendRatio: item.stockDividendRatio,
+              year: item.year || new Date(item.exDividendDate).getFullYear(),
+            }));
           }
-        } else {
-          logger.debug('dividend', `${symbol} 是一般股票，使用 FinMind 備用`);
-          // 一般股票先嘗試 FinMind API
-          const finMindProvider = new FinMindAPIProvider();
-          try {
-            const dividendData = await finMindProvider.getDividendData(symbol);
-            if (dividendData && dividendData.length > 0) {
-              logger.info('dividend', `FinMind API 成功獲取 ${symbol} 股息`, { count: dividendData.length });
-              return dividendData.map(item => ({
-                symbol: symbol,
-                exDividendDate: item.exDividendDate,
-                dividendPerShare: item.dividendPerShare,
-                stockDividendRatio: item.stockDividendRatio,
-                year: item.year || new Date(item.exDividendDate).getFullYear(),
-              }));
-            }
-          } catch (error) {
-            logger.warn('dividend', `FinMind API 獲取 ${symbol} 股息失敗`, error);
-          }
+        } catch (error) {
+          logger.warn('dividend', `FinMind API 獲取 ${symbol} 股息失敗`, error);
         }
 
         // 🔧 備援：FinMind 查不到時，直接呼叫 Yahoo Finance（透過 AllOrigins CORS proxy）

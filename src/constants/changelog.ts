@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0410',
+    date: '2026-10-21',
+    type: 'hotfix',
+    title: '修復：00992A 等含字母 ETF 除息改走 FinMind，移除錯誤的第三方 Vercel API 分叉邏輯',
+    description: '含字母結尾的 ETF（如 00992A）被 isLetterETF 正則匹配後，錯誤地優先呼叫硬編碼的第三方 vercel-stock-api.vercel.app/api/dividend（該端點無此 ETF 資料），Vercel 失敗後再試 Yahoo Finance（也無資料），導致最終查不到任何除息記錄。根本修復：移除 isBondETF/isLetterETF 分叉邏輯，所有股票（含字母 ETF）統一先走 FinMind，FinMind 無資料才 fallback 到 Yahoo Finance。FinMind TaiwanStockDividend 資料集可正常查到 00992A 的配息記錄。',
+    changes: [
+      '🔧 修復 dividendApiService.ts：移除 isLetterETF/isBondETF 分叉邏輯',
+      '🔧 修復 dividendApiService.ts：所有股票統一先走 FinMind，查不到才 fallback Yahoo Finance',
+      '🚫 移除對 vercel-stock-api.vercel.app/api/dividend 的硬編碼呼叫（端點無此 ETF 資料）',
+      '✅ 00992A、00937B 等含字母 ETF 可透過 FinMind 正確取得除息資料',
+    ],
+    fixes: [
+      '修復 00992A 等含字母 ETF 在 GitHub Pages 雲端環境查不到配息的問題',
+      '移除錯誤的第三方 API 分叉邏輯，簡化除息查詢流程',
+    ],
+  },
+  {
     version: '1.0.2.0409',
     date: '2026-10-08',
     type: 'hotfix',
