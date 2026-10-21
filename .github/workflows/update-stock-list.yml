@@ -21,12 +21,11 @@ jobs:
         
     - name: Install Python dependencies
       run: |
-        pip install FinMind tqdm pandas
+        pip install requests pandas
         
     - name: Check if already updated today
       run: |
         TODAY=$(date +%Y-%m-%d)
-        # 檢查 public/stock_list.json 的 date 欄位是否為今天
         if [ -f "public/stock_list.json" ]; then
           FILE_DATE=$(jq -r '.date' "public/stock_list.json" 2>/dev/null || echo "")
           if [ "$FILE_DATE" = "$TODAY" ]; then
@@ -41,7 +40,7 @@ jobs:
           echo "SKIP_UPDATE=false" >> $GITHUB_ENV
         fi
         
-    - name: Fetch stock list
+    - name: Fetch stock list via FinMind REST API
       if: env.SKIP_UPDATE != 'true'
       env:
         FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN || secrets.VITE_FINMIND_TOKEN }}
@@ -54,50 +53,93 @@ jobs:
           echo "✅ Token 長度: ${#FINMIND_TOKEN} 字元"
         fi
         
-        cd backend
-        if python fetch_stock_list.py --force; then
-          echo "✅ 股票清單抓取成功"
-        else
-          echo "❌ 股票清單抓取失敗"
-          exit 1
-        fi
+        python3 - <<'EOF'
+import requests
+import json
+import os
+from datetime import datetime
+
+token = os.environ.get('FINMIND_TOKEN', '')
+today = datetime.now().strftime('%Y-%m-%d')
+
+print(f"[INFO] 開始透過 FinMind REST API 抓取股票清單...")
+print(f"[INFO] 日期: {today}")
+
+url = "https://api.finmindtrade.com/api/v4/data"
+params = {
+    "dataset": "TaiwanStockInfo",
+    "token": token
+}
+
+try:
+    response = requests.get(url, params=params, timeout=60)
+    response.raise_for_status()
+    data = response.json()
+    
+    if data.get('msg') != 'success' or not data.get('data'):
+        print(f"[ERROR] API 返回錯誤: {data.get('msg', '未知錯誤')}")
+        print(f"[ERROR] 狀態碼: {data.get('status', 'N/A')}")
+        exit(1)
+    
+    records = data['data']
+    print(f"[OK] 成功取得 {len(records)} 筆股票資料")
+    
+    stocks = {}
+    for item in records:
+        stock_id = item.get('stock_id', '')
+        if stock_id:
+            stocks[stock_id] = {
+                'name': item.get('stock_name', ''),
+                'industry': item.get('industry_category', ''),
+                'market': '台股'
+            }
+    
+    stock_list_data = {
+        'date': today,
+        'timestamp': datetime.now().isoformat(),
+        'count': len(stocks),
+        'stocks': stocks
+    }
+    
+    os.makedirs('public', exist_ok=True)
+    
+    # 寫入主要檔案
+    with open('public/stock_list.json', 'w', encoding='utf-8') as f:
+        json.dump(stock_list_data, f, ensure_ascii=False, indent=2)
+    
+    # 寫入帶日期的備份檔案
+    dated_file = f'public/stock_list_{today}.json'
+    with open(dated_file, 'w', encoding='utf-8') as f:
+        json.dump(stock_list_data, f, ensure_ascii=False, indent=2)
+    
+    print(f"[OK] 已儲存 public/stock_list.json（{len(stocks)} 支股票）")
+    print(f"[OK] 已儲存 {dated_file}")
+
+except requests.exceptions.RequestException as e:
+    print(f"[ERROR] HTTP 請求失敗: {e}")
+    exit(1)
+except Exception as e:
+    import traceback
+    print(f"[ERROR] 發生錯誤: {e}")
+    print(traceback.format_exc())
+    exit(1)
+EOF
         
-    - name: Check and copy stock list
+    - name: Cleanup old dated files
       if: env.SKIP_UPDATE != 'true'
       run: |
-        mkdir -p public
-        TODAY=$(date +%Y-%m-%d)
-        
-        # Python 腳本現在直接存到 public/stock_list_$TODAY.json
-        if [ -f "public/stock_list_$TODAY.json" ]; then
-          cp "public/stock_list_$TODAY.json" public/stock_list.json
-          STOCK_COUNT=$(jq '.count' public/stock_list.json)
-          echo "✅ 股票清單已就緒，共 $STOCK_COUNT 支"
-        else
-          echo "❌ 找不到今日股票清單: public/stock_list_$TODAY.json"
-          echo "📋 public/ 目錄現有檔案:"
-          ls -la public/stock_list*.json 2>/dev/null || echo "無任何 stock_list 檔案"
-          exit 1
-        fi
+        # 只保留最近 3 天的帶日期檔案
+        echo "🧹 清理舊 stock_list 日期檔案..."
+        find ./public -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
+          echo "  刪除: $f"
+          git rm -f "$f" 2>/dev/null || rm -f "$f"
+        done
         
     - name: Commit and push changes
       if: env.SKIP_UPDATE != 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        
-        # 只保留最近 3 天的 stock_list 日期檔案（只在 public/）
-        echo "🧹 清理舊 stock_list 檔案（只保留最近 3 天）..."
-        find ./public -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
-          echo "  刪除: $f"
-          git rm -f "$f" 2>/dev/null || rm -f "$f"
-        done
-        
-        # 清理根目錄的帶日期檔案（不應該存在）
-        find . -maxdepth 1 -name "stock_list_2*-*.json" -type f | while read f; do
-          echo "  刪除根目錄舊檔: $f"
-          git rm -f "$f" 2>/dev/null || rm -f "$f"
-        done
         
         git add -f public/stock_list*.json
         
