@@ -12,6 +12,21 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0414',
+    date: '2026-11-24',
+    type: 'hotfix',
+    title: '安全修復：移除 .env 中的真實 GitHub Token 避免打包洩漏',
+    description: 'VITE_DEV_TOKEN 使用 VITE_ 前綴導致 Vite 將 .env 中的真實 GitHub PAT 打包進前端 JS bundle，觸發 GitHub Push Protection 阻擋部署。修復：清空 .env 中的 token 值，autoFillSecurity.ts 找不到 token 時回傳空字串，使用者自行在 UI 輸入 token。',
+    changes: [
+      '🔒 清空 .env 中的 VITE_DEV_TOKEN 真實值，避免打包洩漏',
+      '🔧 修改 autoFillSecurity.ts：token 空值時回傳空字串而非 PLACEHOLDER',
+    ],
+    fixes: [
+      '修復 GitHub Push Protection 阻擋 gh-pages 部署的問題',
+      '防止 GitHub PAT 被意外打包進前端 JS bundle',
+    ],
+  },
+  {
     version: '1.0.2.0413',
     date: '2026-10-24',
     type: 'hotfix',

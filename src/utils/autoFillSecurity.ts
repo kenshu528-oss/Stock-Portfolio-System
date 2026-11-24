@@ -5,12 +5,11 @@ export const AUTO_FILL_CONFIG = {
   REQUIRED_CLICKS: 5,
   CLICK_TIMEOUT: 2000, // Reset counter after 2 seconds
   DEV_TOKEN: (() => {
-    // 嘗試從環境變數讀取，如果失敗則使用佔位符
+    // 嘗試從環境變數讀取，找不到時回傳空字串（使用者自行在 UI 輸入 token）
     try {
-      return import.meta.env?.VITE_DEV_TOKEN || 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
+      return import.meta.env?.VITE_DEV_TOKEN || '';
     } catch (e) {
-      // 如果 import.meta.env 不可用，直接返回佔位符
-      return 'ghp_PLACEHOLDER_TOKEN_FOR_DEVELOPMENT';
+      return '';
     }
   })(),
   PRODUCTION_DISABLED: true,
