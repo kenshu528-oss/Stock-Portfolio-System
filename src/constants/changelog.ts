@@ -12,6 +12,23 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.0.2.0413',
+    date: '2026-10-24',
+    type: 'hotfix',
+    title: '修復：槓桿/反向 ETF 後綴判斷錯誤導致無法新增持股',
+    description: '00631L、00685L 等槓桿/反向 ETF（代碼格式 00XXXL / 00XXXR）在證交所上市，Yahoo Finance 使用 .TW 後綴，但程式錯誤地使用 .TWO，導致 Vercel API 回 404、股價獲取失敗、成本價欄位被清空、新增按鈕永遠 disabled。同時修復股價獲取失敗時不應清空成本價欄位，讓使用者可手動填入後仍能完成新增。',
+    changes: [
+      '🔧 修復 stockSymbolAnalyzer.ts：新增 isLeverageOrInverseETF() 判斷，00XXXL/00XXXR 優先使用 .TW',
+      '🔧 修復 QuickAddStock.tsx：getYahooSymbol() 加入槓桿/反向 ETF 判斷',
+      '🔧 修復 api/stock.ts（Vercel Edge Function）：getYahooSymbol() 加入槓桿/反向 ETF 判斷',
+      '🔧 修復 QuickAddStock.tsx：股價獲取失敗/異常時不清空 costPrice，讓使用者可手動輸入',
+    ],
+    fixes: [
+      '修復 00631L、00685L 等槓桿/反向 ETF 無法新增持股的問題',
+      '修復股價獲取失敗時新增按鈕永遠 disabled 的問題',
+    ],
+  },
+  {
     version: '1.0.2.0412',
     date: '2026-10-21',
     type: 'hotfix',

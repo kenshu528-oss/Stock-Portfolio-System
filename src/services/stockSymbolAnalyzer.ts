@@ -74,6 +74,24 @@ export class StockSymbolAnalyzer {
       return result;
     }
     
+    // 檢查槓桿/反向 ETF（優先於一般 ETF）
+    if (StockSymbolAnalyzer.isLeverageOrInverseETF(normalizedSymbol)) {
+      const result: StockAnalysisResult = {
+        suffixes: ['.TW', '.TWO'],
+        type: 'etf',
+        market: 'ETF',
+        description: '槓桿/反向 ETF',
+        reasoning: '代碼格式 00XXXL / 00XXXR，槓桿/反向 ETF 在證交所上市，使用 .TW'
+      };
+
+      logger.info('stock', `${normalizedSymbol} 識別為槓桿/反向 ETF`, {
+        suffixes: result.suffixes,
+        market: result.market
+      });
+
+      return result;
+    }
+
     // 檢查一般 ETF
     if (StockSymbolAnalyzer.isETF(normalizedSymbol)) {
       const result: StockAnalysisResult = {
@@ -207,6 +225,19 @@ export class StockSymbolAnalyzer {
     // 債券 ETF 格式：00XXXB（如：00679B, 00687B）
     return /^00\d{2,3}B$/i.test(symbol);
   }
+
+  /**
+   * 檢查是否為槓桿/反向 ETF
+   * 槓桿 ETF 以 L 結尾（如：00631L, 00633L）
+   * 反向 ETF 以 R 結尾（如：00632R, 00634R）
+   * 這類 ETF 在 Yahoo Finance 使用 .TW 後綴（上市掛牌）
+   * 
+   * @param symbol 股票代碼
+   * @returns 是否為槓桿/反向 ETF
+   */
+  private static isLeverageOrInverseETF(symbol: string): boolean {
+    return /^00\d{2,3}[LR]$/i.test(symbol);
+  }
   
   /**
    * 檢查是否為一般 ETF
@@ -216,8 +247,10 @@ export class StockSymbolAnalyzer {
    */
   private static isETF(symbol: string): boolean {
     // 一般 ETF 格式：00XXX 或 00XXXA（如：0050, 00646, 00981A）
-    // 排除債券 ETF（已在上面處理）
-    return /^00\d{2,3}[A-Z]?$/i.test(symbol) && !StockSymbolAnalyzer.isBondETF(symbol);
+    // 排除債券 ETF 和槓桿/反向 ETF（已在上面處理）
+    return /^00\d{2,3}[A-Z]?$/i.test(symbol) &&
+           !StockSymbolAnalyzer.isBondETF(symbol) &&
+           !StockSymbolAnalyzer.isLeverageOrInverseETF(symbol);
   }
   
   /**

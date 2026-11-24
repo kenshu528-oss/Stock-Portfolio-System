@@ -340,6 +340,8 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
 
     const code = parseInt(symbol.substring(0, 4));
     const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+    // 槓桿 ETF (L 結尾) 和反向 ETF (R 結尾) 在證交所上市，使用 .TW
+    const isLeverageOrInverseETF = /^00\d{2,3}[LR]$/i.test(symbol);
     const isETF = /^00\d{2,3}[A-Z]?$/i.test(symbol);
 
     // 特殊案例處理
@@ -355,6 +357,11 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
     // 債券 ETF：優先櫃買中心
     if (isBondETF) {
       return `${symbol}.TWO`;
+    }
+
+    // 槓桿/反向 ETF：使用證交所 .TW（如 00631L, 00632R）
+    if (isLeverageOrInverseETF) {
+      return `${symbol}.TW`;
     }
     
     // 一般 ETF：優先櫃買中心
@@ -650,7 +657,7 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
           });
         }
       } else {
-        // 獲取失敗，使用原有價格但標記為失敗
+        // 獲取失敗，保留原有價格（若有），讓使用者可手動填寫成本價
         const failedStock = {
           ...stock,
           source: '獲取失敗'
@@ -658,7 +665,12 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
         
         setSelectedStock(failedStock);
         setSearchQuery(`${failedStock.symbol} - ${failedStock.name}`);
-        setCostPrice(stock.price > 0 ? stock.price.toString() : '');
+        // 🔧 修復 B：股價獲取失敗時，只在原本有股價時才設定 costPrice
+        // 不要清空，讓使用者可以手動填入成本價後仍能按新增
+        if (stock.price > 0) {
+          setCostPrice(stock.price.toString());
+        }
+        // 若 costPrice 目前是空的，不動它，讓使用者自行輸入
         
         logger.warn('stock', `QuickAddStock 獲取 ${stock.symbol} 股價失敗，使用原有價格`, {
           原有價格: stock.price
@@ -675,7 +687,10 @@ const QuickAddStock: React.FC<QuickAddStockProps> = ({
       
       setSelectedStock(errorStock);
       setSearchQuery(`${errorStock.symbol} - ${errorStock.name}`);
-      setCostPrice(stock.price > 0 ? stock.price.toString() : '');
+      // 🔧 修復 B：異常時也不清空 costPrice，讓使用者可手動填入
+      if (stock.price > 0) {
+        setCostPrice(stock.price.toString());
+      }
     } finally {
       setIsSearching(false);
       setLoadingStatus('');

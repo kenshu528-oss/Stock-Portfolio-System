@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock List Update Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Stock List Update Test</h1>
+    
+    <div>
+        <button onclick="testBackendAPI()">測試後端 API</button>
+        <button onclick="testStockListCheck()">測試股票清單檢查</button>
+        <button onclick="testUpdate()">測試更新功能</button>
+        <button onclick="clearLogs()">清除日誌</button>
+    </div>
+    
+    <div id="logs"></div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = `log ${type}`;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logs.appendChild(div);
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        async function testBackendAPI() {
+            log('測試後端 API...', 'info');
+            
+            try {
+                // 測試股票清單 API
+                const response = await fetch('http://localhost:3001/api/stock-list', { method: 'HEAD' });
+                
+                if (response.ok) {
+                    const stockListDate = response.headers.get('X-Stock-List-Date');
+                    const isToday = response.headers.get('X-Stock-List-Is-Today');
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    log(`✅ 後端 API 正常`, 'success');
+                    log(`📅 股票清單日期: ${stockListDate}`, 'info');
+                    log(`📅 今日日期: ${today}`, 'info');
+                    log(`✅ 是否為今日: ${isToday}`, isToday === 'true' ? 'success' : 'error');
+                } else {
+                    log(`❌ 後端 API 錯誤: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ 後端 API 連接失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function testStockListCheck() {
+            log('測試股票清單檢查邏輯...', 'info');
+            
+            try {
+                // 模擬檢查邏輯
+                const backendUrl = 'http://localhost:3001/api/stock-list';
+                const response = await fetch(backendUrl, { 
+                    method: 'HEAD',
+                    signal: AbortSignal.timeout(5000)
+                });
+                
+                if (response.ok) {
+                    const stockListDate = response.headers.get('X-Stock-List-Date');
+                    const isToday = response.headers.get('X-Stock-List-Is-Today') === 'true';
+                    const today = new Date().toISOString().split('T')[0];
+                    
+                    log(`📊 檢查結果:`, 'info');
+                    log(`  - 股票清單日期: ${stockListDate}`, 'info');
+                    log(`  - 今日日期: ${today}`, 'info');
+                    log(`  - 是否為今日: ${isToday}`, 'info');
+                    log(`  - 需要更新: ${!isToday}`, !isToday ? 'error' : 'success');
+                    
+                    if (!isToday) {
+                        log('⚠️ 檢測到需要更新股票清單', 'error');
+                    } else {
+                        log('✅ 股票清單是最新的', 'success');
+                    }
+                } else {
+                    log(`❌ 檢查失敗: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ 檢查失敗: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUpdate() {
+            log('測試更新功能...', 'info');
+            
+            try {
+                const backendUrl = 'http://localhost:3001/api/update-stock-list';
+                const response = await fetch(backendUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        trigger: 'manual-test',
+                        timestamp: new Date().toISOString()
+                    }),
+                    signal: AbortSignal.timeout(30000) // 30秒超時
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`✅ 更新成功: ${result.message}`, 'success');
+                    log(`📅 日期: ${result.date}`, 'info');
+                    log(`📁 檔案: ${result.filename}`, 'info');
+                    
+                    // 更新後重新檢查
+                    setTimeout(() => testStockListCheck(), 1000);
+                } else {
+                    const errorText = await response.text();
+                    log(`❌ 更新失敗: ${response.status} ${response.statusText}`, 'error');
+                    log(`錯誤詳情: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                if (error.name === 'TimeoutError') {
+                    log(`⏰ 更新超時（30秒），可能 Python 腳本執行時間較長`, 'error');
+                } else {
+                    log(`❌ 更新失敗: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // 頁面載入時自動測試
+        window.onload = function() {
+            log('頁面載入完成，開始自動測試...', 'info');
+            testBackendAPI();
+        };
+    </script>
+</body>
+</html>

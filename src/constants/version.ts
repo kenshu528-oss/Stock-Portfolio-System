@@ -3,7 +3,7 @@ export const VERSION = {
   MAJOR: 1,
   MINOR: 0,
   RELEASE: 2, // 第二次GitHub正式發布版本 - 功能完整穩定版
-  PATCH: 412, // 【修復】批量更新時 forceRecalculate 先清除除息快取，確保拿到最新 API 資料
+  PATCH: 413, // 【修復】槓桿/反向 ETF (00XXXL/00XXXR) 使用 .TW 後綴；股價獲取失敗時不清空成本價欄位
   
   get FULL() {
     return `${this.MAJOR}.${this.MINOR}.${this.RELEASE}.${this.PATCH.toString().padStart(4, '0')}`;

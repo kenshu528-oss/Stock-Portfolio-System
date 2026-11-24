@@ -1,0 +1,41 @@
+# 建置輸出
+dist/
+build/
+
+# 依賴套件
+node_modules/
+
+# 匯出檔案
+export/
+
+# 測試檔案
+tests/
+
+# Vercel 相關
+vercel-stock-api/
+
+# GitHub 發布版本
+github-releases/
+
+# 配置檔案
+*.config.js
+*.config.ts
+vite.config.ts
+postcss.config.js
+tailwind.config.js
+
+# 環境檔案
+.env
+.env.local
+.env.production
+
+# 快取檔案
+.vite/
+.netlify/
+
+# GitHub 相關
+.github/
+
+# 其他
+*.log
+*.tmp

@@ -1,0 +1,40 @@
+# Netlify 部署配置
+[build]
+  # 建置命令
+  command = "npm run build"
+  
+  # 發布目錄
+  publish = "dist"
+  
+  # Node.js 版本
+  [build.environment]
+    NODE_VERSION = "18"
+    NETLIFY = "true"
+
+# 重定向規則（支援 SPA 路由）
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 自訂 headers（安全性和快取）
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# 部署通知
+[build.processing]
+  skip_processing = false
+
+# 環境變數（如需要）
+# [context.production.environment]
+#   NODE_ENV = "production"
