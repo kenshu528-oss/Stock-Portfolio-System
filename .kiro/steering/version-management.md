@@ -5,7 +5,7 @@
 ## 🎯 核心原則
 
 ### 版本號一致性
-- ✅ **三處必須同步**：package.json、version.ts、changelog.ts
+- ✅ **四處必須同步**：package.json、package-lock.json、version.ts、changelog.ts
 - ✅ **修改功能必須進版**：任何功能變更都要更新版本號
 - ✅ **重新建置**：版本號更新後必須執行 npm run build
 
@@ -13,6 +13,70 @@
 - ✅ **GitHub 上傳前必須歸檔**：創建完整的版本資料夾
 - ✅ **保留歷史版本**：所有發布版本都要完整保存
 - ✅ **命名規則統一**：github-release-v1.0.2.XXXX
+
+---
+
+## 🚨 已知問題與防範（血淚教訓）
+
+### 問題一：changelog.ts 插入新版本語法錯誤
+**症狀**：build 失敗，`Expected "]" but found ":"`
+**根本原因**：str_replace 用 `{version: '1.0.2.XXXX',` 當 oldStr，把下一個版本物件的 `{` 一起吃掉
+
+**正確插入方式**：
+```typescript
+// ✅ oldStr 包含完整的前一版本結尾 + 下一版本開頭
+oldStr:  `  },\n  {\n    version: '1.0.2.0412',`
+newStr:  `  },\n  {\n    version: '1.0.2.0413',\n    ...\n  },\n  {\n    version: '1.0.2.0412',`
+```
+
+**或使用更安全的 anchor（建議）**：
+```typescript
+// ✅ 在陣列第一個 { 前插入
+oldStr:  `export const CHANGELOG: ChangelogEntry[] = [\n  {`
+newStr:  `export const CHANGELOG: ChangelogEntry[] = [\n  {\n    version: 'NEW',...\n  },\n  {`
+```
+
+**插入後必須確認**：
+```bash
+node -e "require('./src/constants/changelog.ts')"  # 語法錯誤會立即報錯
+npm run check:version  # 確認版本號一致
+npm run build          # 確認能正常 build
+```
+
+### 問題二：VITE_ 前綴環境變數被打包進 bundle
+**症狀**：GitHub Push Protection 擋住推送，提示 `GH013: Repository rule violations`
+**根本原因**：Vite 會將所有 `VITE_` 前綴的變數注入前端 bundle，`.env` 裡的真實 token 因此洩漏
+
+**規則**：
+- ❌ `.env` 裡的 `VITE_` 變數不能放真實 token
+- ✅ 真實 token 只能存在 localStorage（使用者 UI 輸入）或 GitHub Secrets（CI 用）
+- ✅ `.env` 裡的 `VITE_DEV_TOKEN` 必須留空：`VITE_DEV_TOKEN=`
+
+### 問題三：package-lock.json 未同步導致 CI npm ci 失敗
+**症狀**：GitHub Actions build 失敗，時間約 1m 16s（比正常的 1m 35s 短）
+**根本原因**：更新 `package.json` 版本號後沒有同步 `package-lock.json`
+
+**正確做法**：每次更新版本號後執行以下指令更新 lock 檔：
+```bash
+node -e "
+const fs = require('fs');
+const p = JSON.parse(fs.readFileSync('package.json'));
+const l = JSON.parse(fs.readFileSync('package-lock.json'));
+l.version = p.version;
+if (l.packages && l.packages['']) l.packages[''].version = p.version;
+fs.writeFileSync('package-lock.json', JSON.stringify(l, null, 2));
+console.log('package-lock.json 已同步至', p.version);
+"
+```
+
+### 問題四：誤操作 gh-pages 分支
+**症狀**：手動推 gh-pages 沒有效果，GitHub Pages 顯示舊版本
+**根本原因**：本 repo 用 GitHub Actions（actions/deploy-pages）部署，不是直接從 gh-pages 分支讀檔
+
+**規則**：
+- ❌ 不要手動操作 gh-pages 分支
+- ✅ 只要推 main，GitHub Actions 會自動 build 並部署
+- ✅ 部署失敗時看 Actions log，不是看 gh-pages 分支內容
 
 ---
 
@@ -45,19 +109,16 @@ Stock-Portfolio-System 倉庫: v1.0.2.XXXX
 # 2. 更新 src/constants/version.ts
 export const PATCH = 315;
 
-# 3. 更新 src/constants/changelog.ts
-{
-  version: '1.0.2.0315',
-  date: '2026-01-26',
-  changes: [
-    '功能描述'
-  ]
-}
+# 3. 更新 src/constants/changelog.ts（注意：用安全的 anchor 插入，避免破壞語法）
+# oldStr 必須包含完整的前版本結尾 + 下一版本的 {，確保不吃掉任何 {
 
-# 4. 驗證版本號一致
+# 4. 同步 package-lock.json（避免 CI npm ci 失敗）
+node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));const l=JSON.parse(fs.readFileSync('package-lock.json'));l.version=p.version;if(l.packages&&l.packages[''])l.packages[''].version=p.version;fs.writeFileSync('package-lock.json',JSON.stringify(l,null,2));console.log('已同步至',p.version);"
+
+# 5. 驗證版本號一致
 npm run check:version
 
-# 5. 重新建置
+# 6. 重新建置（確認 build 成功後再 commit）
 npm run build
 ```
 
