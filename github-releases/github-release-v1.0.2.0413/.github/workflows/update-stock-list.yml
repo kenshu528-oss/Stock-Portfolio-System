@@ -1,0 +1,80 @@
+name: Update Stock List
+
+on:
+  schedule:
+    - cron: '7 22 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-stock-list:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install requests
+
+      - name: Check if already updated today
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          if [ -f "public/stock_list.json" ]; then
+            FILE_DATE=$(jq -r '.date' "public/stock_list.json" 2>/dev/null || echo "")
+            if [ "$FILE_DATE" = "$TODAY" ]; then
+              echo "SKIP_UPDATE=true" >> $GITHUB_ENV
+              echo "今日已是最新 ($TODAY)，跳過更新"
+            else
+              echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+              echo "需要更新（目前: $FILE_DATE，今天: $TODAY）"
+            fi
+          else
+            echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+            echo "stock_list.json 不存在，需要建立"
+          fi
+
+      - name: Fetch stock list
+        if: env.SKIP_UPDATE != 'true'
+        env:
+          FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN || secrets.VITE_FINMIND_TOKEN }}
+        run: python scripts/fetch_stock_list_ci.py
+
+      - name: Cleanup old dated files
+        if: env.SKIP_UPDATE != 'true'
+        run: |
+          find ./public -maxdepth 1 -name "stock_list_2*-*.json" -type f | sort | head -n -3 | while read f; do
+            echo "刪除舊檔: $f"
+            git rm -f "$f" 2>/dev/null || rm -f "$f"
+          done
+
+      - name: Commit and push changes
+        if: env.SKIP_UPDATE != 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -f public/stock_list*.json
+          if git diff --staged --quiet; then
+            echo "無變更，跳過提交"
+          else
+            TODAY=$(date +%Y-%m-%d)
+            git commit -m "自動更新股票清單 $TODAY"
+            git push
+            echo "已更新並推送"
+          fi
+
+  notify-on-failure:
+    runs-on: ubuntu-latest
+    needs: update-stock-list
+    if: failure()
+
+    steps:
+      - name: Log failure
+        run: |
+          echo "Stock List 自動更新失敗"
+          echo "執行 ID：${{ github.run_id }}"
+          echo "查看詳情：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

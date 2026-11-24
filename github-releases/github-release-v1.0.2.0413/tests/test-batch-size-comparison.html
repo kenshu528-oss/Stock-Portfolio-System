@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>批次大小效能比較測試</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+    h1 {
+      color: #4CAF50;
+      border-bottom: 2px solid #4CAF50;
+      padding-bottom: 10px;
+    }
+    .test-section {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+    .btn-primary {
+      background: #4CAF50;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+    }
+    .btn-secondary {
+      background: #2196F3;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #0b7dda;
+    }
+    .btn-warning {
+      background: #ff9800;
+      color: white;
+    }
+    .btn-warning:hover {
+      background: #e68900;
+    }
+    .results {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 15px 0;
+      font-family: 'Courier New', monospace;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      border-left: 3px solid #666;
+    }
+    .log-info { border-left-color: #2196F3; background: rgba(33, 150, 243, 0.1); }
+    .log-success { border-left-color: #4CAF50; background: rgba(76, 175, 80, 0.1); }
+    .log-warning { border-left-color: #ff9800; background: rgba(255, 152, 0, 0.1); }
+    .log-error { border-left-color: #f44336; background: rgba(244, 67, 54, 0.1); }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    .comparison-table th,
+    .comparison-table td {
+      padding: 12px;
+      text-align: left;
+      border: 1px solid #444;
+    }
+    .comparison-table th {
+      background: #333;
+      color: #4CAF50;
+      font-weight: 600;
+    }
+    .comparison-table tr:hover {
+      background: #2a2a2a;
+    }
+    .metric {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin: 0 4px;
+    }
+    .metric-time { background: #2196F3; color: white; }
+    .metric-success { background: #4CAF50; color: white; }
+    .metric-fail { background: #f44336; color: white; }
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #333;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #45a049);
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 批次大小效能比較測試</h1>
+  
+  <div class="test-section">
+    <h2>📊 測試說明</h2>
+    <p>測試不同批次大小對股價更新效能的影響：</p>
+    <ul>
+      <li><strong>批次大小 10</strong>：保守策略，進度更新頻繁</li>
+      <li><strong>批次大小 20</strong>：平衡策略，速度與穩定性兼顧</li>
+      <li><strong>批次大小 30</strong>：激進策略，追求最快速度</li>
+    </ul>
+    <p><strong>測試股票數量</strong>：36 支（您的實際持股數量）</p>
+  </div>
+
+  <div class="test-section">
+    <h2>🎮 測試控制</h2>
+    <div class="button-group">
+      <button class="btn-primary" onclick="testBatchSize(10)">測試批次大小 10</button>
+      <button class="btn-primary" onclick="testBatchSize(20)">測試批次大小 20 (當前)</button>
+      <button class="btn-primary" onclick="testBatchSize(30)">測試批次大小 30</button>
+      <button class="btn-secondary" onclick="runAllTests()">🚀 執行完整比較</button>
+      <button class="btn-warning" onclick="clearResults()">清除結果</button>
+    </div>
+    
+    <div id="progress-container" style="display: none;">
+      <h3>測試進度</h3>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill" style="width: 0%">0%</div>
+      </div>
+      <p id="progress-text">準備中...</p>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>📈 測試結果</h2>
+    <div id="results" class="results">
+      <div class="log-info">等待測試...</div>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>📊 效能比較表</h2>
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>批次大小</th>
+          <th>總耗時</th>
+          <th>成功數</th>
+          <th>失敗數</th>
+          <th>成功率</th>
+          <th>批次數</th>
+          <th>效能提升</th>
+        </tr>
+      </thead>
+      <tbody id="comparison-tbody">
+        <tr>
+          <td colspan="7" style="text-align: center; color: #888;">尚無測試數據</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const testStocks = [
+      { symbol: '2330', name: '台積電' },
+      { symbol: '2317', name: '鴻海' },
+      { symbol: '2454', name: '聯發科' },
+      { symbol: '2886', name: '兆豐金' },
+      { symbol: '2890', name: '永豐金' },
+      { symbol: '2891', name: '中信金' },
+      { symbol: '2892', name: '第一金' },
+      { symbol: '2881', name: '富邦金' },
+      { symbol: '2882', name: '國泰金' },
+      { symbol: '2884', name: '玉山金' },
+      { symbol: '2885', name: '元大金' },
+      { symbol: '2887', name: '台新金' },
+      { symbol: '2888', name: '新光金' },
+      { symbol: '2889', name: '國票金' },
+      { symbol: '5880', name: '合庫金' },
+      { symbol: '2883', name: '開發金' },
+      { symbol: '2002', name: '中鋼' },
+      { symbol: '1301', name: '台塑' },
+      { symbol: '1303', name: '南亞' },
+      { symbol: '1326', name: '台化' },
+      { symbol: '2412', name: '中華電' },
+      { symbol: '2308', name: '台達電' },
+      { symbol: '2382', name: '廣達' },
+      { symbol: '2357', name: '華碩' },
+      { symbol: '2303', name: '聯電' },
+      { symbol: '3008', name: '大立光' },
+      { symbol: '2327', name: '國巨' },
+      { symbol: '2379', name: '瑞昱' },
+      { symbol: '3711', name: '日月光投控' },
+      { symbol: '2408', name: '南亞科' },
+      { symbol: '2409', name: '友達' },
+      { symbol: '2301', name: '光寶科' },
+      { symbol: '2207', name: '和泰車' },
+      { symbol: '2912', name: '統一超' },
+      { symbol: '2105', name: '正新' },
+      { symbol: '9910', name: '豐泰' }
+    ];
+
+    const testResults = [];
+
+    function log(message, type = 'info') {
+      const results = document.getElementById('results');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      results.appendChild(entry);
+      results.scrollTop = results.scrollHeight;
+    }
+
+    function updateProgress(current, total, text) {
+      const progressContainer = document.getElementById('progress-container');
+      const progressFill = document.getElementById('progress-fill');
+      const progressText = document.getElementById('progress-text');
+      
+      progressContainer.style.display = 'block';
+      const percentage = Math.round((current / total) * 100);
+      progressFill.style.width = `${percentage}%`;
+      progressFill.textContent = `${percentage}%`;
+      progressText.textContent = text;
+    }
+
+    function hideProgress() {
+      document.getElementById('progress-container').style.display = 'none';
+    }
+
+    async function testBatchSize(batchSize) {
+      log(`🧪 開始測試批次大小: ${batchSize}`, 'info');
+      log(`📋 測試股票數量: ${testStocks.length} 支`, 'info');
+      
+      const startTime = Date.now();
+      const symbols = testStocks.map(s => s.symbol);
+      
+      let successCount = 0;
+      let failCount = 0;
+      let batchCount = 0;
+      
+      // 分批處理
+      const batches = [];
+      for (let i = 0; i < symbols.length; i += batchSize) {
+        batches.push(symbols.slice(i, i + batchSize));
+      }
+      
+      log(`📦 分為 ${batches.length} 個批次`, 'info');
+      
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        batchCount++;
+        
+        updateProgress(
+          i * batchSize,
+          symbols.length,
+          `處理第 ${i + 1}/${batches.length} 批 (${batch.length} 支股票)`
+        );
+        
+        log(`📊 處理第 ${i + 1}/${batches.length} 批: ${batch.join(', ')}`, 'info');
+        
+        try {
+          const response = await fetch('http://localhost:3001/api/stocks/batch', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ symbols: batch })
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.success && data.results) {
+            const batchSuccess = Object.keys(data.results).length;
+            const batchFail = batch.length - batchSuccess;
+            successCount += batchSuccess;
+            failCount += batchFail;
+            
+            log(`✅ 批次 ${i + 1} 完成: 成功 ${batchSuccess}, 失敗 ${batchFail}`, 'success');
+          }
+        } catch (error) {
+          log(`❌ 批次 ${i + 1} 失敗: ${error.message}`, 'error');
+          failCount += batch.length;
+        }
+        
+        // 批次之間延遲 1 秒
+        if (i < batches.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      const endTime = Date.now();
+      const duration = ((endTime - startTime) / 1000).toFixed(2);
+      const successRate = ((successCount / symbols.length) * 100).toFixed(1);
+      
+      updateProgress(symbols.length, symbols.length, '測試完成！');
+      
+      log(`🎉 測試完成！`, 'success');
+      log(`⏱️ 總耗時: ${duration} 秒`, 'success');
+      log(`✅ 成功: ${successCount} 支`, 'success');
+      log(`❌ 失敗: ${failCount} 支`, 'error');
+      log(`📊 成功率: ${successRate}%`, 'success');
+      log(`📦 批次數: ${batchCount} 批`, 'info');
+      
+      // 儲存結果
+      testResults.push({
+        batchSize,
+        duration: parseFloat(duration),
+        successCount,
+        failCount,
+        successRate: parseFloat(successRate),
+        batchCount
+      });
+      
+      updateComparisonTable();
+      
+      setTimeout(hideProgress, 2000);
+    }
+
+    function updateComparisonTable() {
+      const tbody = document.getElementById('comparison-tbody');
+      
+      if (testResults.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #888;">尚無測試數據</td></tr>';
+        return;
+      }
+      
+      // 找出基準（批次大小 10 或第一個結果）
+      const baseline = testResults.find(r => r.batchSize === 10) || testResults[0];
+      
+      tbody.innerHTML = testResults
+        .sort((a, b) => a.batchSize - b.batchSize)
+        .map(result => {
+          const improvement = baseline.batchSize === result.batchSize 
+            ? '-' 
+            : `${(((baseline.duration - result.duration) / baseline.duration) * 100).toFixed(1)}%`;
+          
+          return `
+            <tr>
+              <td><strong>${result.batchSize}</strong></td>
+              <td><span class="metric metric-time">${result.duration}s</span></td>
+              <td><span class="metric metric-success">${result.successCount}</span></td>
+              <td><span class="metric metric-fail">${result.failCount}</span></td>
+              <td>${result.successRate}%</td>
+              <td>${result.batchCount} 批</td>
+              <td>${improvement}</td>
+            </tr>
+          `;
+        })
+        .join('');
+    }
+
+    async function runAllTests() {
+      log('🚀 開始執行完整比較測試', 'info');
+      log('⏳ 這將需要約 15-20 秒...', 'warning');
+      
+      testResults.length = 0; // 清空之前的結果
+      
+      await testBatchSize(10);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      await testBatchSize(20);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      await testBatchSize(30);
+      
+      log('🎊 完整比較測試完成！', 'success');
+      log('📊 請查看上方的效能比較表', 'info');
+    }
+
+    function clearResults() {
+      document.getElementById('results').innerHTML = '<div class="log-info">結果已清除，等待測試...</div>';
+      testResults.length = 0;
+      updateComparisonTable();
+      hideProgress();
+    }
+
+    // 頁面載入時的提示
+    log('🎯 批次大小效能比較測試工具已就緒', 'success');
+    log('📝 使用說明:', 'info');
+    log('   1. 點擊「測試批次大小 X」測試單一配置', 'info');
+    log('   2. 點擊「執行完整比較」自動測試所有配置', 'info');
+    log('   3. 觀察效能比較表，選擇最佳批次大小', 'info');
+    log('', 'info');
+    log('⚠️ 注意：請確保後端服務器正在運行 (localhost:3001)', 'warning');
+  </script>
+</body>
+</html>

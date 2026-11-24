@@ -34,8 +34,16 @@ export default async function handler(req: NextRequest) {
       
       const code = parseInt(symbol.substring(0, 4));
       const isBondETF = /^00\d{2,3}B$/i.test(symbol);
+      // 槓桿 ETF (L 結尾) 和反向 ETF (R 結尾) 在證交所上市，使用 .TW
+      const isLeverageOrInverseETF = /^00\d{2,3}[LR]$/i.test(symbol);
+      const isETF = /^00\d{2,3}[A-Z]?$/i.test(symbol);
       
       if (isBondETF) {
+        return `${symbol}.TWO`;
+      } else if (isLeverageOrInverseETF) {
+        // 槓桿/反向 ETF 使用 .TW（如 00631L, 00632R, 00685L）
+        return `${symbol}.TW`;
+      } else if (isETF) {
         return `${symbol}.TWO`;
       } else if (code >= 3000 && code <= 8999) {
         return `${symbol}.TWO`;
